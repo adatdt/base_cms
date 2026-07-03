@@ -115,7 +115,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
   <div className="flex flex-1 items-center gap-2 max-w-md w-full">
 <div className="flex flex-1 items-center w-full space-x-0 isolate">
   {/* 1. Label Abu-Abu (Sudut Kanan Dipotong Siku) */}
-  <span className="flex items-center justify-center bg-slate-100 border border-slate-200 rounded-l-lg rounded-r-none h-[34px] px-3.5 text-xs font-medium text-slate-500 select-none whitespace-nowrap z-10">
+  <span className="flex items-center justify-center bg-slate-100 border border-slate-200 rounded-l-lg rounded-r-none h-8.5 px-3.5 text-xs font-medium text-slate-500 select-none whitespace-nowrap z-10">
     Node Pelabuhan
   </span>
   
@@ -126,7 +126,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     value={typedQuery}
     onChange={(e) => setTypedQuery(e.target.value)}
     onKeyDown={handleKeyDown}
-    className="w-full bg-slate-50 border border-slate-200 rounded-r-lg rounded-l-none h-[34px] px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:z-20 transition-all shadow-sm -ml-[1px]"
+    className="w-full bg-slate-50 border border-slate-200 rounded-r-lg rounded-l-none h-8.5 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:z-20 transition-all shadow-sm -ml-px"
   />
 </div>
     <Button

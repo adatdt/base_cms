@@ -11,13 +11,13 @@ export default function AuthLayout({
         {/* Header Bersama untuk Halaman Auth */}
         <div className="text-center">
           <h2 className="text-3xl font-extrabold tracking-tight text-slate-900">
-            SITOLAUT
+            ASDP
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Balai Pengelola Transportasi Laut
+            Hub Pelabuhan & Penyeberangan
           </p>
         </div>
-        
+
         {/* Halaman /login atau /register akan dimuat di sini */}
         {children}
       </div>
