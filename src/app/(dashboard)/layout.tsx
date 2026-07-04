@@ -34,32 +34,31 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Status visual lebar saat ini
   const [isMiniMode, setIsMiniMode] = useState(false); // Status permanen klik tombol
 
-  const [menus, setMenus] = useState<MenuItem[]>([]);
-  useEffect(() => {
-    async function fetchMenu() {
-      try {
-        // Panggil API Route internal menggunakan metode POST demi keamanan
-        const response = await fetch("/api/menu", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+  // const [menus, setMenus] = useState<MenuItem[]>([]);
+  // useEffect(() => {
+  //   async function fetchMenu() {
+  //     try {
+  //       // Panggil API Route internal menggunakan metode POST demi keamanan
+  //       const response = await fetch("/api/menu", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
 
-        const result = await response.json();
+  //       const result = await response.json();
 
-        if (result.success) {
-          setMenus(result.data);
-        }
-      } catch (error) {
-        console.error("Gagal memuat menu di sisi klien:", error);
-      }
-    }
+  //       if (result.success) {
+  //         setMenus(result.data);
+  //       }
+  //     } catch (error) {
+  //       console.error("Gagal memuat menu di sisi klien:", error);
+  //     }
+  //   }
 
-    fetchMenu();
-  }, []);
+  //   fetchMenu();
+  // }, []);
 
-  console.log(menus);
 
   const menuItems = [
     { name: "Beranda", href: "/home", icon: "🏠" },

@@ -4,7 +4,9 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import StatusBadge from "@/components/ui/StatusBadge";
-import Button from "@/components/ui/Button"; 
+import Btn from "@/components/ui/Btn"; 
+import Modal from "@/components/ui/Modal";
+import CrudIcons from "@/components/ui/CrudIcons";
 
 interface PortRowData {
   id: string;
@@ -23,6 +25,11 @@ export default function PortGridDashboardPage() {
     { id: "2", code: "IDNPD", name: "Pelabuhan Nusa Penida", region: "Klungkung, Bali", docksCount: 3, tariffClass: "Kelas B", status: "Aktif", lastUpdated: "25 Jun 2026" },
     { id: "3", code: "IDPDB", name: "Pelabuhan Padangbai", region: "Karangasem, Bali", docksCount: 4, tariffClass: "Kelas A", status: "Maintenance", lastUpdated: "20 Jun 2026" },
   ]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Kontrol state untuk Modal 2 (Form Input)
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
 
   // 1. DUA STATE TERPISAH UNTUK PENCARIAN (REKOMENDASI PERFORMA)
   const [typedQuery, setTypedQuery] = useState("");      // Menampung teks yang sedang diketik
@@ -87,12 +94,17 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
           <Link href={`/port/list?edit=${row.id}`} className="text-blue-600 hover:text-blue-700 mr-4">
             Konfigurasi
           </Link>
-          <button 
-            onClick={() => alert(`Trigger hapus ID: ${row.id}`)}
-            className="text-slate-400 hover:text-rose-600 transition-colors"
+          
+           <Btn
+            type="button"
+            variant="delete"
+            size="xs"
+            title="Delete"
+            onClick={() => setIsModalOpen(true)}
           >
-            Hapus
-          </button>
+         <CrudIcons name="delete" size={10} />
+
+          </Btn>
         </>
       )
     }
@@ -129,7 +141,7 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     className="w-full bg-slate-50 border border-slate-200 rounded-r-lg rounded-l-none h-8.5 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white focus:z-20 transition-all shadow-sm -ml-px"
   />
 </div>
-    <Button
+    <Btn
   type="button"
   variant="delete"
   size="sm"
@@ -144,10 +156,21 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
   
   {/* Teks Cari dipaksa tidak memotong ke bawah */}
   <span className="whitespace-nowrap block">Cari</span>
-</Button>
+</Btn>
 
 
   </div>
+
+     
+
+
+      {/* TOMBOL PANDUAN 2: UNTUK MODAL FORM INPUT */}
+      <button
+        onClick={() => setIsFormModalOpen(true)}
+        className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        Buka Modal Form Input
+      </button>
 
   {/* SISI KANAN: DROPDOWN FILTER STATUS */}
   <div className="flex items-center gap-2 justify-between md:justify-end text-xs border-t md:border-t-0 pt-3 md:pt-0 border-slate-100">
@@ -164,7 +187,38 @@ const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     </select>
   </div>
 </div>
+{/* Implementasi Komponen Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Konfirmasi Hapus Data"
+      >
+        <p>Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.</p>
+      </Modal>
 
+      <Modal
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        title="Ubah Nama Pengguna"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); alert(`Nama diubah menjadi: ${inputValue}`); setIsFormModalOpen(false); }} className="space-y-4">
+          <div>
+            <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Nama Baru
+            </label>
+            <input
+              id="username"
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              placeholder="Masukkan nama Anda..."
+              className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              required
+            />
+          </div>
+          <p className="text-xs text-gray-500">Pastikan nama sesuai dengan kartu identitas resmi Anda.</p>
+        </form>
+      </Modal>
 
       {/* COMPONENT DATA GRID */}
       <DataGrid 

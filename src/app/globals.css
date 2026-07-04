@@ -5,11 +5,22 @@
   --foreground: #171717;
 }
 
+/* Daftarkan animasi dan keyframes ke dalam sistem tema Tailwind v4 */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  
+  /* 1. Daftarkan nama kelas animasi */
+  --animate-shake: shake 0.3s ease-in-out;
+
+  /* 2. Daftarkan gerakan keyframes di dalam tema */
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%, 45%, 75% { transform: translateX(-4px); }
+    30%, 60%, 90% { transform: translateX(4px); }
+  }
 }
 
 @media (prefers-color-scheme: dark) {

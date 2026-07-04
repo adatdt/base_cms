@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
-import Button from "@/components/ui/Button";
+import Button from "@/components/ui/Btn";
 
 interface PortRowData {
   id: string;
