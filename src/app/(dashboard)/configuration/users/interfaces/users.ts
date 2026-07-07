@@ -30,5 +30,5 @@ export interface TableUsers {
   username: string;
   username_phone: string | null;
   extension_phone: string | null;
-  status: number;
+  status: number | string;
 }
