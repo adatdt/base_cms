@@ -1,5 +1,5 @@
 "use server";
-import { z } from "zod"; 
+import { z } from "zod";
 import { loginSchema } from "../schemas/login-schema";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
@@ -14,7 +14,10 @@ export type ActionState = {
   };
 };
 
-export async function loginUser(prevState: ActionState, formData: FormData): Promise<ActionState> {
+export async function loginUser(
+  prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
   // 1. Ambil data dari object FormData
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
@@ -22,9 +25,9 @@ export async function loginUser(prevState: ActionState, formData: FormData): Pro
   // 2. Validasi menggunakan Zod
   const validatedFields = loginSchema.safeParse({ email, password });
 
-    if (!validatedFields.success) {
+  if (!validatedFields.success) {
     // Menggunakan .format() sebagai pengganti .flatten().fieldErrors
-  const flattened = z.flattenError(validatedFields.error);
+    const flattened = z.flattenError(validatedFields.error);
 
     return {
       success: false,
@@ -36,7 +39,7 @@ export async function loginUser(prevState: ActionState, formData: FormData): Pro
     };
   }
 
- try {
+  try {
     const isAuthValid = email === "admin@gmail.com" && password === "admin123";
 
     if (!isAuthValid) {
@@ -44,17 +47,31 @@ export async function loginUser(prevState: ActionState, formData: FormData): Pro
     }
 
     // 2. SET COOKIE SEBELUM REDIRECT
+    // 2 Jam = 2 * 60 menit * 60 detik = 7200 detik
+    const TWO_HOURS_IN_SECONDS = 2 * 60 * 60;
+
     const cookieStore = await cookies();
+
+    // Set Cookie untuk Session Token
     cookieStore.set("session_token", "dummy-jwt-token-sitolaut", {
-      httpOnly: true, // Amankan cookie dari pencurian via JavaScript (XSS)
-      secure: process.env.NODE_ENV === "production", // Hanya lewat HTTPS di production
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24, // Expired dalam 1 hari (dalam hitungan detik)
-      path: "/", // Berlaku untuk semua rute
+      maxAge: TWO_HOURS_IN_SECONDS,
+      path: "/",
     });
 
+    // SEKARANG SUDAH DIAKOMODIR: Set Cookie untuk User Group
+    // Ganti "dummy-group-operator" dengan data grup asli dari database/API login Anda (misal: el.user_group atau data.group)
+    cookieStore.set("user_group", "1", {
+      httpOnly: true, // Wajib true agar sama dengan middleware Anda
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: TWO_HOURS_IN_SECONDS, // Umurnya sama-sama 2 jam
+      path: "/",
+    });
   } catch (error) {
-     console.log(`Exception while doing something: ${error}`);
+    console.log(`Exception while doing something: ${error}`);
     return { success: false, message: "Terjadi kesalahan server." };
   }
 

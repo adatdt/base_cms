@@ -22,12 +22,12 @@ export default function Header({
   // Fungsi untuk memformat judul breadcrumb di header secara dinamis
   const getBreadcrumbTitle = () => {
     if (pathname === "/home" || pathname === "/") {
-      return "OPERATIONAL / HOME";
+      return " HOME";
     }
 
     // Mengubah rute url seperti '/port-branch' menjadi 'OPERATIONAL / PORT-BRANCH'
     const cleanPath = pathname.replace(/^\//, "").toUpperCase();
-    return `OPERATIONAL / ${cleanPath}`;
+    return `${cleanPath}`;
   };
 
   return (

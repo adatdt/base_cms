@@ -1,7 +1,9 @@
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function proxy(request: NextRequest) {
+  // Diubah namanya dari proxy ke middleware standar Next.js
   const { pathname } = request.nextUrl;
 
   // 1. Ambil token sesi dari cookie
@@ -10,10 +12,19 @@ export function proxy(request: NextRequest) {
   // 2. Tentukan rute publik
   const publicRoutes = ["/login", "/"];
   const isAuthRoute = publicRoutes.includes(pathname);
-  const isProtectedRoute = !isAuthRoute;
+
+  // Rute terproteksi adalah rute yang BUKAN auth route DAN BUKAN file statis internal Next.js
+  const isProtectedRoute = !isAuthRoute && !pathname.startsWith("/_next");
 
   // CASE A: User belum login tapi mencoba mengakses halaman terproteksi
+  // Tambahkan pengecekan agar request API dikembalikan sebagai 401 Unauthorized, bukan di-redirect ke halaman login (agar tidak merusak fetch frontend)
   if (isProtectedRoute && !sessionToken) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json(
+        { success: false, message: "Unauthorized" },
+        { status: 401 },
+      );
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
@@ -31,9 +42,10 @@ export function proxy(request: NextRequest) {
     if (userGroupCookie) userGroup = userGroupCookie;
   }
 
-  // 4. Meneruskan userGroup ke Server Components melalui Headers
+  // 4. Meneruskan userGroup ke Server Components & API Melalui Headers
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-user-group", userGroup);
+  // DISUAIKAN: Menggunakan nama 'user_group' agar sama persis dengan yang dicari di API Route
+  requestHeaders.set("user_group", userGroup);
 
   // Buat respons dasar dengan header baru
   const response = NextResponse.next({
@@ -46,21 +58,18 @@ export function proxy(request: NextRequest) {
   // LOGIKA BARU: ROLLING SESSION (PERPANJANG OTOMATIS 2 JAM)
   // =======================================================
   if (sessionToken && isProtectedRoute) {
-    // 2 Jam = 2 * 60 menit * 60 detik = 7200 detik
     const TWO_HOURS_IN_SECONDS = 2 * 60 * 60;
 
-    // Set ulang cookie session_token agar umurnya bertambah 2 jam dari sekarang
     response.cookies.set({
       name: "session_token",
       value: sessionToken,
-      maxAge: TWO_HOURS_IN_SECONDS, // Detik
+      maxAge: TWO_HOURS_IN_SECONDS,
       path: "/",
-      httpOnly: true, // Amankan dari pencurian JavaScript (XSS)
-      secure: process.env.NODE_ENV === "production", // Wajib HTTPS di production
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
     });
 
-    // Perbarui juga cookie user_group jika ada
     const userGroupCookie = request.cookies.get("user_group")?.value;
     if (userGroupCookie) {
       response.cookies.set({
@@ -78,7 +87,16 @@ export function proxy(request: NextRequest) {
   return response;
 }
 
-// 5. KONFIGURASI MATCHER
+// 5. KONFIGURASI MATCHER DIUBAH
+// Sekarang /api DIKONTROL oleh middleware agar header bisa masuk saat fetch data menu
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|images).*)"],
+  matcher: [
+    /*
+     * Cocokkan semua jalur permintaan kecuali:
+     * - _next/static (file statis)
+     * - _next/image (gambar optimasi Next.js)
+     * - favicon.ico, images, dll (file publik)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|images|images/.*).*)",
+  ],
 };

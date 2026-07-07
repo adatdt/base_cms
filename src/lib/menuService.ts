@@ -6,7 +6,7 @@ export interface RawMenuItem {
   parent_id: string | null;
   name: string;
   icon: string | null;
-  slug: string | null;
+  href: string | null;
   order: number;
 }
 
@@ -41,8 +41,9 @@ export class MenuService {
           cc.id, 
           cc.parent_id, 
           cc.name, 
-          cc.icon, 
-          cc.slug, 
+          --cc.icon,
+          '' as icon, 
+          cc.slug as href, 
           cc.order 
         FROM core.t_mtr_privilege_web aa
         JOIN core.t_mtr_user_group bb ON bb.id = aa.user_group_id AND bb.status = 1 AND bb.id = ${groupId}
@@ -52,7 +53,6 @@ export class MenuService {
         WHERE aa.status = 1 
         ORDER BY cc.order ASC
       `;
-
       // Jika data kosong, langsung kembalikan array kosong
       if (!flatMenus || flatMenus.length === 0) {
         return [];
@@ -74,7 +74,13 @@ export class MenuService {
     const rootMenus: NestedMenuItem[] = [];
 
     // Langkah A: Daftarkan semua item ke dalam Map objek dengan array children kosong
-    items.forEach((item) => {
+    items.forEach((item: RawMenuItem) => {
+      const isInvalidHref = !item.href || item.href === "#";
+
+      item.href = isInvalidHref
+        ? `/${item.id}` // Menghasilkan rute valid seperti "/12" bukan "null12" atau "#12"
+        : item.href;
+
       menuMap[item.id] = { ...item, children: [] };
     });
 

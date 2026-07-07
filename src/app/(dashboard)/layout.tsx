@@ -34,86 +34,30 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Status visual lebar saat ini
   const [isMiniMode, setIsMiniMode] = useState(false); // Status permanen klik tombol
 
-  // const [menus, setMenus] = useState<MenuItem[]>([]);
-  // useEffect(() => {
-  //   async function fetchMenu() {
-  //     try {
-  //       // Panggil API Route internal menggunakan metode POST demi keamanan
-  //       const response = await fetch("/api/menu", {
-  //         method: "POST",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       });
+  const [menus, setMenus] = useState<MenuItem[]>([]);
+  useEffect(() => {
+    async function fetchMenu() {
+      try {
+        // Panggil API Route internal menggunakan metode POST demi keamanan
+        const response = await fetch("/api/menu", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
 
-  //       const result = await response.json();
+        const result = await response.json();
 
-  //       if (result.success) {
-  //         setMenus(result.data);
-  //       }
-  //     } catch (error) {
-  //       console.error("Gagal memuat menu di sisi klien:", error);
-  //     }
-  //   }
+        if (result.success) {
+          setMenus(result.data);
+        }
+      } catch (error) {
+        console.error("Gagal memuat menu di sisi klien:", error);
+      }
+    }
 
-  //   fetchMenu();
-  // }, []);
-
-
-  const menuItems = [
-    { name: "Beranda", href: "/home", icon: "🏠" },
-    {
-      name: "Laporan Booking",
-      href: "/home/reports",
-      icon: "📊",
-      children: [
-        {
-          name: "Laporan Harian",
-          href: "/home/reports/daily",
-          // Grandchild (Child di dalam child)
-          children: [
-            { name: "Laporan Reguler", href: "/home/reports/daily/regular" },
-            { name: "Laporan VIP", href: "/home/reports/daily/vip" },
-          ],
-        },
-        { name: "Laporan Bulanan", href: "/home/reports/monthly" },
-      ],
-    },
-    {
-      name: "Manajemen Kuota",
-      href: "/home/quota",
-      icon: "🚢",
-      children: [
-        {
-          name: "kuota Harian",
-          href: "/home/reports/daily",
-          // Grandchild (Child di dalam child)
-          children: [
-            { name: "kuota kendaraan", href: "/home/reports/daily/regular" },
-            { name: "kuota penumpang", href: "/home/reports/daily/vip" },
-          ],
-        },
-        { name: "parkir kuota", href: "/home/reports/monthly" },
-      ],
-    },
-
-    {
-      name: "Port Management",
-      href: "#",
-      icon: "🚢",
-      children: [
-        {
-          name: "Pelabuhan",
-          href: "#2",
-          // Grandchild (Child di dalam child)
-          children: [
-            { name: "Pelabuhan", href: "/port" },
-            { name: "Pelabuhan Cabang", href: "/port_branch" },
-          ],
-        },
-      ],
-    },
-  ];
+    fetchMenu();
+  }, []);
 
   // 2. FUNGSI LOGIKA HOVER SENSOR
   const handleMouseEnter = () => {
@@ -154,7 +98,7 @@ export default function DashboardLayout({
         >
           {isSidebarOpen && (
             <span className="text-lg font-bold tracking-wider text-blue-400 animate-fade-in">
-              SITOLAUT
+              ASDP
             </span>
           )}
 
@@ -183,7 +127,7 @@ export default function DashboardLayout({
         {/* Menu Navigasi dengan Fitur Pencarian */}
         {/* PANGGIL KELAS UTAMA UNTUK DESKTOP SIDEBAR */}
         <NavigationMenu
-          menuItems={menuItems}
+          menuItems={menus}
           isMobile={false}
           isSidebarOpen={isSidebarOpen}
           handleMouseEnter={handleMouseEnter}
@@ -216,6 +160,7 @@ export default function DashboardLayout({
       </div>
 
       {/* ================= SIDEBAR MENU (MOBILE OVERLAY) ================= */}
+
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 flex md:hidden">
           <button
@@ -226,7 +171,7 @@ export default function DashboardLayout({
           />
           <div className="relative flex w-full max-w-xs flex-col bg-slate-900 p-4 text-white shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-              <span className="text-md font-bold text-blue-400">SITOLAUT</span>
+              <span className="text-md font-bold text-blue-400">ASDP</span>
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -237,7 +182,7 @@ export default function DashboardLayout({
             </div>
 
             <NavigationMenu
-              menuItems={menuItems}
+              menuItems={menus}
               isMobile={true}
               isSidebarOpen={isSidebarOpen}
               handleMouseEnter={handleMouseEnter}
