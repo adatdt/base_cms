@@ -7,9 +7,14 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+
+  onConfirm?: () => void;
+  confirmText?: string;
+  cancelText?: string;
+  confirmLoading?: boolean;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: Readonly<ModalProps>) {
+export default function Modal({ isOpen, onClose, title,children,onConfirm,confirmText,cancelText,confirmLoading = false, }: Readonly<ModalProps>) {
   const [isShaking, setIsShaking] = useState(false);
   // Status untuk mengontrol rendering komponen di DOM agar sempat beranimasi saat ditutup
   const [shouldRender, setShouldRender] = useState(isOpen);
@@ -79,23 +84,26 @@ export default function Modal({ isOpen, onClose, title, children }: Readonly<Mod
 
         {/* Bagian Tombol Aksi (Footer) */}
         <div className="mt-6 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
-          >
-            Batal
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              alert('Aksi dikonfirmasi!');
-              onClose();
-            }}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Konfirmasi
-          </button>
+            <button
+                type="button"
+                onClick={onClose}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+                {cancelText ?? "Batal"}
+            </button>
+
+            {onConfirm && (
+                <button
+                type="button"
+                onClick={onConfirm}
+                disabled={confirmLoading}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                >
+                {confirmLoading
+                    ? "Memproses..."
+                    : confirmText ?? "Simpan"}
+                </button>
+            )}
         </div>
       </div>
     </div>
