@@ -3,6 +3,9 @@
 import React, { useEffect, useState } from "react";
 import NavigationMenu from "@/components/template/NavigationMenu";
 import Header from "@/components/template/Header";
+import Skeleton from "@/components/ui/Skeleton";
+import Notification from "@/components/ui/Notification";
+import { useNotificationStore } from "@/strore/useNotificationStore";
 
 interface MenuItem {
   name: string;
@@ -30,15 +33,23 @@ export default function DashboardLayout({
 }>) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  const toastList = useNotificationStore((state) => state.toastList);
+  const handleClose = useNotificationStore((state) => state.handleClose);
+  const triggerNotification = useNotificationStore(
+    (state) => state.triggerNotification,
+  );
+
   // 1. STATE MANAGEMENT BARU
   const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Status visual lebar saat ini
   const [isMiniMode, setIsMiniMode] = useState(false); // Status permanen klik tombol
+  const [isLoading, setIsLoading] = useState(true);
 
   const [menus, setMenus] = useState<MenuItem[]>([]);
   useEffect(() => {
     async function fetchMenu() {
       try {
         // Panggil API Route internal menggunakan metode POST demi keamanan
+
         const response = await fetch("/api/menu", {
           method: "POST",
           headers: {
@@ -47,12 +58,18 @@ export default function DashboardLayout({
         });
 
         const result = await response.json();
-
         if (result.success) {
           setMenus(result.data);
+          setIsLoading(false);
+        } else {
+          triggerNotification(result.message, `warning`);
         }
       } catch (error) {
-        console.error("Gagal memuat menu di sisi klien:", error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan jaringan atau sistem.";
+        triggerNotification(errorMessage, `error`);
       }
     }
 
@@ -83,6 +100,19 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-950">
+      {/* CONTAINER UTAMA: Mengunci posisi di pojok kanan atas dan menyusun baris ke bawah */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+        {toastList.map((toast) => (
+          <div key={toast.id} className="pointer-events-auto w-full">
+            <Notification
+              message={toast.message}
+              type={toast.type}
+              duration={toast.duration}
+              onClose={() => handleClose(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
       {/* ================= SIDEBAR (DESKTOP) ================= */}
       {/* Sensor hover dipasang menggunakan onMouseEnter dan onMouseLeave */}
       <aside
@@ -126,13 +156,23 @@ export default function DashboardLayout({
         </div>
         {/* Menu Navigasi dengan Fitur Pencarian */}
         {/* PANGGIL KELAS UTAMA UNTUK DESKTOP SIDEBAR */}
-        <NavigationMenu
-          menuItems={menus}
-          isMobile={false}
-          isSidebarOpen={isSidebarOpen}
-          handleMouseEnter={handleMouseEnter}
-          handleMouseLeave={handleMouseLeave}
-        />
+        {isLoading ? (
+          // Tampilkan UI Skeleton saat loading
+          <Skeleton
+            totalCount={10}
+            align="left"
+            rows={3}
+            variant="skeleton-only"
+          />
+        ) : (
+          <NavigationMenu
+            menuItems={menus}
+            isMobile={false}
+            isSidebarOpen={isSidebarOpen}
+            handleMouseEnter={handleMouseEnter}
+            handleMouseLeave={handleMouseLeave}
+          />
+        )}
         {/* Footer Sidebar */}
         <div className="p-4 border-t border-slate-800 bg-slate-950/50 text-center text-xs overflow-hidden">
           <p className="text-[10px] text-slate-500 font-mono whitespace-nowrap">

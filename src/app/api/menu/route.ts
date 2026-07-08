@@ -19,9 +19,15 @@ export async function POST() {
     }
 
     const menuTree = await MenuService.getMenu(groupId);
-    return NextResponse.json({ success: true, data: menuTree });
+    return NextResponse.json({
+      success: true,
+      data: menuTree,
+      message: "success",
+    });
   } catch (error) {
-    console.error("API Menu Error:", error);
-    return NextResponse.json({ success: false, data: [] }, { status: 500 });
+    return NextResponse.json(
+      { success: false, data: [], message: `API Menu Error: ${error}` },
+      { status: 500 },
+    );
   }
 }

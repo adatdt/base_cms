@@ -62,7 +62,7 @@ export class MenuService {
       return this.buildMenuTree(flatMenus);
     } catch (error) {
       console.error("Error pada MenuRepository.getMenu:", error);
-      return [];
+      throw error || ` Silahkan Hubungi Administrator`;
     }
   }
 

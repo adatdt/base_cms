@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
 import type { TableUsers } from "./interfaces/users";
-import Notification from "@/components/ui/Notification";
-import { useNotification } from "@/hooks/useNotification";
 import CrudIcons from "@/components/ui/CrudIcons";
 import Modal from "@/components/ui/Modal";
+import { useNotificationStore } from "@/strore/useNotificationStore";
 
 const moduleName = `Users`;
 export default function PortBranchPage() {
   const [tableData, setTableData] = useState<TableUsers[]>([]);
   // Panggil hook di sini, semua fungsi otomatis tersedia
-  const { toast, triggerNotification, handleClose } = useNotification();
+
+  const triggerNotification = useNotificationStore(
+    (state) => state.triggerNotification,
+  );
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -38,6 +39,7 @@ export default function PortBranchPage() {
   const fetchData = useCallback(
     async (targetPage: number, targetLimit: number, searchQuery: string) => {
       try {
+        setLoadData(true);
         const requestBody = {
           page: targetPage,
           limit: targetLimit,
@@ -71,10 +73,15 @@ export default function PortBranchPage() {
 
           setTableData(dataTerkonversi);
           setTotalRecords(result.total_data || 0);
+        } else {
+          triggerNotification(result.message, `warning`);
         }
-      } catch (err: any) {
-        console.log(err);
-        triggerNotification("Terjadi kesalahan sistem.", "error");
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "Terjadi kesalahan jaringan atau sistem.";
+        triggerNotification(errorMessage, `error`);
       } finally {
         setLoadData(false);
       }
@@ -192,13 +199,6 @@ export default function PortBranchPage() {
 
   return (
     <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
-      {toast.message && (
-        <Notification
-          message={toast.message}
-          type={toast.type}
-          onClose={handleClose}
-        />
-      )}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -312,6 +312,7 @@ export default function PortBranchPage() {
       <DataGrid
         data={tableData}
         columns={columns}
+        isLoading={loadData}
         currentPage={page}
         rowsPerPage={limit}
         totalData={totalRecords}

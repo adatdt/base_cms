@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 
 export type NotificationType =
   | "error"
@@ -12,7 +12,6 @@ export type NotificationType =
 interface NotificationProps {
   message: string | null;
   type?: NotificationType;
-  position?: string;
   duration?: number;
   onClose: () => void;
 }
@@ -20,38 +19,50 @@ interface NotificationProps {
 export default function Notification({
   message,
   type = "default",
-  position = "top-4 right-4",
   duration = 3000,
   onClose,
 }: Readonly<NotificationProps>) {
+  const [isHovered, setIsHovered] = useState(false);
+  // 1. State baru untuk memicu kelas animasi keluar
+  const [isDisappearing, setIsDisappearing] = useState(false);
+
+  // 2. Fungsi penutup kustom untuk menjalankan animasi keluar dulu selama 250ms
+  const handleStartDismiss = useCallback(() => {
+    setIsDisappearing(true);
+    setTimeout(() => {
+      onClose();
+    }, 250); // Waktu jeda harus sama dengan durasi --animate-toast-out (0.25s)
+  }, [onClose]);
+
   useEffect(() => {
-    if (duration <= 0) return;
+    if (duration <= 0 || !message || isHovered || isDisappearing) return;
 
     const timer = setTimeout(() => {
-      onClose();
+      handleStartDismiss(); // Panggil fungsi animasi keluar saat waktu habis
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [duration, message, isHovered, isDisappearing, handleStartDismiss]);
 
-  // Perpaduan warna pastel cerah premium dengan aksen border yang hidup
+  if (!message) return null;
+
+  // Warna pastel premium berbasis OKLCH konstan (dikunci agar tidak terpengaruh tema dark mode)
   const typeStyles: Record<NotificationType, string> = {
     error:
-      "bg-red-50/95 border-red-500 text-red-800 shadow-red-100 dark:bg-red-950/95 dark:border-red-500 dark:text-red-200 dark:shadow-none",
+      "bg-[oklch(96.5%_0.025_24.37)] border-[oklch(62.7%_0.194_24.37)] text-[oklch(35%_0.13_24.37)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
     warning:
-      "bg-amber-50/95 border-amber-500 text-amber-900 shadow-amber-100 dark:bg-amber-950/95 dark:border-amber-500 dark:text-amber-200 dark:shadow-none",
+      "bg-[oklch(97.3%_0.02_74.34)] border-[oklch(76.2%_0.158_74.34)] text-[oklch(40%_0.11_74.34)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
     success:
-      "bg-emerald-50/95 border-emerald-500 text-emerald-900 shadow-emerald-100 dark:bg-emerald-950/95 dark:border-emerald-500 dark:text-emerald-200 dark:shadow-none",
-    info: "bg-sky-50/95 border-sky-500 text-sky-900 shadow-sky-100 dark:bg-sky-950/95 dark:border-sky-500 dark:text-sky-200 dark:shadow-none",
+      "bg-[oklch(96%_0.04_162.48)] border-[oklch(69.6%_0.17_162.48)] text-[oklch(35%_0.12_162.48)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
+    info: "bg-[oklch(96.6%_0.022_245.92)] border-[oklch(62.8%_0.177_245.92)] text-[oklch(35%_0.12_245.92)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
     default:
-      "bg-slate-50/95 border-slate-400 text-slate-800 shadow-slate-100 dark:bg-slate-900/95 dark:border-slate-600 dark:text-slate-200 dark:shadow-none",
+      "bg-[oklch(96.5%_0.008_255.43)] border-[oklch(61.3%_0.021_255.43)] text-[oklch(35%_0.015_255.43)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
   };
 
-  // Ikon SVG Khusus yang disesuaikan warnanya agar cerah dan serasi dengan tema
   const icons: Record<NotificationType, React.ReactNode> = {
     error: (
       <svg
-        className="w-5 h-5 text-red-500"
+        className="w-5 h-5 shrink-0 text-[oklch(62.7%_0.194_24.37)]"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -66,7 +77,7 @@ export default function Notification({
     ),
     warning: (
       <svg
-        className="w-5 h-5 text-amber-500"
+        className="w-5 h-5 shrink-0 text-[oklch(76.2%_0.158_74.34)]"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -81,7 +92,7 @@ export default function Notification({
     ),
     success: (
       <svg
-        className="w-5 h-5 text-emerald-500"
+        className="w-5 h-5 shrink-0 text-emerald-500"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -96,7 +107,7 @@ export default function Notification({
     ),
     info: (
       <svg
-        className="w-5 h-5 text-sky-500"
+        className="w-5 h-5 shrink-0 text-[oklch(62.8%_0.177_245.92)]"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -111,7 +122,7 @@ export default function Notification({
     ),
     default: (
       <svg
-        className="w-5 h-5 text-slate-500 dark:text-slate-400"
+        className="w-5 h-5 shrink-0 text-[oklch(61.3%_0.021_255.43)]"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -128,20 +139,19 @@ export default function Notification({
 
   return (
     <div
-      className={`fixed ${position} z-50 flex items-center w-full max-w-sm p-4 border-l-4 rounded-r-xl shadow-xl backdrop-blur-md transition-all duration-300 ease-in-out transform hover:scale-[1.02] ${typeStyles[type]}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={`${
+        isDisappearing ? "animate-toast-out" : "animate-toast-in"
+      } flex items-center w-full max-w-sm p-4 border-l-4 rounded-r-xl shadow-xl backdrop-blur-md transition-all duration-300 ease-in-out transform hover:scale-[1.02] ${typeStyles[type]}`}
       role="alert"
     >
-      {/* Container Ikon */}
       <div className="inline-flex items-center justify-center shrink-0">
         {icons[type]}
       </div>
-
-      {/* Konten Teks */}
       <div className="ml-3 text-sm font-semibold tracking-wide wrap-break-word flex-1">
         {message}
       </div>
-
-      {/* Tombol Tutup (Sleek Close Button) */}
       <button
         type="button"
         onClick={onClose}

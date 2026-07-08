@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import Skeleton from "./Skeleton";
 
 export interface ColumnProps<T> {
   key: keyof T | "actions";
@@ -12,6 +13,7 @@ export interface ColumnProps<T> {
 interface DataGridProps<T> {
   data: T[]; // Data bersih yang sudah dipaginasi oleh Backend PostgreSQL
   columns: ColumnProps<T>[];
+  isLoading?: boolean;
 
   // PROPERTI UNTUK MENGONTROL SERVER-SIDE PAGINATION
   currentPage: number;
@@ -24,6 +26,7 @@ interface DataGridProps<T> {
 export default function DataGrid<T extends { id: string }>({
   data,
   columns,
+  isLoading = false,
   currentPage,
   rowsPerPage,
   totalData,
@@ -60,6 +63,55 @@ export default function DataGrid<T extends { id: string }>({
     return pages;
   };
 
+  // 🌟 Extract nested ternary into clean, standalone conditional blocks
+  const renderTableBodyContent = (): React.ReactNode => {
+    // CASE 1: Data is currently fetching from the PostgreSQL server
+    if (isLoading) {
+      return (
+        <tr className="hover:bg-slate-50/80 transition-colors group">
+          <td colSpan={columns.length} className="p-0">
+            <Skeleton
+              totalCount={3}
+              align="left"
+              rows={3}
+              variant="text-only"
+            />
+          </td>
+        </tr>
+      );
+    }
+
+    // CASE 2: API request resolved successfully and contains items
+    if (data.length > 0) {
+      return data.map((row) => (
+        <tr
+          key={row.id}
+          className="hover:bg-slate-50/80 transition-colors group"
+        >
+          {columns.map((col) => (
+            <td key={col.header} className={`p-4 ${col.className || ""}`}>
+              {col.render
+                ? col.render(row)
+                : (row[col.key as keyof T] as React.ReactNode)}
+            </td>
+          ))}
+        </tr>
+      ));
+    }
+
+    // CASE 3: Fetch process finished but returned an empty dataset
+    return (
+      <tr>
+        <td
+          colSpan={columns.length}
+          className="p-12 text-center text-slate-400 font-normal"
+        >
+          ⚠️ Tidak ada data yang ditemukan dari database.
+        </td>
+      </tr>
+    );
+  };
+
   return (
     <div className="space-y-4 w-full">
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full">
@@ -75,34 +127,7 @@ export default function DataGrid<T extends { id: string }>({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {data.length > 0 ? (
-                data.map((row) => (
-                  <tr
-                    key={row.id}
-                    className="hover:bg-slate-50/80 transition-colors group"
-                  >
-                    {columns.map((col) => (
-                      <td
-                        key={col.header}
-                        className={`p-4 ${col.className || ""}`}
-                      >
-                        {col.render
-                          ? col.render(row)
-                          : (row[col.key as keyof T] as React.ReactNode)}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="p-12 text-center text-slate-400 font-normal"
-                  >
-                    ⚠️ Tidak ada data yang ditemukan dari database.
-                  </td>
-                </tr>
-              )}
+              {renderTableBodyContent()}
             </tbody>
           </table>
         </div>
@@ -126,6 +151,7 @@ export default function DataGrid<T extends { id: string }>({
               <select
                 value={rowsPerPage}
                 onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
+                disabled={isLoading}
                 className="bg-white border border-slate-300 rounded-md px-2 py-1 text-slate-700 font-medium focus:outline-none focus:border-blue-500 cursor-pointer text-[11px] shadow-sm"
               >
                 <option value={5}>5</option>
@@ -140,26 +166,51 @@ export default function DataGrid<T extends { id: string }>({
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || isLoading}
                 onClick={() => onPageChange(1)}
                 className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
                 title="Halaman Pertama"
               >
-                &lt;&lt;
+                <svg
+                  className="w-4 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"
+                  />
+                </svg>
               </button>
 
               <button
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || isLoading}
                 onClick={() => onPageChange(currentPage - 1)}
                 className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
                 title="Sebelumnya"
               >
-                &lt;
+                <svg
+                  className="w-4 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15.75 19.5L8.25 12l7.5-7.5"
+                  />
+                </svg>
               </button>
 
               {getPaginationNumbers().map((pageNumber) => (
                 <button
                   key={pageNumber}
+                  disabled={isLoading}
                   onClick={() => onPageChange(pageNumber)}
                   className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${
                     currentPage === pageNumber
@@ -172,21 +223,45 @@ export default function DataGrid<T extends { id: string }>({
               ))}
 
               <button
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || isLoading}
                 onClick={() => onPageChange(currentPage + 1)}
                 className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
                 title="Selanjutnya"
               >
-                &gt;
+                <svg
+                  className="w-4 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                  />
+                </svg>
               </button>
 
               <button
-                disabled={currentPage === totalPages}
+                disabled={currentPage === totalPages || isLoading}
                 onClick={() => onPageChange(totalPages)}
                 className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
                 title="Halaman Terakhir"
               >
-                &gt;&gt;
+                <svg
+                  className="w-4 h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5.25 5.25l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"
+                  />
+                </svg>
               </button>
             </div>
           )}
