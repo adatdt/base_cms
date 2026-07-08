@@ -6,6 +6,7 @@ export interface ColumnProps<T> {
   key: keyof T | "actions";
   header: string;
   className?: string;
+  headerClassName?: string;
   render?: (row: T) => React.ReactNode;
 }
 
@@ -68,9 +69,12 @@ export default function DataGrid<T extends { id: string }>({
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 {columns.map((col) => (
-                  <th key={col.header} className={`p-4 ${col.className || ""}`}>
-                    {col.header}
-                  </th>
+                    <th
+                        key={col.header}
+                        className={`p-4 ${col.headerClassName || ""}`}
+                        >
+                        {col.header}
+                    </th>
                 ))}
               </tr>
             </thead>
