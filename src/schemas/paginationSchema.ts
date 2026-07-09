@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 /**
- * Skema validasi Zod untuk Query Parameters pagination.
+ * Skema validasi Zod global untuk Query Parameters pagination.
  * Menggunakan z.coerce untuk otomatis mengubah string URL menjadi tipe number.
  */
-export const branchQuerySchema = z.object({
+export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(10),
   search: z
@@ -19,5 +19,5 @@ export const branchQuerySchema = z.object({
     .default(""),
 });
 
-// Inferensi tipe data TypeScript otomatis dari skema Zod (Sangat disukai SonarQube)
-export type BranchQueryInput = z.infer<typeof branchQuerySchema>;
+// Inferensi tipe data TypeScript otomatis dari skema Zod global
+export type PaginationQueryInput = z.infer<typeof paginationQuerySchema>;

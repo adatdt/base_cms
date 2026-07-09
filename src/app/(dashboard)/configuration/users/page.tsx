@@ -1,12 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
 import type { TableUsers } from "./interfaces/users";
 import CrudIcons from "@/components/ui/CrudIcons";
 import Modal from "@/components/ui/Modal";
-import { useNotificationStore } from "@/strore/useNotificationStore";
+import { useModalStore } from "@/store/useModalStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import Add from "./components/Add";
+import Edit, { UserEditData } from "./components/Edit";
+import { getUserColumns } from "./utils/usersColumns";
 
 const moduleName = `Users`;
 export default function PortBranchPage() {
@@ -17,11 +21,17 @@ export default function PortBranchPage() {
     (state) => state.triggerNotification,
   );
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Ambil seluruh state pengendali modal dari Zustand
+  const openModal = useModalStore((state) => state.openModal);
+  const closeModal = useModalStore((state) => state.closeModal);
 
-  //   form  modal
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [inputValue, setInputValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserEditData | null>(null);
+
+  const handleFormSubmit = async (data: any) => {
+    console.log("Kirim ke API:", data);
+    closeModal();
+  };
 
   // STATE CONTROL UNTUK SERVER-SIDE PAGINATION
   const [page, setPage] = useState<number>(1);
@@ -105,144 +115,55 @@ export default function PortBranchPage() {
     }
   };
 
-  const columns: ColumnProps<TableUsers>[] = [
-    {
-      key: "no",
-      header: "NO",
-      className: "w-12 text-center text-slate-500",
-    },
-    {
-      key: "username",
-      header: "Username",
-      className: "font-semibold text-slate-800",
-    },
-    {
-      key: "first_name",
-      header: "Nama Depan",
-      className: "text-slate-700",
-    },
-    {
-      key: "phone",
-      header: "No. Telepon",
-      className: "text-slate-600 font-medium",
-    },
-    {
-      key: "group_name",
-      header: "Group",
-      className: "w-28 font-mono text-slate-500 font-medium",
-    },
-    {
-      key: "status",
-      header: "STATUS",
-      className: "text-center w-28",
-      render: (row) => (
-        <span
-          className={`px-1 py-1 rounded-full text-xs font-semibold ${
-            String(row.status) == "1"
-              ? "bg-emerald-50 text-emerald-700"
-              : "bg-slate-100 text-slate-600"
-          }`}
-        >
-          {row.status == "1" ? "Aktif" : "Non Aktif"}
-        </span>
-      ),
-    },
-    {
-      key: "actions",
-      header: "AKSI",
-      className: "text-center whitespace-nowrap text-xs font-semibold",
-      render: (row) => (
-        <div className="flex flex-row items-center gap-1.5">
-          <Btn
-            type="button"
-            variant="info"
-            size="xs"
-            title="edit"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <CrudIcons name="edit" size={10} />
-          </Btn>
+  const columns: ColumnProps<TableUsers>[] = useMemo(() => {
+    return getUserColumns();
+  }, []);
 
-          <Btn
-            type="button"
-            variant="success"
-            size="xs"
-            title="Aktif"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <CrudIcons name="active" size={10} />
-          </Btn>
+  // Solusi SonarQube 2: Gunakan useCallback pada proses submit API
+  const handleFormEditSubmit = useCallback(
+    async (updatedData: UserEditData) => {
+      setLoading(true);
+      try {
+        // Tempatkan aksi integrasi API Anda di sini (Fetch / Axios)
+        console.log("Mengirim data UPDATE ke API:", updatedData);
 
-          <Btn
-            type="button"
-            variant="delete"
-            size="xs"
-            title="Non Aktif"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <CrudIcons name="inactive" size={10} />
-          </Btn>
-
-          <Btn
-            type="button"
-            variant="delete"
-            size="xs"
-            title="Delete"
-            onClick={() => setIsModalOpen(true)}
-          >
-            <CrudIcons name="delete" size={10} />
-          </Btn>
-        </div>
-      ),
+        closeModal();
+        setSelectedUser(null); // Bersihkan state referensi data lama setelah sukses
+      } catch (error) {
+        console.error("Gagal memperbarui pengguna:", error);
+      } finally {
+        setLoading(false);
+      }
     },
-  ];
-
+    [closeModal],
+  );
   return (
     <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
+      {/* HEADER */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Konfirmasi Hapus Data"
+        id="Form Add"
+        title="Tambah Data Pengguna"
+        size="5xl"
+        // confirmLoading={loading}
       >
-        <p>Apakah Anda yakin ingin menghapus data ini?</p>
+        {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
+        <Add formId="Form Add" onSubmit={handleFormSubmit} />
       </Modal>
 
+      {/* Modal Edit */}
       <Modal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        title="Ubah Nama Pengguna"
+        id="Form Edit"
+        title="Ubah Data Pengguna"
+        size="2xl"
+        confirmLoading={loading}
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            alert(`Nama diubah menjadi: ${inputValue}`);
-            setIsFormModalOpen(false);
-          }}
-          className="space-y-4"
-        >
-          <div>
-            <label
-              htmlFor="username"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-            >
-              Nama Baru
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Masukkan nama Anda..."
-              className="w-full rounded-lg border border-gray-300 p-2.5 text-gray-900 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              required
-            />
-          </div>
-          <p className="text-xs text-gray-500">
-            Pastikan nama sesuai dengan kartu identitas resmi Anda.
-          </p>
-        </form>
+        <Edit
+          formId="Form Edit"
+          initialData={selectedUser}
+          onSubmit={handleFormEditSubmit}
+        />
       </Modal>
-      {/* HEADER */}
+
       <div className="flex flex-row items-center justify-between w-full gap-4">
         {/* Bagian Kiri: Judul dan Deskripsi Modul */}
         <div>
@@ -258,8 +179,8 @@ export default function PortBranchPage() {
           type="button"
           variant="primary"
           size="sm"
-          title="Delete"
-          onClick={() => setIsFormModalOpen(true)}
+          title="Tambah"
+          onClick={() => openModal("Form Add")}
         >
           <CrudIcons name="add" size={15} />
           Tambah

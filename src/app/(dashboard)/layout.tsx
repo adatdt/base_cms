@@ -5,7 +5,7 @@ import NavigationMenu from "@/components/template/NavigationMenu";
 import Header from "@/components/template/Header";
 import Skeleton from "@/components/ui/Skeleton";
 import Notification from "@/components/ui/Notification";
-import { useNotificationStore } from "@/strore/useNotificationStore";
+import { useNotificationStore } from "@/store/useNotificationStore";
 
 interface MenuItem {
   name: string;

@@ -1,38 +1,27 @@
 import { sql } from "@/lib/db";
 import type { UserQueryResult } from "../interfaces/users";
+import {
+  parsePagination,
+  buildWhereClause,
+  formatPaginatedResponse,
+  PaginatedResult,
+} from "@/utils/queryHelper";
 
 export class UsersModel {
   /**
    * Mengambil data branch terpaginasi menggunakan parameter halaman dan batasan data.
    * Menggunakan Tagged Template Literal agar parameter terikat dinamis dan aman dari SQL Injection.
    */
-  static async getAllList(searchParams: URLSearchParams): Promise<{
-    data: UserQueryResult[];
-    total: number;
-    page: number;
-    limit: number;
-    total_data: number;
-    total_page: number;
-  }> {
+  static async getAllList(
+    searchParams: URLSearchParams,
+  ): Promise<PaginatedResult<UserQueryResult>> {
     try {
-      const search = (searchParams.get("search") || "").trim();
-      const page = Math.max(1, Number(searchParams.get("page") || 1));
-      const limit = Math.max(
-        1,
-        Math.min(100, Number(searchParams.get("limit") || 10)),
-      );
-      const offset = (page - 1) * limit;
+      // 1. SOLUSI SONARQUBE: Ekstraksi parameter via global helper
+      const { search, page, limit, offset } = parsePagination(searchParams);
 
-      // 1. Kondisi dasar (Base condition) menggunakan tag sql biasa
-      let baseWhere = sql`WHERE u.status <> '-5'`; // Pastikan prefix tabel benar (misal 'u.status' jika status ada di tabel user)
+      // 2. SOLUSI SONARQUBE: Pembuatan filter WHERE via global helper
+      const baseWhere = buildWhereClause(search, "u", "username");
 
-      // 2. Filter pencarian dinamis (Otomatis Parameterized Query & Anti SQL Injection)
-      if (search !== "") {
-        const searchPattern = `%${search}%`;
-        baseWhere = sql`${baseWhere} AND u.username ILIKE ${searchPattern}`;
-      }
-
-      // Ambil kerangka kueri utama langsung dari method (tidak perlu dibungkus sql`${}` ganda)
       const qry = this.qry();
       const qryCount = this.qryCount();
 
@@ -51,22 +40,12 @@ export class UsersModel {
         ${baseWhere}
       `;
 
-      // Database PostgreSQL sering mengembalikan COUNT(*) sebagai string/BigInt, konversi ke Number agar aman
       const total = Number(countResult[0]?.total || 0);
 
-      return {
-        data,
-        total,
-        page,
-        limit,
-        total_data: total,
-        total_page: Math.ceil(total / limit) || 1,
-      };
+      // 5. SOLUSI SONARQUBE: Return response terformat via global helper
+      return formatPaginatedResponse(data, total, page, limit);
     } catch (error) {
-      // 5. Catat log error asli di terminal server (Aman dari pengguna luar)
       console.error("Error pada UserModel.getAllList:", error);
-
-      // 6. Lempar error dengan pesan yang aman untuk dikonsumsi API / UI Client
       throw new Error("Gagal mengambil daftar pengguna dari sistem.");
     }
   }

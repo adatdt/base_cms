@@ -1,16 +1,18 @@
 "use server";
+
 import { z } from "zod";
 import { loginSchema } from "../schemas/login-schema";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { verifyTextCaptcha } from "@/utils/captcha"; // 🌟 Impor fungsi validasi captcha
 
-// Tipe untuk feedback status ke UI Form
 export type ActionState = {
   success: boolean;
   message: string;
   errors?: {
     email?: string[];
     password?: string[];
+    captcha?: string[]; // 🌟 Tambahkan tipe error captcha
   };
 };
 
@@ -18,7 +20,34 @@ export async function loginUser(
   prevState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  // 1. Ambil data dari object FormData
+  // 🌟 A. AMBIL DATA INPUT CAPTCHA & JAWABAN ASLI TERENKRIPSI
+  const userCaptchaInput = formData.get("user_captcha") as string;
+  const encryptedCaptchaAnswer = formData.get("encrypted_captcha") as string;
+
+  // VALIDASI IF: Pastikan user mengisi kolom captcha
+  if (!userCaptchaInput || userCaptchaInput.trim().length === 0) {
+    return {
+      success: false,
+      message: "Validasi gagal. Mohon isi jawaban Captcha.",
+      errors: { captcha: ["Jawaban Captcha wajib diisi."] },
+    };
+  }
+
+  // 🌟 B. VERIFIKASI JAWABAN CAPTCHA SECARA MANDIRI
+  const isCaptchaValid = verifyTextCaptcha(
+    userCaptchaInput,
+    encryptedCaptchaAnswer,
+  );
+
+  if (!isCaptchaValid) {
+    return {
+      success: false,
+      message: "Validasi gagal. Jawaban Captcha yang Anda masukkan salah.",
+      errors: { captcha: ["Jawaban salah, silakan coba lagi."] },
+    };
+  }
+
+  // 1. Ambil data kredensial dari object FormData
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
 
@@ -26,7 +55,6 @@ export async function loginUser(
   const validatedFields = loginSchema.safeParse({ email, password });
 
   if (!validatedFields.success) {
-    // Menggunakan .format() sebagai pengganti .flatten().fieldErrors
     const flattened = z.flattenError(validatedFields.error);
 
     return {
@@ -46,10 +74,7 @@ export async function loginUser(
       return { success: false, message: "Email atau password salah." };
     }
 
-    // 2. SET COOKIE SEBELUM REDIRECT
-    // 2 Jam = 2 * 60 menit * 60 detik = 7200 detik
     const TWO_HOURS_IN_SECONDS = 2 * 60 * 60;
-
     const cookieStore = await cookies();
 
     // Set Cookie untuk Session Token
@@ -61,13 +86,12 @@ export async function loginUser(
       path: "/",
     });
 
-    // SEKARANG SUDAH DIAKOMODIR: Set Cookie untuk User Group
-    // Ganti "dummy-group-operator" dengan data grup asli dari database/API login Anda (misal: el.user_group atau data.group)
+    // Set Cookie untuk User Group
     cookieStore.set("user_group", "1", {
-      httpOnly: true, // Wajib true agar sama dengan middleware Anda
+      httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: TWO_HOURS_IN_SECONDS, // Umurnya sama-sama 2 jam
+      maxAge: TWO_HOURS_IN_SECONDS,
       path: "/",
     });
   } catch (error) {
