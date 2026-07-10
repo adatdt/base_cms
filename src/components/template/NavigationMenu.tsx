@@ -72,7 +72,7 @@ export default function NavigationMenu({
       <div key={child.href} className="space-y-1">
         {/* ITEM LINK CHILD (LEVEL 2) */}
         <Link
-          href={hasGrandchildren ? "#" : child.href}
+          href={hasGrandchildren ? "#" : `/${child.href}`}
           onClick={(e) => {
             if (hasGrandchildren) {
               e.preventDefault();
@@ -108,7 +108,7 @@ export default function NavigationMenu({
               return (
                 <Link
                   key={grandchild.href}
-                  href={grandchild.href}
+                  href={`/${grandchild.href}`}
                   onClick={() => {
                     if (isMobile && setIsMobileMenuOpen) {
                       setIsMobileMenuOpen(false);
@@ -188,7 +188,7 @@ export default function NavigationMenu({
                 {/* LEVEL 1: Menu Utama */}
                 <div className="relative flex items-center justify-between group">
                   <Link
-                    href={hasChildren ? "#" : item.href}
+                    href={hasChildren ? "#" : `/${item.href}`}
                     onClick={(e) => {
                       if (hasChildren) {
                         e.preventDefault();

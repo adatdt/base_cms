@@ -84,20 +84,28 @@ export default function DataGrid<T extends { id: string }>({
 
     // CASE 2: API request resolved successfully and contains items
     if (data.length > 0) {
-      return data.map((row) => (
-        <tr
-          key={row.id}
-          className="hover:bg-slate-50/80 transition-colors group"
-        >
-          {columns.map((col) => (
-            <td key={col.header} className={`p-4 ${col.className || ""}`}>
-              {col.render
-                ? col.render(row)
-                : (row[col.key as keyof T] as React.ReactNode)}
-            </td>
-          ))}
-        </tr>
-      ));
+      // Tambahkan parameter 'index' pada data.map() untuk menghitung baris ganjil/genap
+      return data.map((row, index) => {
+        // Baris genap (0, 2, 4) akan mendapat warna putih bersih, baris ganjil (1, 3, 5) mendapat bg-slate-50/40 redup
+        const isEvenRow = index % 2 === 0;
+        const rowBackgroundClass = isEvenRow ? "bg-white" : "bg-slate-50/40";
+
+        return (
+          <tr
+            key={row.id}
+            // Gabungkan kelas latar belakang dinamis ke dalam tr
+            className={`${rowBackgroundClass} hover:bg-slate-50/80 transition-colors group`}
+          >
+            {columns.map((col) => (
+              <td key={col.header} className={`p-4 ${col.className || ""}`}>
+                {col.render
+                  ? col.render(row)
+                  : (row[col.key as keyof T] as React.ReactNode)}
+              </td>
+            ))}
+          </tr>
+        );
+      });
     }
 
     // CASE 3: Fetch process finished but returned an empty dataset
@@ -121,12 +129,12 @@ export default function DataGrid<T extends { id: string }>({
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 {columns.map((col) => (
-                    <th
-                        key={col.header}
-                        className={`p-4 ${col.headerClassName || ""}`}
-                        >
-                        {col.header}
-                    </th>
+                  <th
+                    key={col.header}
+                    className={`p-4 ${col.headerClassName || ""}`}
+                  >
+                    {col.header}
+                  </th>
                 ))}
               </tr>
             </thead>
