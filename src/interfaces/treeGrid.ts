@@ -1,7 +1,7 @@
 export interface TreeGridRow {
   id: string | number;
   parentId: string | number | null;
-  level: number;
+  level?: number;
   isLeaf: boolean;
   [key: string]: any;
 }

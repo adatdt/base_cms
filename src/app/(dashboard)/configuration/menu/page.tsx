@@ -1,21 +1,57 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
 import type { TreeGridColumn } from "@/interfaces/treeGrid";
 
 interface DocumentData {
-  id: number;
-  parentId: number | null;
-  level: number;
+  id: number | string;
+  parentId: number | string | null;
   isLeaf: boolean;
-  namaDokumen: string;
+  name: string;
   owner: string;
 }
 
+interface RawDatabaseMenu {
+  id: number | string;
+  parent_id: number | string | null;
+  name: string;
+  slug: string;
+  order: number;
+}
+
 export default function MenuPage() {
+  const [data, setData] = React.useState<DocumentData[]>([]);
+  const fetchData = useCallback(async () => {
+    try {
+      // 2. Menggunakan metode GET dengan menyisipkan query string di ujung URL
+      const response = await fetch(`/configuration/menu/api/get_data?`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Gagal mengambil data (HTTP ${response.status})`);
+      }
+
+      const result = await response.json();
+      setData(convertToTreeGridData(result.data));
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan jaringan atau sistem.";
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   // Fungsi penanganan klik yang stabil di level Page
   const handleEdit = useCallback((row: DocumentData) => {
     console.log("Membuka form edit untuk Dokumen ID:", row.id);
@@ -29,19 +65,15 @@ export default function MenuPage() {
   const columns: TreeGridColumn<DocumentData>[] = useMemo(
     () => [
       {
-        key: "namaDokumen",
-        header: "Nama Berkas / Folder",
-        className: "w-1/2",
+        key: "name",
+        header: "Nama Menu",
+        className: "w-full",
         isTreeField: true,
-      },
-      {
-        key: "owner",
-        header: "Pemilik",
       },
       {
         key: "actions",
         header: "AKSI",
-        className: "text-center whitespace-nowrap",
+        className: "text-center whitespace-nowrap w-[1%] px-2",
         // MENARUH KONTEN TOMBOL AKSI LANGSUNG DI FILE PAGE:
         render: (row) => (
           <div className="flex justify-center gap-1.5">
@@ -70,141 +102,37 @@ export default function MenuPage() {
     [handleEdit, handleDelete],
   );
 
-  const mockData: DocumentData[] = useMemo(
-    () => [
-      // ================= LEVEL 0: ROOT FOLDER 1 =================
-      {
-        id: 1,
-        parentId: null,
-        level: 0,
-        isLeaf: false,
-        namaDokumen: "01. Rencana Anggaran Perusahaan 2026",
-        owner: "Finance Directors",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 1
-      {
-        id: 2,
-        parentId: 1,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Departemen IT",
-        owner: "IT Procurement",
-      },
-      // LEVEL 2: Sub-Folder di bawah ID 2
-      {
-        id: 3,
-        parentId: 2,
-        level: 2,
-        isLeaf: false,
-        namaDokumen: "Infrastruktur & Cloud",
-        owner: "DevOps Team",
-      },
-      // LEVEL 3: Files di bawah ID 3
-      {
-        id: 4,
-        parentId: 3,
-        level: 3,
-        isLeaf: true,
-        namaDokumen: "estimasi_biaya_aws_it.xlsx",
-        owner: "Andi (DevOps)",
-      },
-      {
-        id: 5,
-        parentId: 3,
-        level: 3,
-        isLeaf: true,
-        namaDokumen: "kontrak_server_rack_space.pdf",
-        owner: "Budi (SysAdmin)",
-      },
-      // LEVEL 2: File di bawah ID 2 (Sejajar dengan Folder ID 3)
-      {
-        id: 6,
-        parentId: 2,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "lisensi_software_enterprise.csv",
-        owner: "Andi (DevOps)",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 1 (Sejajar dengan Folder ID 2)
-      {
-        id: 7,
-        parentId: 1,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Departemen Pemasaran & HR",
-        owner: "Marketing Lead",
-      },
-      // LEVEL 2: Files di bawah ID 7
-      {
-        id: 8,
-        parentId: 7,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "anggaran_iklan_q1_q2.pdf",
-        owner: "Siti (Marketing)",
-      },
-      {
-        id: 9,
-        parentId: 7,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "biaya_rekrutmen_karyawan.xlsx",
-        owner: "Dewi (HRD)",
-      },
+  const convertToTreeGridData = (rawMenus: RawDatabaseMenu[]) => {
+    if (!rawMenus || rawMenus.length === 0) return [];
 
-      // ================= LEVEL 0: ROOT FOLDER 2 =================
-      {
-        id: 10,
-        parentId: null,
-        level: 0,
-        isLeaf: false,
-        namaDokumen: "02. Standar Operasional Prosedur (SOP)",
-        owner: "Compliance QM",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 10
-      {
-        id: 11,
-        parentId: 10,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Kebijakan Keamanan Informasi",
-        owner: "CISO Office",
-      },
-      // LEVEL 2: File di bawah ID 11
-      {
-        id: 12,
-        parentId: 11,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "SOP_penanganan_insiden_cyber.pdf",
-        owner: "SecOps Team",
-      },
-      // LEVEL 1: File di bawah ID 10 (Sejajar dengan Folder ID 11)
-      {
-        id: 13,
-        parentId: 10,
-        level: 1,
-        isLeaf: true,
-        namaDokumen: "panduan_ onboarding_karyawan_baru.pdf",
-        owner: "Dewi (HRD)",
-      },
+    // 1. Buat Set berisi kumpulan semua parent_id yang ada untuk mempercepat pencarian (O(1))
+    const parentIdsSet = new Set(
+      rawMenus
+        .map((item) => item.parent_id)
+        .filter((pId) => pId !== null && pId !== undefined),
+    );
 
-      // ================= LEVEL 0: ROOT FILE STANDALONE =================
-      {
-        id: 14,
-        parentId: null,
-        level: 0,
-        isLeaf: true,
-        namaDokumen: "catatan_rapat_direksi_januari.docx",
-        owner: "Corporate Secretary",
-      },
-    ],
-    [],
-  );
+    // 2. Map data seperti biasa
+    return rawMenus.map((item) => {
+      // Jika ID saat ini terdaftar di dalam kumpulan parentIdsSet, berarti dia PUNYA CHILD (bukan Leaf)
+      const hasChild = parentIdsSet.has(item.id);
+      const isLeaf = !hasChild; // Leaf adalah item yang TIDAK memiliki anak
+
+      return {
+        id: item.id,
+        parentId: item.parent_id,
+        isLeaf: isLeaf,
+        name: item.name,
+        href: item.slug,
+        order: item.order,
+        owner: "System",
+      };
+    });
+  };
 
   return (
     <div className="p-8">
-      <DynamicTreeGrid columns={columns} data={mockData} />
+      <DynamicTreeGrid columns={columns} data={data} />
     </div>
   );
 }
