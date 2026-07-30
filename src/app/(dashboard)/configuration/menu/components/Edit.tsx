@@ -2,25 +2,17 @@
 
 import { InputText } from "@/components/ui/InputText";
 import { SelectData } from "@/components/ui/SelectData";
-import React, { useState } from "react";
+import React from "react";
+import { useFormStore } from "@/store/useFormStore";
+import type { InputSchema } from "../interfaces/menu.interaces";
+import { menuFormSchema } from "../schema/menu.schema";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
 
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
-    onSubmit: (data: any) => void;
 }
 
-interface SelectOption {
-    value: string | number;
-    label: string;
-}
-
-interface InputSchema {
-    name: string;
-    variant: string;
-    label: string;
-    placeholder: string;
-    options?: SelectOption[]; // ⚠️ Menggunakan tanda ? berarti boleh ada atau undefined
-}
 const input: InputSchema[] = [
     {
         name: "menu",
@@ -73,36 +65,42 @@ const input: InputSchema[] = [
     },
 ];
 
-export default function Edit({
-    formId,
-    onSubmit,
-}: Readonly<UserFormFieldsProps>) {
-    const [formData, setFormData] = useState({
-        username: "",
-        namaDepan: "",
-        noTelepon: "",
-        group: "",
-        status: "1", // 1 = Aktif, 2 = Non Aktif
-    });
+export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
+    const triggerNotification = useNotificationStore(
+        (state) => state.triggerNotification,
+    );
 
-    const handleChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    ) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    const formData = useFormStore((state) => state.formData);
+    const errors = useFormStore((state) => state.errors);
+    const handleChange = useFormStore((state) => state.handleChange);
+    const handleFieldChange = useFormStore((state) => state.handleFieldChange);
 
-    const handleSubmitInside = (
-        e: React.BaseSyntheticEvent<Event, EventTarget, HTMLFormElement>,
-    ) => {
-        e.preventDefault(); // Mencegah reload halaman browser
-        onSubmit(formData); // Teruskan data ke halaman utama
+    const executeSubmit = useFormStore((state) => state.executeSubmit);
+
+    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
+        executeSubmit(e, {
+            formKey: "menuForm",
+            schema: menuFormSchema,
+            endpoint: "/configuration/menu/api/crud",
+            method: "POST",
+            triggerNotification: triggerNotification,
+            onSuccess: (response) => {
+                console.log("Data berhasil dikirim!", response);
+            },
+            onError: () => {
+                // Remove the unused parameter placeholder entirely
+                console.log("API error handled cleanly in UI.");
+            },
+        }).catch(() => {
+            // Safe parameterless empty catcher
+            console.log("Safely caught unhandled form execution rejection.");
+        });
     };
 
     return (
         <form
             id={formId}
-            onSubmit={handleSubmitInside}
+            onSubmit={sendForm}
             className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
         >
             {input.map((item) => (
@@ -119,9 +117,22 @@ export default function Edit({
                             return (
                                 <SelectData
                                     name={item.name}
+                                    hasError={!!errors[item.name]} // Menentukan apakah ada error untuk field ini
                                     defaultValue=""
+                                    onChange={handleFieldChange(item.name)}
                                     options={item.options || []}
-                                    required
+                                />
+                            );
+                        }
+                        if (item.variant === "select-hirarchy") {
+                            return (
+                                <SelectHierarchyData
+                                    name={item.name}
+                                    options={item.options || []}
+                                    value={formData.parent}
+                                    onChange={handleFieldChange(item.name)}
+                                    hasError={!!errors.parent}
+                                    placeholder="Pilih Parent Menu..."
                                 />
                             );
                         }
@@ -129,6 +140,13 @@ export default function Edit({
                         return (
                             <InputText
                                 type={item.variant} // Otomatis menjadi 'text' atau 'number'
+                                value={
+                                    formData[
+                                        item.name as keyof typeof formData
+                                    ] || ""
+                                }
+                                onChange={handleChange}
+                                hasError={!!errors[item.name]}
                                 name={item.name}
                                 placeholder={item.placeholder}
                                 required

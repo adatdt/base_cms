@@ -8,6 +8,7 @@ import CrudIcons from "@/components/ui/CrudIcons";
 import type { TreeGridColumn } from "@/interfaces/treeGrid";
 import Modal from "@/components/ui/Modal";
 import { useModalStore } from "@/store/useModalStore";
+import Edit from "./components/Edit";
 
 const moduleName = `Menu`;
 
@@ -31,12 +32,7 @@ export default function MenuPage() {
     const [data, setData] = React.useState<DocumentData[]>([]);
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
-    const closeModal = useModalStore((state) => state.closeModal);
 
-    const handleFormSubmit = async (data: any) => {
-        console.log("Kirim ke API:", data);
-        closeModal();
-    };
     const fetchData = useCallback(async () => {
         try {
             // 2. Menggunakan metode GET dengan menyisipkan query string di ujung URL
@@ -158,7 +154,7 @@ export default function MenuPage() {
                 // confirmLoading={loading}
             >
                 {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
-                <Add formId="Form Add" onSubmit={handleFormSubmit} />
+                <Add formId="Form Add" />
             </Modal>
 
             <Modal
@@ -168,7 +164,7 @@ export default function MenuPage() {
                 // confirmLoading={loading}
             >
                 {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Edit" */}
-                <Add formId="Form Edit" onSubmit={handleFormSubmit} />
+                <Edit formId="Form Edit" />
             </Modal>
 
             <div className="flex flex-row items-center justify-between w-full gap-4">

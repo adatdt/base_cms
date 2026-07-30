@@ -1,6 +1,7 @@
 interface SelectOption {
     value: string | number;
     label: string;
+    parent?: string | number | null;
 }
 
 export interface InputSchema {

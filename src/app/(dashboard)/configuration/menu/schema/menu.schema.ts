@@ -1,97 +1,62 @@
 import { z } from "zod";
 
-// 1. Skema bentuk dasar data Anda (untuk referensi tipe data)
-export interface InputSchema {
-    name: string;
-    label: string;
-    variant: string;
-    placeholder: string;
-    options?: { value: string; label: string }[];
-}
+export const menuFormSchema = z.object({
+    // 1. Menu (Text) - Wajib diisi, minimal 3 karakter
+    menu: z
+        .string()
+        .min(1, { message: "Nama menu wajib diisi" })
+        .min(3, { message: "Nama menu minimal 3 karakter" }),
 
-// Data array input dari Anda
-export const input: InputSchema[] = [
-    {
-        name: "menu",
-        label: "Menu",
-        variant: "text",
-        placeholder: "Masukkan menu",
-    },
-    {
-        name: "action",
-        label: "Aksi",
-        variant: "select",
-        placeholder: "Masukkan aksi",
-        options: [
-            { value: "0", label: "Tidak Ada (Jadikan Menu Utama)" },
-            { value: "1", label: "Dashboard Utama" },
-            { value: "2", label: "Pengaturan Sistem" },
-            { value: "3", label: "Manajemen Pengguna" },
-            { value: "4", label: "Hak Akses & Otentikasi" },
-            { value: "5", label: "Profil Perusahaan" },
-            { value: "6", label: "Manajemen Departemen" },
-            { value: "7", label: "Daftar Karyawan" },
-            { value: "8", label: "Absensi & Kehadiran" },
-            { value: "9", label: "Pengajuan Cuti Karyawan" },
-            { value: "10", label: "Sistem Penggajian (Payroll)" },
-        ],
-    },
-    {
-        name: "icon",
-        label: "Ikon",
-        variant: "text",
-        placeholder: "Masukkan icon",
-    },
-    {
-        name: "order",
-        label: "Urutan",
-        variant: "text",
-        placeholder: "Masukkan order",
-    },
-    {
-        name: "parent",
-        label: "Parent",
-        variant: "text",
-        placeholder: "Masukkan parent",
-    },
-    { name: "url", label: "URL", variant: "text", placeholder: "Masukkan url" },
-];
+    // 2. Action (Select) - Wajib memilih salah satu opsi yang tersedia (0-10)
+    action: z.string(),
+    // .nonempty("Silakan pilih aksi yang valid")
+    // .refine(
+    //     (val) =>
+    //         [
+    //             "0",
+    //             "1",
+    //             "2",
+    //             "3",
+    //             "4",
+    //             "5",
+    //             "6",
+    //             "7",
+    //             "8",
+    //             "9",
+    //             "10",
+    //         ].includes(val),
+    //     { message: "Silakan pilih aksi yang valid" },
+    // )
+    // 3. Icon (Text) - Opsional, boleh kosong
+    icon: z.string().optional().or(z.literal("")),
 
-// 2. Generate Object Shape Zod secara otomatis dengan aturan spesifik
-const dynamicShape = input.reduce(
-    (acc, item) => {
-        // Kondisi khusus jika nama field adalah 'url'
-        if (item.name === "url") {
-            acc[item.name] = z
-                .string()
-                .min(1, { message: "URL wajib diisi" })
-                .startsWith("/", {
-                    message: "URL harus diawali dengan karakter '/'",
-                }); // Cocok untuk routing internal Next.js/React Router
-        }
-        // Kondisi khusus jika nama field adalah 'order' (Urutan)
-        else if (item.name === "order") {
-            acc[item.name] = z
-                .string()
-                .min(1, { message: "Urutan angka wajib diisi" })
-                .regex(/^\d+$/, {
-                    message: "Urutan harus berupa angka bulat positif",
-                });
-        }
-        // Kondisi default untuk field text & select lainnya
-        else {
-            acc[item.name] = z
-                .string()
-                .min(1, { message: `${item.label} tidak boleh kosong` });
-        }
+    // 4. Order (Text input tapi berisi Angka) - Mengubah string menjadi number dan memvalidasinya
+    order: z
+        .string()
+        .min(1, { message: "Urutan wajib diisi" })
+        .refine((val) => !Number.isNaN(Number(val)), {
+            message: "Urutan harus berupa angka",
+        })
+        .transform(Number)
+        .pipe(z.number().min(1, { message: "Urutan minimal bernilai 1" })),
 
-        return acc;
-    },
-    {} as Record<string, z.ZodTypeAny>,
-);
+    // 5. Parent (Text) - Opsional, jika menu utama biasanya kosong atau diisi ID parent
+    parent: z.string().optional().or(z.literal("")),
 
-// 3. Buat skema Zod utama yang siap diekspor
-export const menuFormSchema = z.object(dynamicShape);
+    // 6. URL (Text) - Wajib diisi, format harus diawali dengan slash (/) atau url valid
+    url: z
+        .string()
+        .min(1, { message: "URL wajib diisi" })
+        .regex(/^\/[a-zA-Z0-9\-_/]*$/, {
+            message:
+                "Format URL tidak valid, harus diawali dengan '/' (contoh: /dashboard)",
+        }),
+});
 
-// 4. Ekstrak tipe data murni TypeScript dari skema Zod di atas
+export const menuEditFormSchema = menuFormSchema.extend({
+    id: z.string().min(1, { message: "ID Menu wajib disertakan" }), // Bisa juga z.number() tergantung database Anda
+});
+
+// Infer tipe data dari schema untuk digunakan pada TypeScript React Anda
 export type MenuFormData = z.infer<typeof menuFormSchema>;
+export type MenuEditFormData = z.infer<typeof menuEditFormSchema>;
