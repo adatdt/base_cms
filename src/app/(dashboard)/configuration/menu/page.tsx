@@ -11,43 +11,11 @@ import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
+import { DocumentData, MyApiDetails, MyComponentFields, RawDatabaseMenu } from "./interfaces/menu.interfaces";
 
 const moduleName = `Menu`;
 
-interface DocumentData {
-    id: number | string;
-    parentId: number | string | null;
-    isLeaf: boolean;
-    name: string;
-    owner: string;
-}
 
-interface RawDatabaseMenu {
-    id: number | string;
-    parent_id: number | string | null;
-    name: string;
-    slug: string;
-    order: number;
-}
-
-interface MyApiDetails {
-    name: string;
-    // action: string;
-    icon: string;
-    order: string;
-    parent: string;
-    slug: string;
-}
-
-// 2. Definisikan bentuk data yang diinginkan oleh Komponen Form Anda
-interface MyComponentFields {
-    menu: string;
-    // action: string;
-    icon: string;
-    order: string;
-    parent: string;
-    url: string;
-}
 
 export default function MenuPage() {
     const [data, setData] = React.useState<DocumentData[]>([]);
@@ -100,8 +68,9 @@ export default function MenuPage() {
     }, []);
 
     // 3. Panggil di dalam komponen Anda
-    const loadData = async (menuId: string | number) => {
+    const loadEdit = async (menuId: string | number) => {
         openModal("Form Edit");
+        const urlDetail = `/configuration/menu/api/crud/${menuId}`;
         await fetchFormDetails<MyApiDetails, MyComponentFields>(
             menuId,
             triggerNotification,
@@ -112,7 +81,20 @@ export default function MenuPage() {
                 order: apiData.order, // Langsung dipasangkan karena namanya sama
                 parent: apiData.parent, // Langsung dipasangkan karena namanya sama
                 url: apiData.slug,
+                
             }),
+            urlDetail, // Gunakan URL kustom untuk fetch detail
+        );
+    };
+
+    const loadAdd = async () => {
+        openModal("Form Add");
+        const urlDetail = `/configuration/menu/api/crud`;
+        await fetchFormDetails(
+            0,
+            triggerNotification,
+            undefined,
+            urlDetail, // Gunakan URL kustom untuk fetch detail
         );
     };
 
@@ -137,7 +119,7 @@ export default function MenuPage() {
                             variant="info"
                             size="xs"
                             title="Edit"
-                            onClick={() => loadData(row.id)}
+                            onClick={() => loadEdit(row.id)}
                         >
                             <CrudIcons name="edit" size={10} />
                         </Btn>
@@ -195,6 +177,7 @@ export default function MenuPage() {
                 id="Form Add"
                 title="Tambah Data Pengguna"
                 size="5xl"
+                isBackdropLoading={isFetchLoading}
                 // confirmLoading={loading}
             >
                 {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
@@ -234,7 +217,7 @@ export default function MenuPage() {
                     variant="primary"
                     size="sm"
                     title="Tambah"
-                    onClick={() => openModal("Form Add")}
+                    onClick={() => loadAdd()}
                 >
                     <CrudIcons name="add" size={15} />
                     Tambah

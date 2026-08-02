@@ -3,7 +3,7 @@
 import { InputText } from "@/components/ui/InputText";
 import { SelectData } from "@/components/ui/SelectData";
 import React from "react";
-import type { InputSchema } from "../interfaces/menu.interaces";
+import type { InputSchema } from "../interfaces/menu.interfaces";
 import { menuFormSchema } from "../schema/menu.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";

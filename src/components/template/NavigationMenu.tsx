@@ -134,13 +134,14 @@ export default function NavigationMenu({
   const showSidebarFeatures = isMobile || isSidebarOpen;
 
   return (
-    <nav
+        <nav
       onMouseEnter={isMobile ? undefined : handleMouseEnter}
       onMouseLeave={isMobile ? undefined : handleMouseLeave}
       className={`flex-1 space-y-4 py-4 overflow-y-auto transition-all ${
         showSidebarFeatures ? "px-4" : "px-2"
-      }`}
+      } scrollbar-thin [scrollbar-color:rgba(148,163,184,0.3)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-400/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/50`}
     >
+
       {/* 1. INPUT PENCARIAN (Hanya sembunyi jika di desktop dan sidebar sedang mengecil) */}
       {showSidebarFeatures && (
         <div className="px-1 mb-2 animate-fade-in">

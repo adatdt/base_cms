@@ -28,7 +28,7 @@ export class MenuService {
             if (!result || result.length === 0) {
                 return [];
             }
-            return await this.getMenuAction();
+            return result;
         } catch (error) {
             console.error("Error fetching menu data:", error);
             throw new Error(`Failed to fetch menu data: ${error}`);
@@ -70,8 +70,26 @@ export class MenuService {
             throw new Error(`Failed to fetch menu data: ${error}`);
         }
     }
-    static async getDetail(id: string) {
+    static async getMasterAction() {
         try {
+            const result = await sql`
+            select 
+            a.id,
+            a.action_name
+            from core.t_mtr_menu_action a 
+        `;
+            if (!result || !Array.isArray(result)) {
+                return {};     }       
+
+            return result;
+        } catch (error) {
+            console.error("Error fetching menu data:", error);
+            throw new Error(`Failed to fetch menu data: ${error}`);
+        }
+    }
+    static async edit(searchParams: URLSearchParams) {
+        try {
+            const id = searchParams.get("id");
             const result = await sql`
             select 
                 id,
@@ -101,6 +119,19 @@ export class MenuService {
                 slug: String(row.slug || "").toLowerCase(),
                 order: Number(row.order || 0),
                 action_id: masterAction[row.id] || null, // Ditambahkan || null jika id tidak ada di masterAction
+            };
+        } catch (error) {
+            console.error("Error fetching menu data:", error);
+            throw new Error(`Failed to fetch menu data: ${error}`);
+        }
+    }
+    static async add(searchParams: URLSearchParams) {
+        try {
+
+         const masterAction = await this.getMasterAction();
+
+            return {
+                action: masterAction || null, // Ditambahkan || null jika id tidak ada di masterAction
             };
         } catch (error) {
             console.error("Error fetching menu data:", error);

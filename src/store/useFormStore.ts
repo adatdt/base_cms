@@ -61,7 +61,8 @@ interface FormState {
     >(
         id: string | number,
         triggerNotification: NotificationTrigger,
-        transform?: (data: TResponse) => TForm, // Parameter untuk mengubah / memetakan nama field dari komponen
+        transform?: (data: TResponse) => TForm,
+        customUrl?: string 
     ) => Promise<void>;
 }
 
@@ -204,69 +205,73 @@ export const useFormStore = create<FormState>((set, get) => ({
 
     // Async Populate Engine: Resolves data objects dynamically over dynamic record parameter IDs
     fetchFormDetails: async <
-        TResponse = Record<string, unknown>,
-        TForm = Record<string, string>,
-    >(
-        id: string | number,
-        triggerNotification: NotificationTrigger,
-        transform?: (data: TResponse) => TForm,
-    ) => {
-        set({ isFetchLoading: true, errors: {} });
-        try {
-            const response = await fetchClient.request<any>( // Ubah sementara ke any untuk kemudahan pengecekan
-                `/configuration/menu/api/crud?id=${id}`,
-                { method: "GET" },
-            );
+    TResponse = Record<string, unknown>,
+    TForm = Record<string, string>,
+>(
+    id: string | number,
+    triggerNotification: NotificationTrigger,
+    transform?: (data: TResponse) => TForm,
+    customUrl?: string, // 👈 1. Tambahkan parameter opsional di sini
+) => {
+    set({ isFetchLoading: true, errors: {} });
+    try {
+        console.log(customUrl);
+        // 👈 2. Gunakan customUrl jika ada, jika tidak ada pakai URL default
+        const targetUrl = customUrl || `/configuration/menu/api/crud?id=${id}`;
 
-            if (response) {
-                // 💡 SOLUSI UTAMA: Bongkar bungkus '.data' jika API Next.js mengirimkannya di dalam envelope
-                // Jika response.data ada, gunakan response.data. Jika tidak, gunakan response langsung.
-                const apiPayload =
-                    response.data !== undefined ? response.data : response;
-                // Kirim data yang sudah dibongkar ke fungsi transform komponen
-                const mappedData = transform
-                    ? transform(apiPayload)
-                    : apiPayload;
+        const response = await fetchClient.request<any>(
+            targetUrl,
+            { method: "GET" },
+        );
 
-                console.log(mappedData);
-                const sanitizedData: Record<string, string> = {};
+        if (response) {
+            const apiPayload =
+                response.data !== undefined ? response.data : response;
+            
+            const mappedData = transform
+                ? transform(apiPayload)
+                : apiPayload;
 
-                Object.entries(mappedData as Record<string, unknown>).forEach(
-                    ([key, val]) => {
-                        if (val !== null && val !== undefined) {
-                            if (typeof val === "string") {
-                                sanitizedData[key] = val;
-                            } else if (
-                                typeof val === "number" ||
-                                typeof val === "boolean" ||
-                                typeof val === "bigint"
-                            ) {
-                                sanitizedData[key] = val.toString();
-                            } else if (typeof val === "object") {
-                                sanitizedData[key] = JSON.stringify(val);
-                            } else {
-                                sanitizedData[key] = "";
-                            }
+            console.log(mappedData);
+            const sanitizedData: Record<string, string> = {};
+
+            Object.entries(mappedData as Record<string, unknown>).forEach(
+                ([key, val]) => {
+                    if (val !== null && val !== undefined) {
+                        if (typeof val === "string") {
+                            sanitizedData[key] = val;
+                        } else if (
+                            typeof val === "number" ||
+                            typeof val === "boolean" ||
+                            typeof val === "bigint"
+                        ) {
+                            sanitizedData[key] = val.toString();
+                        } else if (typeof val === "object") {
+                            sanitizedData[key] = JSON.stringify(val);
                         } else {
                             sanitizedData[key] = "";
                         }
-                    },
-                );
-
-                set({ formData: sanitizedData });
-            }
-        } catch (error: any) {
-            console.error(
-                "[Fetch Detail Error] Failed to get menu details:",
-                error,
+                    } else {
+                        sanitizedData[key] = "";
+                    }
+                },
             );
-            const errorMsg =
-                error?.data?.message ||
-                error?.message ||
-                "Gagal memuat detail data!";
-            triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
-        } finally {
-            set({ isFetchLoading: false });
+
+            set({ formData: sanitizedData });
         }
-    },
+    } catch (error: any) {
+        console.error(
+            "[Fetch Detail Error] Failed to get menu details:",
+            error,
+        );
+        const errorMsg =
+            error?.data?.message ||
+            error?.message ||
+            "Gagal memuat detail data!";
+        triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
+    } finally {
+        set({ isFetchLoading: false });
+    }
+},
+
 }));

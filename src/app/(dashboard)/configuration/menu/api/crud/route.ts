@@ -14,7 +14,6 @@ interface RouteContext {
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const id = String(searchParams.get("id"));
         const headersList = await headers();
         const groupId = headersList.get("user_group");
 
@@ -28,7 +27,7 @@ export async function GET(request: Request) {
             );
         }
 
-        const getDetail = await MenuService.getDetail(id);
+        const getDetail = await MenuService.add(searchParams);
 
         return NextResponse.json({
             success: true,
