@@ -8,10 +8,34 @@ import { menuFormSchema } from "../schema/menu.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
 import { useFormStore } from "@/store/useFormStore";
+import { SelectDataMultiple } from "@/components/ui/SelectDataMultiple";
 
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
 }
+
+const roleOptions = [
+    { value: "1", label: "Super Admin" },
+    { value: "2", label: "Management" },
+    { value: "3", label: "Staff Operational" },
+    { value: "4", label: "Viewer Only" },
+    { value: "5", label: "Human Resources Manager" },
+    { value: "6", label: "HR Specialist" },
+    { value: "7", label: "Finance Director" },
+    { value: "8", label: "Finance & Accounting Staff" },
+    { value: "9", label: "Project Manager" },
+    { value: "10", label: "Lead Developer" },
+    { value: "11", label: "Senior Developer" },
+    { value: "12", label: "Junior Developer" },
+    { value: "13", label: "Quality Assurance Specialist" },
+    { value: "14", label: "System Administrator" },
+    { value: "15", label: "Network Engineer" },
+    { value: "16", label: "Data Analyst" },
+    { value: "17", label: "Marketing Manager" },
+    { value: "18", label: "Marketing Content Creator" },
+    { value: "19", label: "Customer Relation Officer" },
+    { value: "20", label: "Internal Auditor" },
+];
 
 const input: InputSchema[] = [
     {
@@ -106,6 +130,21 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         });
     };
 
+    const getSelectedRoles = (): (string | number)[] => {
+        const rawValue = formData["roles"];
+
+        if (!rawValue) return [];
+
+        // 💡 JIKA DI ZUSTAND BENTUKNYA STRING JSON (Hasil dari JSON.stringify di fetchFormDetails lama)
+        try {
+            const parsed = JSON.parse(rawValue);
+            return Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+            // 💡 JIKA DI ZUSTAND BENTUKNYA STRING BIASA TERPISAH KOMA (Contoh: "1,2,3")
+            return rawValue.split(",").map((item) => item.trim());
+        }
+    };
+
     return (
         <form
             id={formId}
@@ -168,6 +207,21 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                     </p>
                 </div>
             ))}
+
+            <SelectDataMultiple
+                name="roles"
+                options={roleOptions}
+                placeholder="Pilih beberapa hak akses..."
+                hasError={!!errors["roles"]}
+                // 💡 Kirimkan nilai berbentuk array murni
+                value={getSelectedRoles()}
+                // 💡 Ambil array baru [ "1", "3" ] yang dipilih user, lalu simpan ke Zustand
+                onChange={(selectedArray) => {
+                    // Jika handleFieldChange Anda hanya menerima string/number, konversi array menjadi JSON string agar aman
+                    const valueToSave = JSON.stringify(selectedArray);
+                    handleFieldChange("roles")(valueToSave);
+                }}
+            />
         </form>
     );
 }

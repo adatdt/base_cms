@@ -9,6 +9,8 @@ import type { TreeGridColumn } from "@/interfaces/treeGrid";
 import Modal from "@/components/ui/Modal";
 import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useFormStore } from "@/store/useFormStore";
 
 const moduleName = `Menu`;
 
@@ -28,10 +30,35 @@ interface RawDatabaseMenu {
     order: number;
 }
 
+interface MyApiDetails {
+    name: string;
+    // action: string;
+    icon: string;
+    order: string;
+    parent: string;
+    slug: string;
+}
+
+// 2. Definisikan bentuk data yang diinginkan oleh Komponen Form Anda
+interface MyComponentFields {
+    menu: string;
+    // action: string;
+    icon: string;
+    order: string;
+    parent: string;
+    url: string;
+}
+
 export default function MenuPage() {
     const [data, setData] = React.useState<DocumentData[]>([]);
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
+    const fetchFormDetails = useFormStore((state) => state.fetchFormDetails);
+    const { formData } = useFormStore();
+    const triggerNotification = useNotificationStore(
+        (state) => state.triggerNotification,
+    );
+    const isFetchLoading = useFormStore((state) => state.isFetchLoading);
 
     const fetchData = useCallback(async () => {
         try {
@@ -72,6 +99,23 @@ export default function MenuPage() {
         console.log("Menghapus Dokumen ID:", row.id);
     }, []);
 
+    // 3. Panggil di dalam komponen Anda
+    const loadData = async (menuId: string | number) => {
+        openModal("Form Edit");
+        await fetchFormDetails<MyApiDetails, MyComponentFields>(
+            menuId,
+            triggerNotification,
+            // Pastikan semua properti yang ada di MyComponentFields terpenuhi di sini
+            (apiData) => ({
+                menu: apiData.name, // Memetakan 'name' dari API ke 'menu' komponen
+                icon: apiData.icon, // Langsung dipasangkan karena namanya sama
+                order: apiData.order, // Langsung dipasangkan karena namanya sama
+                parent: apiData.parent, // Langsung dipasangkan karena namanya sama
+                url: apiData.slug,
+            }),
+        );
+    };
+
     // Definisikan kolom beserta implementasi kustom render AKSI di level Page
     const columns: TreeGridColumn<DocumentData>[] = useMemo(
         () => [
@@ -93,7 +137,7 @@ export default function MenuPage() {
                             variant="info"
                             size="xs"
                             title="Edit"
-                            onClick={() => openModal("Form Edit")}
+                            onClick={() => loadData(row.id)}
                         >
                             <CrudIcons name="edit" size={10} />
                         </Btn>
@@ -161,10 +205,15 @@ export default function MenuPage() {
                 id="Form Edit"
                 title="Edit Data Pengguna"
                 size="5xl"
+                isBackdropLoading={isFetchLoading}
+
                 // confirmLoading={loading}
             >
                 {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Edit" */}
-                <Edit formId="Form Edit" />
+                <Edit
+                    formId="Form Edit"
+                    key={formData.menu || "modal-kosong"}
+                />
             </Modal>
 
             <div className="flex flex-row items-center justify-between w-full gap-4">

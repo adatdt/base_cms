@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useModalStore } from "@/store/useModalStore";
 import { useFormStore } from "@/store/useFormStore";
 import Btn from "./Btn";
+import Skeleton from "@/components/ui/Skeleton";
 
-// 1. Definisikan opsi ukuran yang tersedia
 type ModalSize =
     | "sm"
     | "md"
@@ -25,19 +25,18 @@ interface ModalProps {
     confirmText?: string;
     cancelText?: string;
     confirmLoading?: boolean;
-    size?: ModalSize; // 2. Tambahkan properti size opsional
+    isBackdropLoading?: boolean;
+    size?: ModalSize;
 }
 
-// 3. Buat pemetaan (mapping) kelas lebar Tailwind berdasarkan prop size
-// 2. Petakan ukuran lebar baru ke kelas Tailwind CSS
 const sizeClasses: Record<ModalSize, string> = {
-    sm: "max-w-sm", // ~384px
-    md: "max-w-md", // ~448px
-    lg: "max-w-lg", // ~512px
-    xl: "max-w-xl", // ~576px
-    "2xl": "max-w-2xl", // ~672px
-    "3xl": "max-w-3xl", // ~768px  <-- Ukuran Baru
-    "4xl": "max-w-4xl", // ~896px  <-- Ukuran Baru
+    sm: "max-w-sm",
+    md: "max-w-md",
+    lg: "max-w-lg",
+    xl: "max-w-xl",
+    "2xl": "max-w-2xl",
+    "3xl": "max-w-3xl",
+    "4xl": "max-w-4xl",
     "5xl": "max-w-5xl",
     full: "max-w-full m-4",
 };
@@ -50,7 +49,8 @@ export default function Modal({
     confirmText,
     cancelText,
     confirmLoading = false,
-    size = "md", // 4. Set ukuran default ke "md" jika tidak diisi
+    isBackdropLoading = false,
+    size = "md",
 }: Readonly<ModalProps>) {
     const activeModalId = useModalStore((state) => state.activeModalId);
     const closeModal = useModalStore((state) => state.closeModal);
@@ -82,26 +82,37 @@ export default function Modal({
     if (!shouldRender) return null;
 
     const handleOverlayClick = () => {
+        // Jika sedang loading konten, cegah efek getar overlay click agar tidak mengganggu visual spinner
+        if (isBackdropLoading) return;
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 300);
     };
 
     return (
-        /* Kontainer Utama: Mengunci seluruh layar agar tidak mengganggu halaman belakang */
         <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
-            {/* 🔴 1. BACKDROP HITAM UTUH (Mengunci 100% layar penuh, tidak akan bocor/terputus saat scroll) */}
-            <button
-                type="button"
-                className={`fixed inset-0 h-screen w-screen bg-black/50 backdrop-blur-sm transition-opacity duration-200 border-none outline-none ${isAnimating ? "opacity-100" : "opacity-0"}`}
-                onClick={handleOverlayClick}
+            {/* 🔴 BACKDROP DENGAN LOADING SPINNER */}
+            <div
+                className={`fixed inset-0 h-screen w-screen bg-black/50 backdrop-blur-sm transition-opacity duration-200 flex items-center justify-center ${isAnimating ? "opacity-100" : "opacity-0"}`}
             >
-                <span className="sr-only">Tutup modal</span>
-            </button>
+                {/* Tombol transparan backdrop untuk mendeteksi klik luar */}
+                <button
+                    type="button"
+                    className="absolute inset-0 h-full w-full border-none outline-none cursor-default"
+                    onClick={handleOverlayClick}
+                >
+                    <span className="sr-only">Tutup modal</span>
+                </button>
 
-            {/* 🔴 2. KONTAINER JALUR SCROLL (Lapisan transparan di atas backdrop tempat kotak putih bergulir) */}
-            {/* Ditambahkan padding top (pt-10) dan padding bottom (pb-16) agar tombol bawah tidak teriris layar */}
+                {/* 💡 Indikator Spinner Loading Tengah Backdrop */}
+                {isBackdropLoading && (
+                    <div className="relative z-50 flex items-center justify-center bg-slate-900/85 py-2.5 px-4 rounded-xl shadow-xl border border-slate-700/40 pointer-events-none select-none max-w-xs mx-auto">
+                        {/* Memanggil komponen Skeleton bawaan Anda dengan varian teks saja */}
+                        <Skeleton variant="text-only" align="center" />
+                    </div>
+                )}
+            </div>
+
             <div className="absolute inset-0 h-full w-full overflow-y-auto p-4 flex items-start justify-center pt-10 pb-16">
-                {/* Overlay Catcher khusus untuk menangkap klik di luar area kotak putih */}
                 <button
                     type="button"
                     className="absolute inset-0 h-full w-full cursor-default z-0"
@@ -110,11 +121,12 @@ export default function Modal({
                     <span className="sr-only">Tutup modal</span>
                 </button>
 
-                {/* 🔴 3. KOTAK PUTIH MODAL (Aman melayang di depan backdrop karena properti z-10) */}
+                {/* Kotak Putih Modal Konten */}
+                {/* 💡 Ditambahkan kelas CSS dinamis jika isBackdropLoading aktif untuk menyembunyikan sementara kotak putih agar fokus ke backdrop loading */}
                 <div
                     className={`relative z-10 w-full bg-slate-50 p-6 shadow-xl rounded-2xl transition-all duration-200 ease-out mb-auto
               ${sizeClasses[size]} 
-              ${isAnimating ? "scale-100 opacity-100" : "scale-95 opacity-0"} 
+              ${isAnimating && !isBackdropLoading ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"} 
               ${isShaking ? "animate-shake" : ""}`}
                 >
                     {/* Header */}
@@ -131,7 +143,7 @@ export default function Modal({
                         </button>
                     </div>
 
-                    {/* Body (Memanjang alami ke bawah mengikuti isi konten form) */}
+                    {/* Body */}
                     <div className="mt-4 text-sm text-gray-600 ">
                         {children}
                     </div>
@@ -143,6 +155,7 @@ export default function Modal({
                             onClick={closeModal}
                             variant="delete"
                             size="md"
+                            disabled={confirmLoading}
                         >
                             {cancelText ?? "Batal"}
                         </Btn>

@@ -28,16 +28,7 @@ export class MenuService {
             if (!result || result.length === 0) {
                 return [];
             }
-            const masterAction = await this.getMenuAction();
-            return result.map((row) => ({
-                id: Number(row.id),
-                parent_id:
-                    row.parent_id !== null ? Number(row.parent_id) : null,
-                name: String(row.name || "").trim(),
-                slug: String(row.slug || "").toLowerCase(),
-                order: Number(row.order || 0),
-                action_id: masterAction[row.id],
-            }));
+            return await this.getMenuAction();
         } catch (error) {
             console.error("Error fetching menu data:", error);
             throw new Error(`Failed to fetch menu data: ${error}`);
@@ -74,6 +65,43 @@ export class MenuService {
             );
 
             return masterAction;
+        } catch (error) {
+            console.error("Error fetching menu data:", error);
+            throw new Error(`Failed to fetch menu data: ${error}`);
+        }
+    }
+    static async getDetail(id: string) {
+        try {
+            const result = await sql`
+            select 
+                id,
+                NULLIF(parent_id, 0) AS parent_id,
+                "name" ,
+                slug ,
+                "order" 
+                from core.t_mtr_menu_web tmmw 
+                where id = ${id}
+        `;
+
+            // 💡 JIKA DATA TIDAK DITEMUKAN: Kembalikan null (bukan array kosong [])
+            if (!result || result.length === 0) {
+                return null;
+            }
+
+            // Ambil baris pertama dari query SQL Anda
+            const row = result[0];
+            const masterAction = await this.getMenuAction();
+
+            // 💡 SOLUSI: Langsung return satu objek murni (Single Object)
+            return {
+                id: Number(row.id),
+                parent_id:
+                    row.parent_id !== null ? Number(row.parent_id) : null,
+                name: String(row.name || "").trim(),
+                slug: String(row.slug || "").toLowerCase(),
+                order: Number(row.order || 0),
+                action_id: masterAction[row.id] || null, // Ditambahkan || null jika id tidak ada di masterAction
+            };
         } catch (error) {
             console.error("Error fetching menu data:", error);
             throw new Error(`Failed to fetch menu data: ${error}`);

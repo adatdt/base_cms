@@ -118,6 +118,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                                 <SelectData
                                     name={item.name}
                                     hasError={!!errors[item.name]} // Menentukan apakah ada error untuk field ini
+                                    value={formData[item.name] || ""}
                                     defaultValue=""
                                     onChange={handleFieldChange(item.name)}
                                     options={item.options || []}
@@ -129,7 +130,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                                 <SelectHierarchyData
                                     name={item.name}
                                     options={item.options || []}
-                                    value={formData.parent}
+                                    value={formData[item.name] || ""}
                                     onChange={handleFieldChange(item.name)}
                                     hasError={!!errors.parent}
                                     placeholder="Pilih Parent Menu..."
@@ -140,11 +141,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                         return (
                             <InputText
                                 type={item.variant} // Otomatis menjadi 'text' atau 'number'
-                                value={
-                                    formData[
-                                        item.name as keyof typeof formData
-                                    ] || ""
-                                }
+                                value={formData[item.name] || ""}
                                 onChange={handleChange}
                                 hasError={!!errors[item.name]}
                                 name={item.name}

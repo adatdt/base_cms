@@ -1,23 +1,26 @@
 import { create } from "zustand";
 
-// 1. Definisikan tipe data untuk State dan Action
 interface ModalState {
-  activeModalId: string | null; // Menyimpan ID modal yang sedang aktif/terbuka
-  openModal: (id: string) => void; // Fungsi untuk membuka modal berdasarkan ID
-  closeModal: () => void; // Fungsi untuk menutup modal yang sedang terbuka
+    activeModalId: string | null;
+    // 💡 SOLUSI: Tambahkan '| null' agar TypeScript mengizinkan nilai awal null
+    modalData: Record<string, any> | null;
+    openModal: (id: string, data?: Record<string, any> | null) => void;
+    closeModal: () => void;
 }
 
-// 2. Buat store menggunakan hooks create dari Zustand
 export const useModalStore = create<ModalState>((set) => ({
-  activeModalId: null, // Kondisi awal (default) semua modal tertutup
+    activeModalId: null,
+    modalData: null, // Sekarang pengisian null di sini sudah legal bagi linter
 
-  openModal: (id: string) =>
-    set({
-      activeModalId: id,
-    }),
+    openModal: (id: string, data = null) =>
+        set({
+            activeModalId: id,
+            modalData: data,
+        }),
 
-  closeModal: () =>
-    set({
-      activeModalId: null,
-    }),
+    closeModal: () =>
+        set({
+            activeModalId: null,
+            modalData: null, // Pembersihan dengan nilai null juga aman
+        }),
 }));

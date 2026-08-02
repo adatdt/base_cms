@@ -4,8 +4,17 @@ import { MenuService } from "../../service/menuService";
 import { menuFormSchema } from "../../schema/menu.schema";
 import z from "zod";
 
-export async function GET() {
+// 1. Definisikan tipe untuk params (id harus berupa string sesuai folder [id])
+interface RouteContext {
+    params: Promise<{
+        id: string;
+    }>;
+}
+
+export async function GET(request: Request) {
     try {
+        const { searchParams } = new URL(request.url);
+        const id = String(searchParams.get("id"));
         const headersList = await headers();
         const groupId = headersList.get("user_group");
 
@@ -19,11 +28,11 @@ export async function GET() {
             );
         }
 
-        const menuData = await MenuService.getMenu();
+        const getDetail = await MenuService.getDetail(id);
 
         return NextResponse.json({
             success: true,
-            data: menuData,
+            data: getDetail,
             message: "success",
         });
     } catch (error) {
