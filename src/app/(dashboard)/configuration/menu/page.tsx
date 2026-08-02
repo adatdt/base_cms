@@ -1,210 +1,247 @@
 "use client";
 
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useEffect } from "react";
 import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
+import Add from "./components/Add";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
 import type { TreeGridColumn } from "@/interfaces/treeGrid";
+import Modal from "@/components/ui/Modal";
+import { useModalStore } from "@/store/useModalStore";
+import Edit from "./components/Edit";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useFormStore } from "@/store/useFormStore";
+
+const moduleName = `Menu`;
 
 interface DocumentData {
-  id: number;
-  parentId: number | null;
-  level: number;
-  isLeaf: boolean;
-  namaDokumen: string;
-  owner: string;
+    id: number | string;
+    parentId: number | string | null;
+    isLeaf: boolean;
+    name: string;
+    owner: string;
+}
+
+interface RawDatabaseMenu {
+    id: number | string;
+    parent_id: number | string | null;
+    name: string;
+    slug: string;
+    order: number;
+}
+
+interface MyApiDetails {
+    name: string;
+    // action: string;
+    icon: string;
+    order: string;
+    parent: string;
+    slug: string;
+}
+
+// 2. Definisikan bentuk data yang diinginkan oleh Komponen Form Anda
+interface MyComponentFields {
+    menu: string;
+    // action: string;
+    icon: string;
+    order: string;
+    parent: string;
+    url: string;
 }
 
 export default function MenuPage() {
-  // Fungsi penanganan klik yang stabil di level Page
-  const handleEdit = useCallback((row: DocumentData) => {
-    console.log("Membuka form edit untuk Dokumen ID:", row.id);
-  }, []);
+    const [data, setData] = React.useState<DocumentData[]>([]);
+    // Ambil seluruh state pengendali modal dari Zustand
+    const openModal = useModalStore((state) => state.openModal);
+    const fetchFormDetails = useFormStore((state) => state.fetchFormDetails);
+    const { formData } = useFormStore();
+    const triggerNotification = useNotificationStore(
+        (state) => state.triggerNotification,
+    );
+    const isFetchLoading = useFormStore((state) => state.isFetchLoading);
 
-  const handleDelete = useCallback((row: DocumentData) => {
-    console.log("Menghapus Dokumen ID:", row.id);
-  }, []);
+    const fetchData = useCallback(async () => {
+        try {
+            // 2. Menggunakan metode GET dengan menyisipkan query string di ujung URL
+            const response = await fetch(`/configuration/menu/api/get_data?`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
 
-  // Definisikan kolom beserta implementasi kustom render AKSI di level Page
-  const columns: TreeGridColumn<DocumentData>[] = useMemo(
-    () => [
-      {
-        key: "namaDokumen",
-        header: "Nama Berkas / Folder",
-        className: "w-1/2",
-        isTreeField: true,
-      },
-      {
-        key: "owner",
-        header: "Pemilik",
-      },
-      {
-        key: "actions",
-        header: "AKSI",
-        className: "text-center whitespace-nowrap",
-        // MENARUH KONTEN TOMBOL AKSI LANGSUNG DI FILE PAGE:
-        render: (row) => (
-          <div className="flex justify-center gap-1.5">
-            <Btn
-              type="button"
-              variant="info"
-              size="xs"
-              title="Edit"
-              onClick={() => handleEdit(row)}
+            if (!response.ok) {
+                throw new Error(
+                    `Gagal mengambil data (HTTP ${response.status})`,
+                );
+            }
+
+            const result = await response.json();
+            setData(convertToTreeGridData(result.data));
+        } catch (error) {
+            const errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : "Terjadi kesalahan jaringan atau sistem.";
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Fungsi penanganan klik yang stabil di level Page
+    const handleEdit = useCallback((row: DocumentData) => {
+        console.log("Membuka form edit untuk Dokumen ID:", row.id);
+    }, []);
+
+    const handleDelete = useCallback((row: DocumentData) => {
+        console.log("Menghapus Dokumen ID:", row.id);
+    }, []);
+
+    // 3. Panggil di dalam komponen Anda
+    const loadData = async (menuId: string | number) => {
+        openModal("Form Edit");
+        await fetchFormDetails<MyApiDetails, MyComponentFields>(
+            menuId,
+            triggerNotification,
+            // Pastikan semua properti yang ada di MyComponentFields terpenuhi di sini
+            (apiData) => ({
+                menu: apiData.name, // Memetakan 'name' dari API ke 'menu' komponen
+                icon: apiData.icon, // Langsung dipasangkan karena namanya sama
+                order: apiData.order, // Langsung dipasangkan karena namanya sama
+                parent: apiData.parent, // Langsung dipasangkan karena namanya sama
+                url: apiData.slug,
+            }),
+        );
+    };
+
+    // Definisikan kolom beserta implementasi kustom render AKSI di level Page
+    const columns: TreeGridColumn<DocumentData>[] = useMemo(
+        () => [
+            {
+                key: "name",
+                header: "Nama Menu",
+                className: "w-full",
+                isTreeField: true,
+            },
+            {
+                key: "actions",
+                header: "AKSI",
+                className: "text-center whitespace-nowrap w-[1%] px-2",
+                // MENARUH KONTEN TOMBOL AKSI LANGSUNG DI FILE PAGE:
+                render: (row) => (
+                    <div className="flex justify-center gap-1.5">
+                        <Btn
+                            type="button"
+                            variant="info"
+                            size="xs"
+                            title="Edit"
+                            onClick={() => loadData(row.id)}
+                        >
+                            <CrudIcons name="edit" size={10} />
+                        </Btn>
+                        <Btn
+                            type="button"
+                            variant="delete"
+                            size="xs"
+                            title="Hapus"
+                            onClick={() => handleDelete(row)}
+                        >
+                            <CrudIcons name="delete" size={10} />
+                        </Btn>
+                    </div>
+                ),
+            },
+        ],
+        [handleEdit, handleDelete],
+    );
+
+    const convertToTreeGridData = (rawMenus: RawDatabaseMenu[]) => {
+        if (!rawMenus || rawMenus.length === 0) return [];
+
+        // 1. Buat Set berisi kumpulan semua parent_id yang ada untuk mempercepat pencarian (O(1))
+        const parentIdsSet = new Set(
+            rawMenus
+                .map((item) => item.parent_id)
+                .filter((pId) => pId !== null && pId !== undefined),
+        );
+
+        // 2. Map data seperti biasa
+        return rawMenus.map((item) => {
+            // Jika ID saat ini terdaftar di dalam kumpulan parentIdsSet, berarti dia PUNYA CHILD (bukan Leaf)
+            const hasChild = parentIdsSet.has(item.id);
+            const isLeaf = !hasChild; // Leaf adalah item yang TIDAK memiliki anak
+
+            return {
+                id: item.id,
+                parentId: item.parent_id,
+                isLeaf: isLeaf,
+                name: item.name,
+                href: item.slug,
+                order: item.order,
+                owner: "System",
+            };
+        });
+    };
+
+    return (
+        // <div className="p-8">
+        //   <DynamicTreeGrid columns={columns} data={data} />
+        // </div>
+        <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
+            {/* HEADER */}
+            <Modal
+                id="Form Add"
+                title="Tambah Data Pengguna"
+                size="5xl"
+                // confirmLoading={loading}
             >
-              <CrudIcons name="edit" size={10} />
-            </Btn>
-            <Btn
-              type="button"
-              variant="delete"
-              size="xs"
-              title="Hapus"
-              onClick={() => handleDelete(row)}
+                {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
+                <Add formId="Form Add" />
+            </Modal>
+
+            <Modal
+                id="Form Edit"
+                title="Edit Data Pengguna"
+                size="5xl"
+                isBackdropLoading={isFetchLoading}
+
+                // confirmLoading={loading}
             >
-              <CrudIcons name="delete" size={10} />
-            </Btn>
-          </div>
-        ),
-      },
-    ],
-    [handleEdit, handleDelete],
-  );
+                {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Edit" */}
+                <Edit
+                    formId="Form Edit"
+                    key={formData.menu || "modal-kosong"}
+                />
+            </Modal>
 
-  const mockData: DocumentData[] = useMemo(
-    () => [
-      // ================= LEVEL 0: ROOT FOLDER 1 =================
-      {
-        id: 1,
-        parentId: null,
-        level: 0,
-        isLeaf: false,
-        namaDokumen: "01. Rencana Anggaran Perusahaan 2026",
-        owner: "Finance Directors",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 1
-      {
-        id: 2,
-        parentId: 1,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Departemen IT",
-        owner: "IT Procurement",
-      },
-      // LEVEL 2: Sub-Folder di bawah ID 2
-      {
-        id: 3,
-        parentId: 2,
-        level: 2,
-        isLeaf: false,
-        namaDokumen: "Infrastruktur & Cloud",
-        owner: "DevOps Team",
-      },
-      // LEVEL 3: Files di bawah ID 3
-      {
-        id: 4,
-        parentId: 3,
-        level: 3,
-        isLeaf: true,
-        namaDokumen: "estimasi_biaya_aws_it.xlsx",
-        owner: "Andi (DevOps)",
-      },
-      {
-        id: 5,
-        parentId: 3,
-        level: 3,
-        isLeaf: true,
-        namaDokumen: "kontrak_server_rack_space.pdf",
-        owner: "Budi (SysAdmin)",
-      },
-      // LEVEL 2: File di bawah ID 2 (Sejajar dengan Folder ID 3)
-      {
-        id: 6,
-        parentId: 2,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "lisensi_software_enterprise.csv",
-        owner: "Andi (DevOps)",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 1 (Sejajar dengan Folder ID 2)
-      {
-        id: 7,
-        parentId: 1,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Departemen Pemasaran & HR",
-        owner: "Marketing Lead",
-      },
-      // LEVEL 2: Files di bawah ID 7
-      {
-        id: 8,
-        parentId: 7,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "anggaran_iklan_q1_q2.pdf",
-        owner: "Siti (Marketing)",
-      },
-      {
-        id: 9,
-        parentId: 7,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "biaya_rekrutmen_karyawan.xlsx",
-        owner: "Dewi (HRD)",
-      },
+            <div className="flex flex-row items-center justify-between w-full gap-4">
+                {/* Bagian Kiri: Judul dan Deskripsi Modul */}
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {moduleName}
+                    </h1>
+                    <p className="text-sm text-slate-400">
+                        Pusat kendali data jaringan pelabuhan, kapasitas
+                        dermaga, dan status operasional.
+                    </p>
+                </div>
+                {/* Bagian Kanan: Tombol Aksi */}
 
-      // ================= LEVEL 0: ROOT FOLDER 2 =================
-      {
-        id: 10,
-        parentId: null,
-        level: 0,
-        isLeaf: false,
-        namaDokumen: "02. Standar Operasional Prosedur (SOP)",
-        owner: "Compliance QM",
-      },
-      // LEVEL 1: Sub-Folder di bawah ID 10
-      {
-        id: 11,
-        parentId: 10,
-        level: 1,
-        isLeaf: false,
-        namaDokumen: "Kebijakan Keamanan Informasi",
-        owner: "CISO Office",
-      },
-      // LEVEL 2: File di bawah ID 11
-      {
-        id: 12,
-        parentId: 11,
-        level: 2,
-        isLeaf: true,
-        namaDokumen: "SOP_penanganan_insiden_cyber.pdf",
-        owner: "SecOps Team",
-      },
-      // LEVEL 1: File di bawah ID 10 (Sejajar dengan Folder ID 11)
-      {
-        id: 13,
-        parentId: 10,
-        level: 1,
-        isLeaf: true,
-        namaDokumen: "panduan_ onboarding_karyawan_baru.pdf",
-        owner: "Dewi (HRD)",
-      },
+                <Btn
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    title="Tambah"
+                    onClick={() => openModal("Form Add")}
+                >
+                    <CrudIcons name="add" size={15} />
+                    Tambah
+                </Btn>
+            </div>
 
-      // ================= LEVEL 0: ROOT FILE STANDALONE =================
-      {
-        id: 14,
-        parentId: null,
-        level: 0,
-        isLeaf: true,
-        namaDokumen: "catatan_rapat_direksi_januari.docx",
-        owner: "Corporate Secretary",
-      },
-    ],
-    [],
-  );
-
-  return (
-    <div className="p-8">
-      <DynamicTreeGrid columns={columns} data={mockData} />
-    </div>
-  );
+            <DynamicTreeGrid columns={columns} data={data} />
+        </div>
+    );
 }

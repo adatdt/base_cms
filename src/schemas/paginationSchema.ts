@@ -12,7 +12,7 @@ export const paginationQuerySchema = z.object({
     .trim()
     .max(100, "Kata kunci pencarian maksimal 100 karakter")
     .regex(
-      /^[a-zA-Z0-9\s]*$/,
+      /^[a-zA-Z0-9\s\-_]*$/,
       "Pencarian tidak boleh mengandung karakter khusus atau simbol",
     )
     .optional()
