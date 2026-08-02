@@ -29,6 +29,9 @@ interface FormState {
     errors: Record<string, string>;
     isFetchLoading: boolean;
 
+    masterOptions: Record<string, any[]>;
+    isMasterLoading: boolean;
+
     handleChange: (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     ) => void;
@@ -64,12 +67,25 @@ interface FormState {
         transform?: (data: TResponse) => TForm,
         customUrl?: string 
     ) => Promise<void>;
+
+      fetchMasterOptions: (
+        configs: { 
+            key: string; 
+            url: string; 
+            // 💡 TAMBAHAN: Fungsi opsional untuk mengubah struktur data master secara dinamis
+            transform?: (data: any) => any[] 
+        }[],
+        triggerNotification: NotificationTrigger,
+    ) => Promise<void>;
 }
 
 export const useFormStore = create<FormState>((set, get) => ({
     formData: {},
     errors: {},
     isFetchLoading: false,
+
+    masterOptions: {},
+    isMasterLoading: false,
 
     // Core Handler: Native HTML Form Inputs (Event Driven)
     handleChange: (e) => {
@@ -273,5 +289,35 @@ export const useFormStore = create<FormState>((set, get) => ({
         set({ isFetchLoading: false });
     }
 },
+// Master Submit Action: Mendukung eksekusi paralel multi-endpoint untuk data master/dropdown
+    fetchMasterOptions: async (configs, triggerNotification) => {
+    set({ isMasterLoading: true });
+    try {
+        const requests = configs.map(async (cfg) => {
+            const response = await fetchClient.request<any>(cfg.url, { method: "GET" });
+            const payload = response.data !== undefined ? response.data : response;
+            
+            // 💡 JALANKAN TRANSFORMASI JIKA ADA:
+            // Jika komponen menyediakan fungsi transform, jalankan. Jika tidak, pakai data mentah.
+            const finalData = cfg.transform ? cfg.transform(payload) : payload;
 
+            return { key: cfg.key, data: finalData };
+        });
+
+        const results = await Promise.all(requests);
+        
+        const nextMasterOptions = { ...get().masterOptions };
+        results.forEach((res) => {
+            nextMasterOptions[res.key] = res.data;
+        });
+
+        set({ masterOptions: nextMasterOptions });
+    } catch (error: any) {
+        console.error("[Fetch Master Options Error]:", error);
+        const errorMsg = error?.data?.message || error?.message || "Gagal memuat opsi pilihan!";
+        triggerNotification(`Terjadi kesalahan master data: ${errorMsg}`, "warning");
+    } finally {
+        set({ isMasterLoading: false });
+    }
+}
 }));

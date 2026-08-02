@@ -10,6 +10,7 @@ import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
 import { useFormStore } from "@/store/useFormStore";
 import { SelectDataMultiple } from "@/components/ui/SelectDataMultiple";
 
+
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
 }
@@ -109,6 +110,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
     const handleFieldChange = useFormStore((state) => state.handleFieldChange);
 
     const executeSubmit = useFormStore((state) => state.executeSubmit);
+    const { masterOptions, isMasterLoading } = useFormStore();
 
     const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
         executeSubmit(e, {
@@ -162,13 +164,14 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                     {(() => {
                         // Jika variant berupa "select", render komponen SelectData
                         if (item.variant === "select") {
+                            const dynamicOptions = masterOptions[item.name] || item.options || [];
                             return (
                                 <SelectData
                                     name={item.name}
                                     hasError={!!errors[item.name]} // Menentukan apakah ada error untuk field ini
                                     defaultValue=""
                                     onChange={handleFieldChange(item.name)}
-                                    options={item.options || []}
+                                    options={dynamicOptions || []}
                                 />
                             );
                         }

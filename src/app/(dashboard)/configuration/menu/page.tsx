@@ -22,6 +22,7 @@ export default function MenuPage() {
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
     const fetchFormDetails = useFormStore((state) => state.fetchFormDetails);
+    const fetchMasterOptions  = useFormStore((state) => state.fetchMasterOptions );
     const { formData } = useFormStore();
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
@@ -88,15 +89,27 @@ export default function MenuPage() {
     };
 
     const loadAdd = async () => {
-        openModal("Form Add");
-        const urlDetail = `/configuration/menu/api/crud`;
-        await fetchFormDetails(
-            0,
-            triggerNotification,
-            undefined,
-            urlDetail, // Gunakan URL kustom untuk fetch detail
-        );
-    };
+    openModal("Form Add");
+    // Cukup masukkan satu objek saja di dalam array []
+    await fetchMasterOptions(
+        [
+            { 
+                key: "action", 
+                url: "/configuration/menu/api/crud",
+                transform: (apiResponse) => {
+                     // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+                    // const targetArray = apiResponse?.data?.items || [];
+                    const dataArray = apiResponse?.action || [];
+                    return dataArray.map((item: any) => ({
+                        value: item.id.toString(),
+                        label: item.action_name
+                    }));
+                }
+            }
+        ],
+        triggerNotification
+    );
+};
 
     // Definisikan kolom beserta implementasi kustom render AKSI di level Page
     const columns: TreeGridColumn<DocumentData>[] = useMemo(

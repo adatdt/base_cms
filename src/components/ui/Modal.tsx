@@ -112,7 +112,7 @@ export default function Modal({
                 )}
             </div>
 
-            <div className="absolute inset-0 h-full w-full overflow-y-auto p-4 flex items-start justify-center pt-10 pb-16">
+            <div className="fixed inset-0 min-h-screen w-full overflow-y-auto p-4 flex items-start justify-center pt-10 pb-16 z-50 bg-black/50">
                 <button
                     type="button"
                     className="absolute inset-0 h-full w-full cursor-default z-0"
