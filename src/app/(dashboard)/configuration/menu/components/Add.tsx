@@ -1,14 +1,11 @@
 "use client";
 
-import { InputText } from "@/components/ui/InputText";
-import { SelectData } from "@/components/ui/SelectData";
 import React from "react";
 import type { InputSchema } from "../interfaces/menu.interfaces";
 import { menuFormSchema } from "../schema/menu.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
 import { useFormStore } from "@/store/useFormStore";
-import { SelectDataMultiple } from "@/components/ui/SelectDataMultiple";
+import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
 
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
@@ -21,12 +18,7 @@ const input: InputSchema[] = [
         variant: "text",
         placeholder: "Masukkan menu",
     },
-    {
-        name: "action",
-        label: "Aksi",
-        variant: "select-multiple",
-        placeholder: "Masukkan aksi",
-    },
+    
     {
         name: "icon",
         label: "Ikon",
@@ -50,6 +42,11 @@ const input: InputSchema[] = [
         label: "URL",
         variant: "text",
         placeholder: "Masukkan url",
+    },{
+        name: "action",
+        label: "Aksi",
+        variant: "select-multiple",
+        placeholder: "Masukkan aksi",
     },
 ];
 
@@ -88,113 +85,25 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
     };
 
     return (
-        <form
-            id={formId}
-            onSubmit={sendForm}
-            className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
-        >
-            {input.map((item) => (
-                <div key={item.name} className="flex flex-col gap-1.5">
-                    <label
-                        htmlFor={item.name}
-                        className="text-xs font-semibold text-gray-700 "
-                    >
-                        {item.label}
-                    </label>
-                    {(() => {
-                        // Jika variant berupa "select", render komponen SelectData
-                        if (isMasterLoading) {
-                            return (
-                                <div className="w-full h-10 bg-slate-100 animate-pulse rounded-lg" />
-                            );
-                        }
-                        const dynamicOptions =
-                            masterOptions[item.name] || item.options || [];
-                        if (item.variant === "select") {
-                            return (
-                                <SelectData
-                                    name={item.name}
-                                    hasError={!!errors[item.name]} // Menentukan apakah ada error untuk field ini
-                                    defaultValue=""
-                                    onChange={handleFieldChange(item.name)}
-                                    options={dynamicOptions || []}
-                                />
-                            );
-                        }
-
-                        if (item.variant === "select-hierarchy") {
-                            return (
-                                <SelectHierarchyData
-                                    name={item.name}
-                                    options={dynamicOptions}
-                                    value={formData[item.name]}
-                                    onChange={handleFieldChange(item.name)}
-                                    hasError={!!errors.parent}
-                                    placeholder="Pilih Parent Menu..."
-                                />
-                            );
-                        }
-
-                        if (item.variant === "select-multiple") {
-                            const rawData = formData[item.name];
-                            let currentValue: (string | number)[] = [];
-
-                            // Lakukan parse aman agar komponen select-multiple bisa membaca array asli
-                            if (
-                                typeof rawData === "string" &&
-                                rawData.trim() !== ""
-                            ) {
-                                try {
-                                    const parsed = JSON.parse(rawData);
-                                    if (Array.isArray(parsed))
-                                        currentValue = parsed;
-                                } catch (e) {
-                                    console.log(e);
-                                    currentValue = [];
-                                }
-                            } else if (Array.isArray(rawData)) {
-                                currentValue = rawData;
-                            }
-                            return (
-                                <SelectDataMultiple
-                                    name={item.name}
-                                    options={dynamicOptions}
-                                    placeholder="Pilih beberapa hak akses..."
-                                    hasError={!!errors["roles"]}
-                                    value={currentValue}
-                                    onChange={(selectedArray) => {
-                                        // Jika handleFieldChange Anda hanya menerima string/number, konversi array menjadi JSON string agar aman
-                                        const valueToSave =
-                                            JSON.stringify(selectedArray);
-                                        handleFieldChange(item.name)(
-                                            valueToSave,
-                                        );
-                                    }}
-                                />
-                            );
-                        }
-
-                        return (
-                            <InputText
-                                type={item.variant} // Otomatis menjadi 'text' atau 'number'
-                                value={
-                                    formData[
-                                        item.name as keyof typeof formData
-                                    ] || ""
-                                }
-                                onChange={handleChange}
-                                hasError={!!errors[item.name]}
-                                name={item.name}
-                                placeholder={item.placeholder}
-                                required
-                            />
-                        );
-                    })()}
-                    <p className="mt-1 text-sm text-red-600 font-medium">
-                        {errors[item.name] || ""}
-                    </p>
-                </div>
-            ))}
-        </form>
+        
+            <form
+                id={formId}
+                onSubmit={sendForm}
+                className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
+            >
+                {input.map((item) => (
+                    <FormFieldRenderer
+                        key={item.name}
+                        item={item}
+                        isMasterLoading={isMasterLoading}
+                        masterOptions={masterOptions}
+                        errors={errors}
+                        formData={formData}
+                        handleChange={handleChange}
+                        handleFieldChange={handleFieldChange}
+                    />
+                ))}
+            </form>
+        
     );
 }

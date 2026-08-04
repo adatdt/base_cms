@@ -1,5 +1,5 @@
 import { UsersModel } from "../models/usersModel";
-import type { UserQueryResult } from "../interfaces/users";
+import type { UserQueryResult } from "../interfaces/users.interfaces";
 
 // Definisikan interface baru untuk tipe kembalian terpaginasi agar TypeScript aman
 export interface PaginatedBranchResult {

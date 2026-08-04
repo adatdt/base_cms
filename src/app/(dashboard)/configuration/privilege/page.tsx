@@ -4,7 +4,7 @@ import React, { useMemo, useCallback } from "react";
 import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
-import type { TreeGridColumn } from "@/interfaces/treeGrid";
+import type { TreeGridColumn } from "@/types/treeGrid.type";
 
 interface DocumentData {
   id: number;

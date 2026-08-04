@@ -1,7 +1,7 @@
 import React from "react";
 // Impor tipe data properti kolom dari UI DataGrid Anda
 import { ColumnProps } from "@/components/ui/DataGrid";
-import type { TableUsers } from "../interfaces/users";
+import type { TableUsers } from "../interfaces/users.interfaces";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
 

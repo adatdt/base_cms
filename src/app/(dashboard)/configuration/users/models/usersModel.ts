@@ -1,5 +1,5 @@
 import { sql } from "@/lib/db";
-import type { UserQueryResult } from "../interfaces/users";
+import type { UserQueryResult } from "../interfaces/users.interfaces";
 import {
   parsePagination,
   buildWhereClause,

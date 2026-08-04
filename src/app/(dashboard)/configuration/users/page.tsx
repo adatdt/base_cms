@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
-import type { TableUsers } from "./interfaces/users";
+import type { TableUsers } from "./interfaces/users.interfaces";
 import CrudIcons from "@/components/ui/CrudIcons";
 import Modal from "@/components/ui/Modal";
 import { useModalStore } from "@/store/useModalStore";
@@ -11,6 +11,8 @@ import { useNotificationStore } from "@/store/useNotificationStore";
 import Add from "./components/Add";
 import Edit, { UserEditData } from "./components/Edit";
 import { getUserColumns } from "./utils/usersColumns";
+import { useFormStore } from "@/store/useFormStore";
+import { useShallow } from 'zustand/shallow';
 
 const moduleName = `Users`;
 export default function PortBranchPage() {
@@ -24,14 +26,16 @@ export default function PortBranchPage() {
   // Ambil seluruh state pengendali modal dari Zustand
   const openModal = useModalStore((state) => state.openModal);
   const closeModal = useModalStore((state) => state.closeModal);
+   const { isFetchLoading, fetchBulkMasterOptions } = useFormStore(
+    useShallow((state) => ({
+      isFetchLoading: state.isFetchLoading,
+      fetchBulkMasterOptions: state.fetchBulkMasterOptions,
+    }))
+  );
 
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserEditData | null>(null);
 
-  const handleFormSubmit = async (data: any) => {
-    console.log("Kirim ke API:", data);
-    closeModal();
-  };
 
   // STATE CONTROL UNTUK SERVER-SIDE PAGINATION
   const [page, setPage] = useState<number>(1);
@@ -137,6 +141,40 @@ export default function PortBranchPage() {
     },
     [closeModal],
   );
+
+  const loadAdd = async () => {
+        openModal("Form Add");
+
+        // await fetchBulkMasterOptions(
+        //     "/configuration/menu/api/crud",
+        //     [
+        //         {
+        //             key: "action",
+        //             transform: (apiResponse) => {
+        //                 // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+        //                 const dataArray = apiResponse?.action || [];
+        //                 return dataArray.map((item: any) => ({
+        //                     value: item.id.toString(),
+        //                     label: item.action_name,
+        //                 }));
+        //             },
+        //         },
+        //         {
+        //             key: "parent",
+        //             transform: (apiResponse) => {
+        //                 // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+        //                 const dataArray = apiResponse?.menu || [];
+        //                 return dataArray.map((item: any) => ({
+        //                     value: item.id.toString(),
+        //                     label: item.name,
+        //                     parent: item.parent_id?.toString() || null,
+        //                 }));
+        //             },
+        //         },
+        //     ],
+        //     triggerNotification,
+        // );
+    };
   return (
     <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
       {/* HEADER */}
@@ -144,10 +182,11 @@ export default function PortBranchPage() {
         id="Form Add"
         title="Tambah Data Pengguna"
         size="5xl"
+        isBackdropLoading={isFetchLoading}
         // confirmLoading={loading}
       >
         {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
-        <Add formId="Form Add" onSubmit={handleFormSubmit} />
+        <Add formId="Form Add"  />
       </Modal>
 
       {/* Modal Edit */}
@@ -180,7 +219,7 @@ export default function PortBranchPage() {
           variant="primary"
           size="sm"
           title="Tambah"
-          onClick={() => openModal("Form Add")}
+          onClick={() => loadAdd()}
         >
           <CrudIcons name="add" size={15} />
           Tambah

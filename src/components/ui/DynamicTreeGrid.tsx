@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useMemo } from "react";
-import type { TreeGridRow, TreeGridColumn } from "@/interfaces/treeGrid";
+import type { TreeGridRow, TreeGridColumn } from "@/types/treeGrid.type";
 import { ChevronTriangleIcon } from "@/components/ui/Icons";
 
 interface TreeGridProps<T> {

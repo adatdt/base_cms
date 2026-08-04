@@ -5,7 +5,7 @@ import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
 import Add from "./components/Add";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
-import type { TreeGridColumn } from "@/interfaces/treeGrid";
+import type { TreeGridColumn } from "@/types/treeGrid.type";
 import Modal from "@/components/ui/Modal";
 import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
