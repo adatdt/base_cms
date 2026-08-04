@@ -24,8 +24,14 @@ interface GlobalSubmitConfig<TResponse> extends FormSubmitOptions<TResponse> {
     triggerNotification: NotificationTrigger;
 }
 
+interface BulkMasterConfig {
+    key: string;
+    // Fungsi opsional untuk mengubah struktur data master dari payload tunggal
+    transform?: (data: any) => any[];
+}
+
 interface FormState {
-    formData: Record<string, string>;
+    formData: Record<string, any>;
     errors: Record<string, string>;
     isFetchLoading: boolean;
 
@@ -38,12 +44,24 @@ interface FormState {
 
     handleFieldChange: (
         name: string,
+        config?: {
+            selectBy: "id" | "label";
+            options: Array<{ value: string | number; label: string }>;
+        },
     ) => (
         eOrValue:
             | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
             | string
             | number,
     ) => void;
+    // handleFieldChange: (
+    //     name: string,
+    // ) => (
+    //     eOrValue:
+    //         | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    //         | string
+    //         | number,
+    // ) => void;
 
     setErrors: (
         nameOrErrors: string | Record<string, string>,
@@ -65,17 +83,28 @@ interface FormState {
         id: string | number,
         triggerNotification: NotificationTrigger,
         transform?: (data: TResponse) => TForm,
-        customUrl?: string 
+        customUrl?: string,
     ) => Promise<void>;
 
-      fetchMasterOptions: (
-        configs: { 
-            key: string; 
-            url: string; 
+    fetchMasterOptions: (
+        configs: {
+            key: string;
+            url: string;
             // 💡 TAMBAHAN: Fungsi opsional untuk mengubah struktur data master secara dinamis
-            transform?: (data: any) => any[] 
+            transform?: (data: any) => any[];
         }[],
         triggerNotification: NotificationTrigger,
+    ) => Promise<void>;
+
+    fetchBulkMasterOptions: (
+        bulkUrl: string,
+        configs: Array<{ key: string; transform?: (data: any) => any }>,
+        triggerNotification?: (
+            message: string,
+            type: "success" | "warning",
+        ) => void,
+        method?: "GET" | "POST" | "PUT",
+        requestData?: any, // 💡 TAMBAHKAN BARIS INI
     ) => Promise<void>;
 }
 
@@ -101,6 +130,7 @@ export const useFormStore = create<FormState>((set, get) => ({
     },
 
     // Core Handler: Custom Input Components (Raw Value Payload Driven - SonarQube Clean)
+    /*
     handleFieldChange: (name: string) => (eOrValue) => {
         let value: string = "";
         if (eOrValue && typeof eOrValue === "object" && "target" in eOrValue) {
@@ -122,7 +152,147 @@ export const useFormStore = create<FormState>((set, get) => ({
                 errors: nextErrors,
             };
         });
-    },
+    }, */
+    handleFieldChange:
+        (
+            name: string,
+            config?: {
+                selectBy: "id" | "label";
+                options: Array<{ value: string | number; label: string }>;
+            },
+        ) =>
+        (eOrValue: any) => {
+            const hasOptions = config?.options && config.options.length > 0;
+
+            // 💡 SOLUSI UTAMA: Fungsi pencari lokal satu tingkat untuk meratakan kedalaman nesting
+            const getMatchedOption = (val: any) => {
+                if (!hasOptions) return null;
+
+                const strVal = String(val);
+                const lowerVal = strVal.toLowerCase();
+
+                // 💡 SOLUSI MUTLAK: Menggunakan loop tradisional untuk meratakan (flatten) tingkat nesting
+                for (const o of config!.options) {
+                    if (
+                        String(o.value) === strVal ||
+                        o.label.toLowerCase() === lowerVal
+                    ) {
+                        return o;
+                    }
+                }
+
+                return null;
+            };
+
+            // =========================================================================
+            // 💡 1. DETEKSI APAKAH DATA YANG MASUK BERUPA ARRAY (SELECT MULTIPLE)
+            // =========================================================================
+            if (Array.isArray(eOrValue)) {
+                let processedArray = [...eOrValue];
+                let labelBackupArray = [...eOrValue];
+
+                if (hasOptions) {
+                    // const { selectBy } = config!;
+
+                    // Proses konversi nilai utama (ID / Label) - Sekarang murni 1 tingkat nesting
+                    processedArray = eOrValue.map((val) => {
+                        const found = getMatchedOption(val);
+                        if (!found) return val;
+                        // return selectBy === "label" ? found.label : found.value;
+                        return found.value;
+                    });
+
+                    // Proses konversi nilai teks visual cadangan - Sekarang murni 1 tingkat nesting
+                    labelBackupArray = eOrValue.map((val) => {
+                        const found = getMatchedOption(val);
+                        return found ? found.label : String(val);
+                    });
+                }
+
+                set((state) => {
+                    const nextErrors = { ...state.errors };
+                    if (nextErrors[name]) delete nextErrors[name];
+
+                    return {
+                        formData: {
+                            ...state.formData,
+                            [name]: processedArray,
+                            [`${name}_selected`]: labelBackupArray,
+                        },
+                        errors: nextErrors,
+                    };
+                });
+
+                setTimeout(
+                    () => console.log("State Terkini (Array):", get().formData),
+                    0,
+                );
+                return; // Early exit
+            }
+
+            // =========================================================================
+            // 💡 2. LOGIKA UNTUK DATA TUNGGAL (TEXT / SELECT HIERARCHY)
+            // =========================================================================
+            let rawValue: string | number = "";
+            console.log("Data Tunggal Masuk:", eOrValue);
+
+            // Ekstrak nilai mentah menggunakan pengondisian datar flat
+            if (
+                eOrValue &&
+                typeof eOrValue === "object" &&
+                "target" in eOrValue
+            ) {
+                rawValue = (
+                    eOrValue.target as HTMLInputElement | HTMLSelectElement
+                ).value;
+            } else if (
+                typeof eOrValue === "string" ||
+                typeof eOrValue === "number"
+            ) {
+                rawValue = eOrValue;
+            }
+
+            let finalValue = rawValue.toString();
+            let getValue = rawValue.toString();
+            let selectedLabel = "";
+
+            // Pencarian data tunggal memanfaatkan fungsi pencari lokal datar
+            const foundOpt = getMatchedOption(rawValue);
+
+            if (foundOpt) {
+                selectedLabel = foundOpt.label;
+                getValue = foundOpt.value.toString();
+                finalValue =
+                    config!.selectBy === "label"
+                        ? foundOpt.label
+                        : foundOpt.value.toString();
+            }
+
+            set((state) => {
+                const nextErrors = { ...state.errors };
+                if (nextErrors[name]) delete nextErrors[name];
+
+                const newFormData: Record<string, any> = {
+                    ...state.formData,
+                    [name]: getValue,
+                    [`${name}_selected`]: finalValue,
+                };
+
+                if (selectedLabel) {
+                    newFormData[`${name}_selected`] = selectedLabel;
+                }
+
+                return {
+                    formData: newFormData,
+                    errors: nextErrors,
+                };
+            });
+
+            setTimeout(
+                () => console.log("State Terkini (Tunggal):", get().formData),
+                0,
+            );
+        },
 
     // Core Handler: Single and Bulk Polymorphic Error Hydrations
     setErrors: (nameOrErrors, errorMessage) =>
@@ -221,103 +391,159 @@ export const useFormStore = create<FormState>((set, get) => ({
 
     // Async Populate Engine: Resolves data objects dynamically over dynamic record parameter IDs
     fetchFormDetails: async <
-    TResponse = Record<string, unknown>,
-    TForm = Record<string, string>,
->(
-    id: string | number,
-    triggerNotification: NotificationTrigger,
-    transform?: (data: TResponse) => TForm,
-    customUrl?: string, // 👈 1. Tambahkan parameter opsional di sini
-) => {
-    set({ isFetchLoading: true, errors: {} });
-    try {
-        console.log(customUrl);
-        // 👈 2. Gunakan customUrl jika ada, jika tidak ada pakai URL default
-        const targetUrl = customUrl || `/configuration/menu/api/crud?id=${id}`;
+        TResponse = Record<string, unknown>,
+        TForm = Record<string, string>,
+    >(
+        id: string | number,
+        triggerNotification: NotificationTrigger,
+        transform?: (data: TResponse) => TForm,
+        customUrl?: string, // 👈 1. Tambahkan parameter opsional di sini
+    ) => {
+        set({ isFetchLoading: true, errors: {} });
+        try {
+            // 👈 2. Gunakan customUrl jika ada, jika tidak ada pakai URL default
+            const targetUrl =
+                customUrl || `/configuration/menu/api/crud?id=${id}`;
 
-        const response = await fetchClient.request<any>(
-            targetUrl,
-            { method: "GET" },
-        );
+            const response = await fetchClient.request<any>(targetUrl, {
+                method: "GET",
+            });
 
-        if (response) {
-            const apiPayload =
-                response.data !== undefined ? response.data : response;
-            
-            const mappedData = transform
-                ? transform(apiPayload)
-                : apiPayload;
+            if (response) {
+                const apiPayload =
+                    response.data !== undefined ? response.data : response;
 
-            console.log(mappedData);
-            const sanitizedData: Record<string, string> = {};
+                const mappedData = transform
+                    ? transform(apiPayload)
+                    : apiPayload;
 
-            Object.entries(mappedData as Record<string, unknown>).forEach(
-                ([key, val]) => {
-                    if (val !== null && val !== undefined) {
-                        if (typeof val === "string") {
-                            sanitizedData[key] = val;
-                        } else if (
-                            typeof val === "number" ||
-                            typeof val === "boolean" ||
-                            typeof val === "bigint"
-                        ) {
-                            sanitizedData[key] = val.toString();
-                        } else if (typeof val === "object") {
-                            sanitizedData[key] = JSON.stringify(val);
+                const sanitizedData: Record<string, string> = {};
+
+                Object.entries(mappedData as Record<string, unknown>).forEach(
+                    ([key, val]) => {
+                        if (val !== null && val !== undefined) {
+                            if (typeof val === "string") {
+                                sanitizedData[key] = val;
+                            } else if (
+                                typeof val === "number" ||
+                                typeof val === "boolean" ||
+                                typeof val === "bigint"
+                            ) {
+                                sanitizedData[key] = val.toString();
+                            } else if (typeof val === "object") {
+                                sanitizedData[key] = JSON.stringify(val);
+                            } else {
+                                sanitizedData[key] = "";
+                            }
                         } else {
                             sanitizedData[key] = "";
                         }
-                    } else {
-                        sanitizedData[key] = "";
-                    }
-                },
+                    },
+                );
+
+                set({ formData: sanitizedData });
+            }
+        } catch (error: any) {
+            console.error(
+                "[Fetch Detail Error] Failed to get menu details:",
+                error,
             );
-
-            set({ formData: sanitizedData });
+            const errorMsg =
+                error?.data?.message ||
+                error?.message ||
+                "Gagal memuat detail data!";
+            triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
+        } finally {
+            set({ isFetchLoading: false });
         }
-    } catch (error: any) {
-        console.error(
-            "[Fetch Detail Error] Failed to get menu details:",
-            error,
-        );
-        const errorMsg =
-            error?.data?.message ||
-            error?.message ||
-            "Gagal memuat detail data!";
-        triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
-    } finally {
-        set({ isFetchLoading: false });
-    }
-},
-// Master Submit Action: Mendukung eksekusi paralel multi-endpoint untuk data master/dropdown
+    },
+    // fungsi hit multiple  api
     fetchMasterOptions: async (configs, triggerNotification) => {
-    set({ isMasterLoading: true });
-    try {
-        const requests = configs.map(async (cfg) => {
-            const response = await fetchClient.request<any>(cfg.url, { method: "GET" });
-            const payload = response.data !== undefined ? response.data : response;
-            
-            // 💡 JALANKAN TRANSFORMASI JIKA ADA:
-            // Jika komponen menyediakan fungsi transform, jalankan. Jika tidak, pakai data mentah.
-            const finalData = cfg.transform ? cfg.transform(payload) : payload;
+        set({ isFetchLoading: true, errors: {} });
+        try {
+            const requests = configs.map(async (cfg) => {
+                const response = await fetchClient.request<any>(cfg.url, {
+                    method: "GET",
+                });
+                const payload =
+                    response.data !== undefined ? response.data : response;
+                const finalData = cfg.transform
+                    ? cfg.transform(payload)
+                    : payload;
 
-            return { key: cfg.key, data: finalData };
-        });
+                return { key: cfg.key, data: finalData };
+            });
 
-        const results = await Promise.all(requests);
-        
-        const nextMasterOptions = { ...get().masterOptions };
-        results.forEach((res) => {
-            nextMasterOptions[res.key] = res.data;
-        });
+            const results = await Promise.all(requests);
 
-        set({ masterOptions: nextMasterOptions });
-    } catch (error: any) {
-        console.error("[Fetch Master Options Error]:", error);
-        const errorMsg = error?.data?.message || error?.message || "Gagal memuat opsi pilihan!";
-        triggerNotification(`Terjadi kesalahan master data: ${errorMsg}`, "warning");
-    } finally {
-        set({ isMasterLoading: false });
-    }
-}
+            const nextMasterOptions = { ...get().masterOptions };
+            results.forEach((res) => {
+                nextMasterOptions[res.key] = res.data;
+            });
+
+            set({ masterOptions: nextMasterOptions });
+        } catch (error: any) {
+            console.error("[Fetch Master Options Error]:", error);
+            const errorMsg =
+                error?.data?.message ||
+                error?.message ||
+                "Gagal memuat opsi pilihan!";
+            triggerNotification(
+                `Terjadi kesalahan master data: ${errorMsg}`,
+                "warning",
+            );
+        } finally {
+            set({ isFetchLoading: false });
+        }
+    },
+    // fungsi hit 1 appi banyak tipe data
+    fetchBulkMasterOptions: async (
+        bulkUrl,
+        configs,
+        triggerNotification,
+        method = "GET",
+        requestData = null,
+    ) => {
+        set({ isFetchLoading: true, errors: {} });
+        try {
+            // 🟢 1. Hit API dengan HTTP Method dan Request Body (Payload) yang Dinamis
+            const response = await fetchClient.request<any>(bulkUrl, {
+                method: method.toUpperCase(),
+                // 💡 Jika method-nya POST/PUT, sertakan requestData ke dalam properti data (atau body tergantung Axios/Fetch wrapper Anda)
+                data: method.toUpperCase() !== "GET" ? requestData : undefined,
+            });
+            const payload =
+                response.data !== undefined ? response.data : response;
+
+            // 🟢 2. Olah payload tunggal tersebut untuk setiap konfigurasi master key yang diminta
+            const results = configs.map((cfg) => {
+                const finalData = cfg.transform
+                    ? cfg.transform(payload)
+                    : payload;
+                return { key: cfg.key, data: finalData };
+            });
+
+            // 🟢 3. Perbarui state masterOptions di store
+            const nextMasterOptions = { ...get().masterOptions };
+            results.forEach((res) => {
+                nextMasterOptions[res.key] = res.data;
+            });
+
+            set({ masterOptions: nextMasterOptions });
+        } catch (error: any) {
+            console.error("[Fetch Bulk Master Options Error]:", error);
+            const errorMsg =
+                error?.data?.message ||
+                error?.message ||
+                "Gagal memuat beberapa opsi pilihan sekaligus!";
+            if (triggerNotification) {
+                triggerNotification(
+                    `Terjadi kesalahan bulk master data: ${errorMsg}`,
+                    "warning",
+                );
+            }
+        } finally {
+            set({ isFetchLoading: false });
+        }
+    },
 }));

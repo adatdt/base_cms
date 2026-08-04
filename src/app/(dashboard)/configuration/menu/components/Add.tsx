@@ -10,33 +10,9 @@ import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
 import { useFormStore } from "@/store/useFormStore";
 import { SelectDataMultiple } from "@/components/ui/SelectDataMultiple";
 
-
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
 }
-
-const roleOptions = [
-    { value: "1", label: "Super Admin" },
-    { value: "2", label: "Management" },
-    { value: "3", label: "Staff Operational" },
-    { value: "4", label: "Viewer Only" },
-    { value: "5", label: "Human Resources Manager" },
-    { value: "6", label: "HR Specialist" },
-    { value: "7", label: "Finance Director" },
-    { value: "8", label: "Finance & Accounting Staff" },
-    { value: "9", label: "Project Manager" },
-    { value: "10", label: "Lead Developer" },
-    { value: "11", label: "Senior Developer" },
-    { value: "12", label: "Junior Developer" },
-    { value: "13", label: "Quality Assurance Specialist" },
-    { value: "14", label: "System Administrator" },
-    { value: "15", label: "Network Engineer" },
-    { value: "16", label: "Data Analyst" },
-    { value: "17", label: "Marketing Manager" },
-    { value: "18", label: "Marketing Content Creator" },
-    { value: "19", label: "Customer Relation Officer" },
-    { value: "20", label: "Internal Auditor" },
-];
 
 const input: InputSchema[] = [
     {
@@ -48,21 +24,8 @@ const input: InputSchema[] = [
     {
         name: "action",
         label: "Aksi",
-        variant: "select",
+        variant: "select-multiple",
         placeholder: "Masukkan aksi",
-        options: [
-            { value: "0", label: "Tidak Ada (Jadikan Menu Utama)" },
-            { value: "1", label: "Dashboard Utama" },
-            { value: "2", label: "Pengaturan Sistem" },
-            { value: "3", label: "Manajemen Pengguna" },
-            { value: "4", label: "Hak Akses & Otentikasi" },
-            { value: "5", label: "Profil Perusahaan" },
-            { value: "6", label: "Manajemen Departemen" },
-            { value: "7", label: "Daftar Karyawan" },
-            { value: "8", label: "Absensi & Kehadiran" },
-            { value: "9", label: "Pengajuan Cuti Karyawan" },
-            { value: "10", label: "Sistem Penggajian (Payroll)" },
-        ],
     },
     {
         name: "icon",
@@ -79,16 +42,8 @@ const input: InputSchema[] = [
     {
         name: "parent",
         label: "Parent",
-        variant: "select-hirarchy",
+        variant: "select-hierarchy",
         placeholder: "Masukkan parent",
-        options: [
-            { value: "1", label: "Dashboard Utama", parent: null },
-            { value: "2", label: "Pengaturan Sistem", parent: null },
-            { value: "3", label: "Manajemen Pengguna", parent: "2" }, // ↳ Child dari Pengaturan Sistem
-            { value: "4", label: "Hak Akses & Role", parent: "3" }, //   ↳ Child dari Manajemen Pengguna (Cucu)
-            { value: "5", label: "Profil Perusahaan", parent: null },
-            { value: "6", label: "Daftar Karyawan", parent: "5" },
-        ],
     },
     {
         name: "url",
@@ -132,21 +87,6 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         });
     };
 
-    const getSelectedRoles = (): (string | number)[] => {
-        const rawValue = formData["roles"];
-
-        if (!rawValue) return [];
-
-        // 💡 JIKA DI ZUSTAND BENTUKNYA STRING JSON (Hasil dari JSON.stringify di fetchFormDetails lama)
-        try {
-            const parsed = JSON.parse(rawValue);
-            return Array.isArray(parsed) ? parsed : [parsed];
-        } catch {
-            // 💡 JIKA DI ZUSTAND BENTUKNYA STRING BIASA TERPISAH KOMA (Contoh: "1,2,3")
-            return rawValue.split(",").map((item) => item.trim());
-        }
-    };
-
     return (
         <form
             id={formId}
@@ -163,8 +103,14 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                     </label>
                     {(() => {
                         // Jika variant berupa "select", render komponen SelectData
+                        if (isMasterLoading) {
+                            return (
+                                <div className="w-full h-10 bg-slate-100 animate-pulse rounded-lg" />
+                            );
+                        }
+                        const dynamicOptions =
+                            masterOptions[item.name] || item.options || [];
                         if (item.variant === "select") {
-                            const dynamicOptions = masterOptions[item.name] || item.options || [];
                             return (
                                 <SelectData
                                     name={item.name}
@@ -176,15 +122,54 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                             );
                         }
 
-                        if (item.variant === "select-hirarchy") {
+                        if (item.variant === "select-hierarchy") {
                             return (
                                 <SelectHierarchyData
                                     name={item.name}
-                                    options={item.options || []}
-                                    value={formData.parent}
+                                    options={dynamicOptions}
+                                    value={formData[item.name]}
                                     onChange={handleFieldChange(item.name)}
                                     hasError={!!errors.parent}
                                     placeholder="Pilih Parent Menu..."
+                                />
+                            );
+                        }
+
+                        if (item.variant === "select-multiple") {
+                            const rawData = formData[item.name];
+                            let currentValue: (string | number)[] = [];
+
+                            // Lakukan parse aman agar komponen select-multiple bisa membaca array asli
+                            if (
+                                typeof rawData === "string" &&
+                                rawData.trim() !== ""
+                            ) {
+                                try {
+                                    const parsed = JSON.parse(rawData);
+                                    if (Array.isArray(parsed))
+                                        currentValue = parsed;
+                                } catch (e) {
+                                    console.log(e);
+                                    currentValue = [];
+                                }
+                            } else if (Array.isArray(rawData)) {
+                                currentValue = rawData;
+                            }
+                            return (
+                                <SelectDataMultiple
+                                    name={item.name}
+                                    options={dynamicOptions}
+                                    placeholder="Pilih beberapa hak akses..."
+                                    hasError={!!errors["roles"]}
+                                    value={currentValue}
+                                    onChange={(selectedArray) => {
+                                        // Jika handleFieldChange Anda hanya menerima string/number, konversi array menjadi JSON string agar aman
+                                        const valueToSave =
+                                            JSON.stringify(selectedArray);
+                                        handleFieldChange(item.name)(
+                                            valueToSave,
+                                        );
+                                    }}
                                 />
                             );
                         }
@@ -210,21 +195,6 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                     </p>
                 </div>
             ))}
-
-            <SelectDataMultiple
-                name="roles"
-                options={roleOptions}
-                placeholder="Pilih beberapa hak akses..."
-                hasError={!!errors["roles"]}
-                // 💡 Kirimkan nilai berbentuk array murni
-                value={getSelectedRoles()}
-                // 💡 Ambil array baru [ "1", "3" ] yang dipilih user, lalu simpan ke Zustand
-                onChange={(selectedArray) => {
-                    // Jika handleFieldChange Anda hanya menerima string/number, konversi array menjadi JSON string agar aman
-                    const valueToSave = JSON.stringify(selectedArray);
-                    handleFieldChange("roles")(valueToSave);
-                }}
-            />
         </form>
     );
 }

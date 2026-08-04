@@ -111,7 +111,25 @@ export const SelectHierarchyData = React.forwardRef<
 
         // Mencari label dari nilai yang sedang aktif untuk ditampilkan di tombol utama
         const selectedLabel = useMemo(() => {
-            const found = options.find((opt) => opt.value === selectedValue);
+            // Jika nilai kosong, nol, atau teks placeholder, langsung kembalikan placeholder
+            if (
+                selectedValue === undefined ||
+                selectedValue === null ||
+                selectedValue === "" ||
+                selectedValue === 0 ||
+                selectedValue === "0"
+            ) {
+                return placeholder;
+            }
+
+            // 💡 SOLUSI UTAMA: Cari berdasarkan ID atau Label sekaligus secara case-insensitive
+            const found = options.find(
+                (opt) =>
+                    String(opt.value) === String(selectedValue) ||
+                    opt.label.toLowerCase() ===
+                        String(selectedValue).toLowerCase(),
+            );
+
             return found ? found.label : placeholder;
         }, [options, selectedValue, placeholder]);
 

@@ -1,5 +1,5 @@
 type OptionId = string | number;
-type ParentOptionId = OptionId | null; 
+type ParentOptionId = OptionId | null;
 
 interface SelectOption {
     value: OptionId;
@@ -36,8 +36,11 @@ export interface MyApiDetails {
     // action: string;
     icon: string;
     order: string;
-    parent: string;
+    parent_id: string;
+    parent_name: string;
     slug: string;
+    action_id: (string | number)[];
+    action_name: (string | number)[];
 }
 
 // 2. Definisikan bentuk data yang diinginkan oleh Komponen Form Anda
@@ -47,5 +50,8 @@ export interface MyComponentFields {
     icon: string;
     order: string;
     parent: string;
+    parent_selected: string;
     url: string;
+    action: (string | number)[];
+    action_selected: (string | number)[];
 }

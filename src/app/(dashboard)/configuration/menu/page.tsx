@@ -11,19 +11,25 @@ import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { DocumentData, MyApiDetails, MyComponentFields, RawDatabaseMenu } from "./interfaces/menu.interfaces";
+import {
+    DocumentData,
+    MyApiDetails,
+    MyComponentFields,
+    RawDatabaseMenu,
+} from "./interfaces/menu.interfaces";
 
 const moduleName = `Menu`;
-
-
 
 export default function MenuPage() {
     const [data, setData] = React.useState<DocumentData[]>([]);
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
     const fetchFormDetails = useFormStore((state) => state.fetchFormDetails);
-    const fetchMasterOptions  = useFormStore((state) => state.fetchMasterOptions );
+    const fetchBulkMasterOptions = useFormStore(
+        (state) => state.fetchBulkMasterOptions,
+    );
     const { formData } = useFormStore();
+
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
     );
@@ -72,6 +78,36 @@ export default function MenuPage() {
     const loadEdit = async (menuId: string | number) => {
         openModal("Form Edit");
         const urlDetail = `/configuration/menu/api/crud/${menuId}`;
+        await fetchBulkMasterOptions(
+            "/configuration/menu/api/crud",
+            [
+                {
+                    key: "action",
+                    transform: (apiResponse) => {
+                        // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+                        const dataArray = apiResponse?.action || [];
+                        return dataArray.map((item: any) => ({
+                            value: item.id.toString(),
+                            label: item.action_name,
+                        }));
+                    },
+                },
+                {
+                    key: "parent",
+                    transform: (apiResponse) => {
+                        // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+                        const dataArray = apiResponse?.menu || [];
+                        return dataArray.map((item: any) => ({
+                            value: item.id.toString(),
+                            label: item.name,
+                            parent: item.parent_id?.toString() || null,
+                        }));
+                    },
+                },
+            ],
+            triggerNotification,
+            "GET",
+        );
         await fetchFormDetails<MyApiDetails, MyComponentFields>(
             menuId,
             triggerNotification,
@@ -80,36 +116,49 @@ export default function MenuPage() {
                 menu: apiData.name, // Memetakan 'name' dari API ke 'menu' komponen
                 icon: apiData.icon, // Langsung dipasangkan karena namanya sama
                 order: apiData.order, // Langsung dipasangkan karena namanya sama
-                parent: apiData.parent, // Langsung dipasangkan karena namanya sama
+                parent: String(apiData.parent_id),
+                parent_selected: apiData.parent_name, // Langsung dipasangkan karena namanya sama
                 url: apiData.slug,
-                
+                action: apiData.action_id.map(String) || [],
+                action_selected: apiData.action_name.map(String) || [],
             }),
             urlDetail, // Gunakan URL kustom untuk fetch detail
         );
     };
 
     const loadAdd = async () => {
-    openModal("Form Add");
-    // Cukup masukkan satu objek saja di dalam array []
-    await fetchMasterOptions(
-        [
-            { 
-                key: "action", 
-                url: "/configuration/menu/api/crud",
-                transform: (apiResponse) => {
-                     // 💡 Masuk langsung ke objek target yang spesifik (data.items)
-                    // const targetArray = apiResponse?.data?.items || [];
-                    const dataArray = apiResponse?.action || [];
-                    return dataArray.map((item: any) => ({
-                        value: item.id.toString(),
-                        label: item.action_name
-                    }));
-                }
-            }
-        ],
-        triggerNotification
-    );
-};
+        openModal("Form Add");
+
+        await fetchBulkMasterOptions(
+            "/configuration/menu/api/crud",
+            [
+                {
+                    key: "action",
+                    transform: (apiResponse) => {
+                        // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+                        const dataArray = apiResponse?.action || [];
+                        return dataArray.map((item: any) => ({
+                            value: item.id.toString(),
+                            label: item.action_name,
+                        }));
+                    },
+                },
+                {
+                    key: "parent",
+                    transform: (apiResponse) => {
+                        // 💡 Masuk langsung ke objek target yang spesifik (data.items)
+                        const dataArray = apiResponse?.menu || [];
+                        return dataArray.map((item: any) => ({
+                            value: item.id.toString(),
+                            label: item.name,
+                            parent: item.parent_id?.toString() || null,
+                        }));
+                    },
+                },
+            ],
+            triggerNotification,
+        );
+    };
 
     // Definisikan kolom beserta implementasi kustom render AKSI di level Page
     const columns: TreeGridColumn<DocumentData>[] = useMemo(

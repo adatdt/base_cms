@@ -8,6 +8,7 @@ import type { InputSchema } from "../interfaces/menu.interfaces";
 import { menuFormSchema } from "../schema/menu.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { SelectHierarchyData } from "@/components/ui/SelectHierarchyData";
+import { SelectDataMultiple } from "@/components/ui/SelectDataMultiple";
 
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan
@@ -23,21 +24,8 @@ const input: InputSchema[] = [
     {
         name: "action",
         label: "Aksi",
-        variant: "select",
+        variant: "select-multiple",
         placeholder: "Masukkan aksi",
-        options: [
-            { value: "0", label: "Tidak Ada (Jadikan Menu Utama)" },
-            { value: "1", label: "Dashboard Utama" },
-            { value: "2", label: "Pengaturan Sistem" },
-            { value: "3", label: "Manajemen Pengguna" },
-            { value: "4", label: "Hak Akses & Otentikasi" },
-            { value: "5", label: "Profil Perusahaan" },
-            { value: "6", label: "Manajemen Departemen" },
-            { value: "7", label: "Daftar Karyawan" },
-            { value: "8", label: "Absensi & Kehadiran" },
-            { value: "9", label: "Pengajuan Cuti Karyawan" },
-            { value: "10", label: "Sistem Penggajian (Payroll)" },
-        ],
     },
     {
         name: "icon",
@@ -54,7 +42,7 @@ const input: InputSchema[] = [
     {
         name: "parent",
         label: "Parent",
-        variant: "text",
+        variant: "select-hierarchy",
         placeholder: "Masukkan parent",
     },
     {
@@ -76,6 +64,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
     const handleFieldChange = useFormStore((state) => state.handleFieldChange);
 
     const executeSubmit = useFormStore((state) => state.executeSubmit);
+    const { masterOptions } = useFormStore();
 
     const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
         executeSubmit(e, {
@@ -112,7 +101,9 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                         {item.label}
                     </label>
                     {(() => {
-                        // Jika variant berupa "select", render komponen SelectData
+                        const dynamicOptions =
+                            masterOptions[item.name] || item.options || [];
+
                         if (item.variant === "select") {
                             return (
                                 <SelectData
@@ -125,13 +116,55 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                                 />
                             );
                         }
-                        if (item.variant === "select-hirarchy") {
+                        if (item.variant === "select-multiple") {
+                            const rawData = formData[item.name];
+                            let currentValue: (string | number)[] = [];
+
+                            // Lakukan parse aman agar komponen select-multiple bisa membaca array asli
+                            if (
+                                typeof rawData === "string" &&
+                                rawData.trim() !== ""
+                            ) {
+                                try {
+                                    const parsed = JSON.parse(rawData);
+                                    if (Array.isArray(parsed))
+                                        currentValue = parsed;
+                                } catch (e) {
+                                    console.log(e);
+                                    currentValue = [];
+                                }
+                            } else if (Array.isArray(rawData)) {
+                                currentValue = rawData;
+                            }
+
+                            return (
+                                <SelectDataMultiple
+                                    key={item.name}
+                                    name={item.name}
+                                    options={dynamicOptions}
+                                    placeholder="Pilih beberapa hak akses..."
+                                    hasError={!!errors[item.name]}
+                                    value={currentValue}
+                                    onChange={(selectedArray) => {
+                                        handleFieldChange(item.name, {
+                                            selectBy: "label", // Menyimpan teks label ("view", "edit") ke formData[item.name]
+                                            options: dynamicOptions,
+                                        })(selectedArray as any); // Gunakan 'as any' jika interface store lama Anda belum diubah tipe datanya
+                                    }}
+                                />
+                            );
+                        }
+
+                        if (item.variant === "select-hierarchy") {
                             return (
                                 <SelectHierarchyData
                                     name={item.name}
-                                    options={item.options || []}
+                                    options={dynamicOptions}
                                     value={formData[item.name] || ""}
-                                    onChange={handleFieldChange(item.name)}
+                                    onChange={handleFieldChange(item.name, {
+                                        selectBy: "label",
+                                        options: dynamicOptions,
+                                    })}
                                     hasError={!!errors.parent}
                                     placeholder="Pilih Parent Menu..."
                                 />
