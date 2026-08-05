@@ -6,7 +6,7 @@ import { useFormStore } from "@/store/useFormStore";
 import Btn from "./Btn";
 import Skeleton from "@/components/ui/Skeleton";
 
-type ModalSize =
+type PanelSize =
     | "sm"
     | "md"
     | "lg"
@@ -15,33 +15,38 @@ type ModalSize =
     | "3xl"
     | "4xl"
     | "5xl"
-    | "full";
+    | "full"
+    | "dynamic"; // 🌟 Menambahkan opsi ukuran dinamis
 
-interface ModalProps {
+interface SidePanelProps {
     id: string;
     title: string;
+    description?: string;
     children: React.ReactNode;
     onConfirm?: () => void;
     confirmText?: string;
     cancelText?: string;
     confirmLoading?: boolean;
     isBackdropLoading?: boolean;
-    size?: ModalSize;
+    size?: PanelSize;
 }
 
-const sizeClasses: Record<ModalSize, string> = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-    "3xl": "max-w-3xl",
-    "4xl": "max-w-4xl",
-    "5xl": "max-w-5xl",
-    full: "max-w-full m-4",
+// 🛠️ PERUBAHAN UTAMA: Mengubah kelas agar mendukung ukuran dinamis berbasis konten
+const sizeClasses: Record<PanelSize, string> = {
+    sm: "w-full md:max-w-xs",
+    md: "w-full md:max-w-sm",
+    lg: "w-full md:max-w-md",
+    xl: "w-full md:max-w-lg",
+    "2xl": "w-full md:max-w-xl",
+    "3xl": "w-full md:max-w-2xl",
+    "4xl": "w-full md:max-w-3xl",
+    "5xl": "w-full md:max-w-4xl",
+    full: "w-full",
+    // 🌟 Ukuran baru: Lebar otomatis menyesuaikan isi konten (bisa membesar sesuai elemen di dalamnya)
+    dynamic: "w-fit min-w-[320px] max-w-[90vw]",
 };
 
-export default function Modal({
+export default function SidePanel({
     id,
     title,
     children,
@@ -50,8 +55,8 @@ export default function Modal({
     cancelText,
     confirmLoading = false,
     isBackdropLoading = false,
-    size = "md",
-}: Readonly<ModalProps>) {
+    size = "dynamic", // 🌟 Mengubah default size menjadi 'dynamic'
+}: Readonly<SidePanelProps>) {
     const activeModalId = useModalStore((state) => state.activeModalId);
     const closeModal = useModalStore((state) => state.closeModal);
     const resetForm = useFormStore((state) => state.resetForm);
@@ -82,110 +87,109 @@ export default function Modal({
     if (!shouldRender) return null;
 
     const handleOverlayClick = () => {
-        // Jika sedang loading konten, cegah efek getar overlay click agar tidak mengganggu visual spinner
         if (isBackdropLoading) return;
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 300);
     };
 
     return (
-        <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
-            {/* 🔴 BACKDROP DENGAN LOADING SPINNER */}
+        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end pointer-events-none">
+            {/* 1. BACKDROP TRANSPARAN / GELAP */}
             <div
-                className={`fixed inset-0 h-screen w-screen bg-black/50 backdrop-blur-sm transition-opacity duration-200 flex items-center justify-center ${isAnimating ? "opacity-100" : "opacity-0"}`}
+                className={`fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity duration-200 flex items-center justify-center z-40 pointer-events-auto
+                ${isAnimating ? "opacity-100" : "opacity-0"}`}
             >
-                {/* Tombol transparan backdrop untuk mendeteksi klik luar */}
                 <button
                     type="button"
                     className="absolute inset-0 h-full w-full border-none outline-none cursor-default"
                     onClick={handleOverlayClick}
                 >
-                    <span className="sr-only">Tutup modal</span>
+                    <span className="sr-only">Tutup panel</span>
                 </button>
 
-                {/* 💡 Indikator Spinner Loading Tengah Backdrop */}
+                {/* Indikator Spinner Loading */}
                 {isBackdropLoading && (
                     <div className="relative z-50 flex items-center justify-center bg-slate-900/85 py-2.5 px-4 rounded-xl shadow-xl border border-slate-700/40 pointer-events-none select-none max-w-xs mx-auto">
-                        {/* Memanggil komponen Skeleton bawaan Anda dengan varian teks saja */}
                         <Skeleton variant="text-only" align="center" />
                     </div>
                 )}
             </div>
 
-            <div className="fixed inset-0 min-h-screen w-full overflow-y-auto p-4 flex items-start justify-center pt-10 pb-16 z-50 bg-black/50">
-                <button
-                    type="button"
-                    className="absolute inset-0 h-full w-full cursor-default z-0"
-                    onClick={handleOverlayClick}
-                >
-                    <span className="sr-only">Tutup modal</span>
-                </button>
+            {/* 2. PANEL UTAMA DENGAN LEBAR DINAMIS */}
+            <div
+                className={`fixed inset-y-0 right-0 z-50 bg-slate-50 shadow-2xl transition-transform duration-200 ease-out flex flex-col pointer-events-auto
+                ${sizeClasses[size]} 
+                ${isAnimating && !isBackdropLoading ? "translate-x-0" : "translate-x-full"} 
+                ${isShaking ? "animate-shake" : ""}`}
+            >
+                {/* Header Panel */}
+                <div className="flex items-center justify-between border-b border-gray-200 p-5 shrink-0">
+                    <h3 className="text-xs font-semibold text-gray-900 whitespace-nowrap">
+                        {title}
+                    </h3>
+                    <button
+                        type="button"
+                        onClick={closeModal}
+                        className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition ml-8"
+                    >
+                        ✕
+                    </button>
+                </div>
 
-                {/* Kotak Putih Modal Konten */}
-                {/* 💡 Ditambahkan kelas CSS dinamis jika isBackdropLoading aktif untuk menyembunyikan sementara kotak putih agar fokus ke backdrop loading */}
-                <div
-                    className={`relative z-10 w-full bg-slate-50 p-6 shadow-xl rounded-2xl transition-all duration-200 ease-out mb-auto
-              ${sizeClasses[size]} 
-              ${isAnimating && !isBackdropLoading ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"} 
-              ${isShaking ? "animate-shake" : ""}`}
-                >
-                    {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                        <h3 className="text-lg font-semibold text-gray-900 ">
-                            {title}
-                        </h3>
-                        <button
-                            type="button"
-                            onClick={closeModal}
-                            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 "
-                        >
-                            ✕
-                        </button>
-                    </div>
+                {/* Body Panel */}
+                <div className="flex-1 overflow-y-auto p-5 text-sm text-gray-600 w-full h-full">
+                    <h3 className="text-2xl font-semibold text-gray-900 whitespace-nowrap">
+                        {title}
+                    </h3>
+                    <p className="mt-1 pb-10 text-xs text-gray-500 font-normal leading-relaxed max-w-sm">
+                        Berikut merupakan detail data{" "}
+                        {title.toLowerCase().replace("tambah ", "")}, anda bisa
+                        melakukan segala perubahan disini
+                    </p>
+                    {children}
+                </div>
 
-                    {/* Body */}
-                    <div className="mt-4 text-sm text-gray-600 ">
-                        {children}
-                    </div>
+                {/* Footer Panel */}
+                {/* Footer Panel - Diubah menjadi justify-center agar posisi tombol berada di tengah */}
+                <div className="border-t border-gray-200 p-8 bg-slate-50 flex justify-center gap-2 shrink-0">
+                    <Btn
+                        type="button"
+                        onClick={closeModal}
+                        variant="default"
+                        size="md"
+                        fullWidth={true}
+                        disabled={confirmLoading}
+                    >
+                        {cancelText ?? "Kembali"}
+                    </Btn>
 
-                    {/* Footer */}
-                    <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-3">
+                    {onConfirm ? (
                         <Btn
                             type="button"
-                            onClick={closeModal}
-                            variant="delete"
-                            size="md"
+                            onClick={onConfirm}
                             disabled={confirmLoading}
+                            variant="info"
+                            size="md"
+                            fullWidth={true}
                         >
-                            {cancelText ?? "Batal"}
+                            {confirmLoading
+                                ? "Memproses..."
+                                : (confirmText ?? "Simpan")}
                         </Btn>
-
-                        {onConfirm ? (
-                            <Btn
-                                type="button"
-                                onClick={onConfirm}
-                                disabled={confirmLoading}
-                                variant="primary"
-                                size="md"
-                            >
-                                {confirmLoading
-                                    ? "Memproses..."
-                                    : (confirmText ?? "Simpan")}
-                            </Btn>
-                        ) : (
-                            <Btn
-                                type="submit"
-                                form={id}
-                                disabled={confirmLoading}
-                                variant="primary"
-                                size="md"
-                            >
-                                {confirmLoading
-                                    ? "Memproses..."
-                                    : (confirmText ?? "Simpan")}
-                            </Btn>
-                        )}
-                    </div>
+                    ) : (
+                        <Btn
+                            type="submit"
+                            form={id}
+                            disabled={confirmLoading}
+                            variant="info"
+                            size="md"
+                            fullWidth={true}
+                        >
+                            {confirmLoading
+                                ? "Memproses..."
+                                : (confirmText ?? "Simpan")}
+                        </Btn>
+                    )}
                 </div>
             </div>
         </div>

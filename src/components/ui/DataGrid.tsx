@@ -4,281 +4,301 @@ import React, { useEffect } from "react";
 import Skeleton from "./Skeleton";
 
 export interface ColumnProps<T> {
-  key: keyof T | "actions";
-  header: string;
-  className?: string;
-  headerClassName?: string;
-  render?: (row: T) => React.ReactNode;
+    key: keyof T | "actions";
+    header: string;
+    className?: string;
+    headerClassName?: string;
+    render?: (row: T) => React.ReactNode;
 }
 
 interface DataGridProps<T> {
-  data: T[]; // Data bersih yang sudah dipaginasi oleh Backend PostgreSQL
-  columns: ColumnProps<T>[];
-  isLoading?: boolean;
+    data: T[]; // Data bersih yang sudah dipaginasi oleh Backend PostgreSQL
+    columns: ColumnProps<T>[];
+    isLoading?: boolean;
 
-  // PROPERTI UNTUK MENGONTROL SERVER-SIDE PAGINATION
-  currentPage: number;
-  rowsPerPage: number;
-  totalData: number; // Mengambil total_data dari metadata PostgreSQL backend
-  onPageChange: (newPage: number) => void; // Fungsi callback untuk mengubah halaman di luar
-  onRowsPerPageChange: (newLimit: number) => void; // Fungsi callback untuk mengubah limit di luar
+    // PROPERTI UNTUK MENGONTROL SERVER-SIDE PAGINATION
+    currentPage: number;
+    rowsPerPage: number;
+    totalData: number; // Mengambil total_data dari metadata PostgreSQL backend
+    onPageChange: (newPage: number) => void; // Fungsi callback untuk mengubah halaman di luar
+    onRowsPerPageChange: (newLimit: number) => void; // Fungsi callback untuk mengubah limit di luar
 }
 
 export default function DataGrid<T extends { id: string }>({
-  data,
-  columns,
-  isLoading = false,
-  currentPage,
-  rowsPerPage,
-  totalData,
-  onPageChange,
-  onRowsPerPageChange,
+    data,
+    columns,
+    isLoading = false,
+    currentPage,
+    rowsPerPage,
+    totalData,
+    onPageChange,
+    onRowsPerPageChange,
 }: Readonly<DataGridProps<T>>) {
-  // Hitung total halaman berdasarkan data COUNT asli dari database
-  const totalPages = Math.ceil(totalData / rowsPerPage) || 1;
-  const indexOfFirstRow = (currentPage - 1) * rowsPerPage;
-  const indexOfLastRow = Math.min(indexOfFirstRow + rowsPerPage, totalData);
+    // Hitung total halaman berdasarkan data COUNT asli dari database
+    const totalPages = Math.ceil(totalData / rowsPerPage) || 1;
+    const indexOfFirstRow = (currentPage - 1) * rowsPerPage;
+    const indexOfLastRow = Math.min(indexOfFirstRow + rowsPerPage, totalData);
 
-  // Auto-reset ke halaman 1 secara aman jika user memperkecil pilihan limit data
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      onPageChange(1);
-    }
-  }, [rowsPerPage, currentPage, totalPages, onPageChange]);
+    // Auto-reset ke halaman 1 secara aman jika user memperkecil pilihan limit data
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            onPageChange(1);
+        }
+    }, [rowsPerPage, currentPage, totalPages, onPageChange]);
 
-  // Hitung rentang halaman dinamis (Maksimal 5 angka tombol)
-  const getPaginationNumbers = (): number[] => {
-    const maxButtons = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
-    let endPage = startPage + maxButtons - 1;
+    // Hitung rentang halaman dinamis (Maksimal 5 angka tombol)
+    const getPaginationNumbers = (): number[] => {
+        const maxButtons = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+        let endPage = startPage + maxButtons - 1;
 
-    if (endPage > totalPages) {
-      endPage = totalPages;
-      startPage = Math.max(1, endPage - maxButtons + 1);
-    }
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
 
-    const pages: number[] = [];
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
-  };
+        const pages: number[] = [];
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(i);
+        }
+        return pages;
+    };
 
-  // 🌟 Extract nested ternary into clean, standalone conditional blocks
-  const renderTableBodyContent = (): React.ReactNode => {
-    // CASE 1: Data is currently fetching from the PostgreSQL server
-    if (isLoading) {
-      return (
-        <tr className="hover:bg-slate-50/80 transition-colors group">
-          <td colSpan={columns.length} className="p-0">
-            <Skeleton
-              totalCount={3}
-              align="left"
-              rows={3}
-              variant="text-only"
-            />
-          </td>
-        </tr>
-      );
-    }
+    // 🌟 Extract nested ternary into clean, standalone conditional blocks
+    const renderTableBodyContent = (): React.ReactNode => {
+        // CASE 1: Data is currently fetching from the PostgreSQL server
+        if (isLoading) {
+            return (
+                <tr className="hover:bg-slate-50/80 transition-colors group">
+                    <td colSpan={columns.length} className="p-0">
+                        <Skeleton
+                            totalCount={3}
+                            align="left"
+                            rows={3}
+                            variant="text-only"
+                        />
+                    </td>
+                </tr>
+            );
+        }
 
-    // CASE 2: API request resolved successfully and contains items
-    if (data.length > 0) {
-      // Tambahkan parameter 'index' pada data.map() untuk menghitung baris ganjil/genap
-      return data.map((row, index) => {
-        // Baris genap (0, 2, 4) akan mendapat warna putih bersih, baris ganjil (1, 3, 5) mendapat bg-slate-50/40 redup
-        const isEvenRow = index % 2 === 0;
-        const rowBackgroundClass = isEvenRow ? "bg-white" : "bg-slate-50/40";
+        // CASE 2: API request resolved successfully and contains items
+        if (data.length > 0) {
+            // Tambahkan parameter 'index' pada data.map() untuk menghitung baris ganjil/genap
+            return data.map((row, index) => {
+                // Baris genap (0, 2, 4) akan mendapat warna putih bersih, baris ganjil (1, 3, 5) mendapat bg-slate-50/40 redup
+                const isEvenRow = index % 2 === 0;
+                const rowBackgroundClass = isEvenRow
+                    ? "bg-white"
+                    : "bg-slate-50/40";
 
+                return (
+                    <tr
+                        key={row.id}
+                        // Gabungkan kelas latar belakang dinamis ke dalam tr
+                        className={`${rowBackgroundClass} hover:bg-slate-50/80 transition-colors group`}
+                    >
+                        {columns.map((col) => (
+                            <td
+                                key={col.header}
+                                className={`p-4 ${col.className || ""}`}
+                            >
+                                {col.render
+                                    ? col.render(row)
+                                    : (row[
+                                          col.key as keyof T
+                                      ] as React.ReactNode)}
+                            </td>
+                        ))}
+                    </tr>
+                );
+            });
+        }
+
+        // CASE 3: Fetch process finished but returned an empty dataset
         return (
-          <tr
-            key={row.id}
-            // Gabungkan kelas latar belakang dinamis ke dalam tr
-            className={`${rowBackgroundClass} hover:bg-slate-50/80 transition-colors group`}
-          >
-            {columns.map((col) => (
-              <td key={col.header} className={`p-4 ${col.className || ""}`}>
-                {col.render
-                  ? col.render(row)
-                  : (row[col.key as keyof T] as React.ReactNode)}
-              </td>
-            ))}
-          </tr>
+            <tr>
+                <td
+                    colSpan={columns.length}
+                    className="p-12 text-center text-slate-400 font-normal"
+                >
+                    Tidak ada data.
+                </td>
+            </tr>
         );
-      });
-    }
+    };
 
-    // CASE 3: Fetch process finished but returned an empty dataset
     return (
-      <tr>
-        <td
-          colSpan={columns.length}
-          className="p-12 text-center text-slate-400 font-normal"
-        >
-          ⚠️ Tidak ada data yang ditemukan dari database.
-        </td>
-      </tr>
+        <div className="space-y-4 w-full">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full">
+                <div className="overflow-x-auto w-full">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                                {columns.map((col) => (
+                                    <th
+                                        key={col.header}
+                                        className={`p-4 ${col.headerClassName || ""}`}
+                                    >
+                                        {col.header}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-xs">
+                            {renderTableBodyContent()}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* GRID FOOTER / PAGINATION CONTROL */}
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-600 w-full">
+                    <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto text-center sm:text-left">
+                        <div>
+                            Menampilkan{" "}
+                            <span className="text-slate-900 font-bold">
+                                {totalData === 0 ? 0 : indexOfFirstRow + 1}
+                            </span>{" "}
+                            sampai{" "}
+                            <span className="text-slate-900 font-bold">
+                                {indexOfLastRow}
+                            </span>{" "}
+                            dari{" "}
+                            <span className="text-slate-900 font-bold">
+                                {totalData}
+                            </span>{" "}
+                            entri data
+                        </div>
+
+                        <div className="flex items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+                            <span className="text-slate-400 text-[11px]">
+                                Tampilkan:
+                            </span>
+                            <select
+                                value={rowsPerPage}
+                                onChange={(e) =>
+                                    onRowsPerPageChange(Number(e.target.value))
+                                }
+                                disabled={isLoading}
+                                className="bg-white border border-slate-300 rounded-md px-2 py-1 text-slate-700 font-medium focus:outline-none focus:border-blue-500 cursor-pointer text-[11px] shadow-sm"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Navigasi Tombol Angka */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-1">
+                            <button
+                                disabled={currentPage === 1 || isLoading}
+                                onClick={() => onPageChange(1)}
+                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                title="Halaman Pertama"
+                            >
+                                <svg
+                                    className="w-4 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"
+                                    />
+                                </svg>
+                            </button>
+
+                            <button
+                                disabled={currentPage === 1 || isLoading}
+                                onClick={() => onPageChange(currentPage - 1)}
+                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                title="Sebelumnya"
+                            >
+                                <svg
+                                    className="w-4 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M15.75 19.5L8.25 12l7.5-7.5"
+                                    />
+                                </svg>
+                            </button>
+
+                            {getPaginationNumbers().map((pageNumber) => (
+                                <button
+                                    key={pageNumber}
+                                    disabled={isLoading}
+                                    onClick={() => onPageChange(pageNumber)}
+                                    className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${
+                                        currentPage === pageNumber
+                                            ? "bg-blue-600 border-blue-600 text-white"
+                                            : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                                    }`}
+                                >
+                                    {pageNumber}
+                                </button>
+                            ))}
+
+                            <button
+                                disabled={
+                                    currentPage === totalPages || isLoading
+                                }
+                                onClick={() => onPageChange(currentPage + 1)}
+                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                title="Selanjutnya"
+                            >
+                                <svg
+                                    className="w-4 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                                    />
+                                </svg>
+                            </button>
+
+                            <button
+                                disabled={
+                                    currentPage === totalPages || isLoading
+                                }
+                                onClick={() => onPageChange(totalPages)}
+                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                title="Halaman Terakhir"
+                            >
+                                <svg
+                                    className="w-4 h-5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2.5}
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M5.25 5.25l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
     );
-  };
-
-  return (
-    <div className="space-y-4 w-full">
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full">
-        <div className="overflow-x-auto w-full">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                {columns.map((col) => (
-                  <th
-                    key={col.header}
-                    className={`p-4 ${col.headerClassName || ""}`}
-                  >
-                    {col.header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {renderTableBodyContent()}
-            </tbody>
-          </table>
-        </div>
-
-        {/* GRID FOOTER / PAGINATION CONTROL */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-600 w-full">
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto text-center sm:text-left">
-            <div>
-              Menampilkan{" "}
-              <span className="text-slate-900 font-bold">
-                {totalData === 0 ? 0 : indexOfFirstRow + 1}
-              </span>{" "}
-              sampai{" "}
-              <span className="text-slate-900 font-bold">{indexOfLastRow}</span>{" "}
-              dari <span className="text-slate-900 font-bold">{totalData}</span>{" "}
-              entri data
-            </div>
-
-            <div className="flex items-center gap-2 border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-              <span className="text-slate-400 text-[11px]">Tampilkan:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => onRowsPerPageChange(Number(e.target.value))}
-                disabled={isLoading}
-                className="bg-white border border-slate-300 rounded-md px-2 py-1 text-slate-700 font-medium focus:outline-none focus:border-blue-500 cursor-pointer text-[11px] shadow-sm"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Navigasi Tombol Angka */}
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                disabled={currentPage === 1 || isLoading}
-                onClick={() => onPageChange(1)}
-                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
-                title="Halaman Pertama"
-              >
-                <svg
-                  className="w-4 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M18.75 19.5l-7.5-7.5 7.5-7.5m-6 15L5.25 12l7.5-7.5"
-                  />
-                </svg>
-              </button>
-
-              <button
-                disabled={currentPage === 1 || isLoading}
-                onClick={() => onPageChange(currentPage - 1)}
-                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
-                title="Sebelumnya"
-              >
-                <svg
-                  className="w-4 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15.75 19.5L8.25 12l7.5-7.5"
-                  />
-                </svg>
-              </button>
-
-              {getPaginationNumbers().map((pageNumber) => (
-                <button
-                  key={pageNumber}
-                  disabled={isLoading}
-                  onClick={() => onPageChange(pageNumber)}
-                  className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${
-                    currentPage === pageNumber
-                      ? "bg-blue-600 border-blue-600 text-white"
-                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              ))}
-
-              <button
-                disabled={currentPage === totalPages || isLoading}
-                onClick={() => onPageChange(currentPage + 1)}
-                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
-                title="Selanjutnya"
-              >
-                <svg
-                  className="w-4 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M8.25 4.5l7.5 7.5-7.5 7.5"
-                  />
-                </svg>
-              </button>
-
-              <button
-                disabled={currentPage === totalPages || isLoading}
-                onClick={() => onPageChange(totalPages)}
-                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
-                title="Halaman Terakhir"
-              >
-                <svg
-                  className="w-4 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2.5}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5.25 5.25l7.5 7.5-7.5 7.5m6-15l7.5 7.5-7.5 7.5"
-                  />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }

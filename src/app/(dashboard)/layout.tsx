@@ -195,7 +195,7 @@ export default function DashboardLayout({
                 <Header
                     isMobileMenuOpen={isMobileMenuOpen}
                     setIsMobileMenuOpen={setIsMobileMenuOpen}
-                    operatorName="Operator ASDP Merak" // Opsional jika ingin diganti dinamis
+                    operatorName="Web Admin ASDP" // Opsional jika ingin diganti dinamis
                 />
 
                 <main className="flex-1 relative">{children}</main>

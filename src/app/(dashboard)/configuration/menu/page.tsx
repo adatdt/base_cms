@@ -238,7 +238,7 @@ export default function MenuPage() {
             <Modal
                 id="Form Add"
                 title="Tambah Data Pengguna"
-                size="5xl"
+                size="sm"
                 isBackdropLoading={isFetchLoading}
                 // confirmLoading={loading}
             >
@@ -249,7 +249,7 @@ export default function MenuPage() {
             <Modal
                 id="Form Edit"
                 title="Edit Data Pengguna"
-                size="5xl"
+                // size="5xl"
                 isBackdropLoading={isFetchLoading}
 
                 // confirmLoading={loading}

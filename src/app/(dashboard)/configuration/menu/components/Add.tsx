@@ -18,7 +18,7 @@ const input: InputSchema[] = [
         variant: "text",
         placeholder: "Masukkan menu",
     },
-    
+
     {
         name: "icon",
         label: "Ikon",
@@ -42,7 +42,8 @@ const input: InputSchema[] = [
         label: "URL",
         variant: "text",
         placeholder: "Masukkan url",
-    },{
+    },
+    {
         name: "action",
         label: "Aksi",
         variant: "select-multiple",
@@ -85,25 +86,23 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
     };
 
     return (
-        
-            <form
-                id={formId}
-                onSubmit={sendForm}
-                className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
-            >
-                {input.map((item) => (
-                    <FormFieldRenderer
-                        key={item.name}
-                        item={item}
-                        isMasterLoading={isMasterLoading}
-                        masterOptions={masterOptions}
-                        errors={errors}
-                        formData={formData}
-                        handleChange={handleChange}
-                        handleFieldChange={handleFieldChange}
-                    />
-                ))}
-            </form>
-        
+        <form
+            id={formId}
+            onSubmit={sendForm}
+            className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
+        >
+            {input.map((item) => (
+                <FormFieldRenderer
+                    key={item.name}
+                    item={item}
+                    isMasterLoading={isMasterLoading}
+                    masterOptions={masterOptions}
+                    errors={errors}
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleFieldChange={handleFieldChange}
+                />
+            ))}
+        </form>
     );
 }

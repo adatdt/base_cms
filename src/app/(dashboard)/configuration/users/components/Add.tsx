@@ -7,8 +7,7 @@ import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
 import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
 
-const input: InputSchema[] =  [
-
+const input: InputSchema[] = [
     {
         name: "username",
         label: "USERNAME",
@@ -26,25 +25,25 @@ const input: InputSchema[] =  [
     {
         name: "no_telepon",
         label: "NO. TELEPON",
-        variant: "text", 
+        variant: "text",
         placeholder: "Masukkan no. telepon",
         required: true,
     },
     {
         name: "group",
         label: "GROUP",
-        variant: "select", 
+        variant: "select",
         required: true,
         placeholder: "Pilih group...",
-        selectBy: "id", // Menentukan seleksi berdasarkan id (mengikuti setup dinamis kita sebelumnya)
-    }
+        selectBy: "label", // Menentukan seleksi berdasarkan id (mengikuti setup dinamis kita sebelumnya)
+    },
 ];
 
 export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
     // State untuk menyimpan pesan error dari Zod
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
-    ); 
+    );
 
     const formData = useFormStore((state) => state.formData);
     const errors = useFormStore((state) => state.errors);
@@ -74,25 +73,24 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         });
     };
 
-   return (
-    <form
-        id={formId}
-        onSubmit={sendForm}
-        className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 text-left"
-    >
-        {input.map((item) => (
-            <FormFieldRenderer
-                key={item.name}
-                item={item}
-                isMasterLoading={isMasterLoading}
-                masterOptions={masterOptions}
-                errors={errors}
-                formData={formData}
-                handleChange={handleChange}
-                handleFieldChange={handleFieldChange}
-            />
-        ))}
-    </form>
-);
-
+    return (
+        <form
+            id={formId}
+            onSubmit={sendForm}
+            className="grid grid-cols-1 gap-y-4 text-left w-full"
+        >
+            {input.map((item) => (
+                <FormFieldRenderer
+                    key={item.name}
+                    item={item}
+                    isMasterLoading={isMasterLoading}
+                    masterOptions={masterOptions}
+                    errors={errors}
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleFieldChange={handleFieldChange}
+                />
+            ))}
+        </form>
+    );
 }
