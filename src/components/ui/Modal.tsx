@@ -138,11 +138,11 @@ export default function SidePanel({
 
                 {/* Body Panel */}
                 <div className="flex-1 overflow-y-auto p-5 text-sm text-gray-600 w-full h-full">
-                    <h3 className="text-2xl font-semibold text-gray-900 whitespace-nowrap">
+                    <h2 className="font-thunder font-black text-3xl leading-tight tracking-tight uppercase text-gray-900 whitespace-nowrap [-webkit-text-stroke:0.5px_#111827]">
                         {title}
-                    </h3>
+                    </h2>
                     <p className="mt-1 pb-10 text-xs text-gray-500 font-normal leading-relaxed max-w-sm">
-                        Berikut merupakan detail data{" "}
+                        Berikut merupakan detail{" "}
                         {title.toLowerCase().replace("tambah ", "")}, anda bisa
                         melakukan segala perubahan disini
                     </p>
@@ -151,7 +151,7 @@ export default function SidePanel({
 
                 {/* Footer Panel */}
                 {/* Footer Panel - Diubah menjadi justify-center agar posisi tombol berada di tengah */}
-                <div className="border-t border-gray-200 p-8 bg-slate-50 flex justify-center gap-2 shrink-0">
+                <div className="border-t border-gray-200 p-6 bg-slate-50 flex justify-center gap-2 shrink-0">
                     <Btn
                         type="button"
                         onClick={closeModal}

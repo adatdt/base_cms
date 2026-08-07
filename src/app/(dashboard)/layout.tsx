@@ -116,31 +116,66 @@ export default function DashboardLayout({
             {/* ================= SIDEBAR (DESKTOP) ================= */}
             {/* Sensor hover dipasang menggunakan onMouseEnter dan onMouseLeave */}
             <aside
-                className={`hidden md:flex md:flex-col fixed inset-y-0 bg-slate-900 text-white z-30 transition-all duration-300 shadow-xl ${
+                className={`hidden md:flex md:flex-col fixed inset-y-0 bg-white text-slate-800 z-30 transition-all duration-300 border-r border-slate-100 shadow-sm ${
                     isSidebarOpen ? "w-64" : "w-20"
                 }`}
             >
                 {/* Logo / Nama Aplikasi & Tombol Toggle */}
                 <div
-                    className={`flex h-16 items-center border-b border-slate-800 bg-slate-950 px-4 ${
+                    className={`flex h-16 items-center border-b border-slate-100 bg-white px-4 ${
                         isSidebarOpen ? "justify-between" : "justify-center"
                     }`}
                 >
                     {isSidebarOpen && (
-                        <span className="text-lg font-bold tracking-wider text-blue-400 animate-fade-in">
-                            ASDP
-                        </span>
+                        <div className="flex items-center gap-2 animate-fade-in select-none">
+                            {/* Wadah Ikon: Latar belakang putih dengan border abu-abu yang sangat tipis dan halus */}
+                            <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg flex-shrink-0">
+                                <svg
+                                    className="w-5 h-5 text-[#459fda]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth="2.5"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M11 3.06a8.003 8.003 0 0 0-7.94 7.94H11V3.06Z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M13 3.06A8.003 8.003 0 0 1 20.94 11H13V3.06Z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M20.475 13A8.001 8.001 0 0 1 3.525 13H20.475Z"
+                                    />
+                                </svg>
+                            </div>
+
+                            {/* Ukuran Teks: Menggunakan text-slate-800 yang kontras dan bersih di atas background putih */}
+                            <div className="flex flex-col text-left font-sans">
+                                <span className="text-xs font-bold leading-tight tracking-tight text-slate-800">
+                                    Merchant
+                                </span>
+                                <span className="text-xs font-bold leading-tight tracking-tight text-slate-800">
+                                    Management
+                                </span>
+                            </div>
+                        </div>
                     )}
 
+                    {/* Tombol Toggle: Diubah dari warna gelap ke abu-abu terang modern agar seimbang dengan background putih */}
                     <button
                         type="button"
                         onClick={handleToggleClick}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all duration-200 focus:outline-none flex items-center justify-center border border-slate-700/50"
+                        className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 transition-all duration-200 focus:outline-none flex items-center justify-center border border-slate-200/60"
                         aria-label={
                             isSidebarOpen ? "Tutup sidebar" : "Buka sidebar"
                         }
                     >
-                        {/* Ikon SVG Dinamis: Otomatis Animasi Burger Menjadi Silang (X) */}
                         <svg
                             className="h-5 w-5 transition-transform duration-300"
                             fill="none"
@@ -148,14 +183,24 @@ export default function DashboardLayout({
                             stroke="currentColor"
                             strokeWidth="2.5"
                         >
+                            <rect
+                                x="3"
+                                y="5"
+                                width="18"
+                                height="14"
+                                rx="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            />
                             <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="M4 6h16M4 12h16M4 18h16"
+                                d="M9 5v14"
                             />
                         </svg>
                     </button>
                 </div>
+
                 {/* Menu Navigasi dengan Fitur Pencarian */}
                 {/* PANGGIL KELAS UTAMA UNTUK DESKTOP SIDEBAR */}
                 {isLoading ? (
@@ -176,8 +221,8 @@ export default function DashboardLayout({
                     />
                 )}
                 {/* Footer Sidebar */}
-                <div className="p-4 border-t border-slate-800 bg-slate-950/50 text-center text-xs overflow-hidden">
-                    <p className="text-[10px] text-slate-500 font-mono whitespace-nowrap">
+                <div className="p-4 border-t border-slate-100 bg-white text-center text-xs overflow-hidden">
+                    <p className="text-[10px] text-slate-400 font-sans tracking-wide whitespace-nowrap">
                         {isSidebarOpen ? "ASDP Versi 2.0" : "V2"}
                     </p>
                 </div>
@@ -211,11 +256,46 @@ export default function DashboardLayout({
                         className="fixed inset-0 w-full h-full bg-slate-900/60 backdrop-blur-sm cursor-default"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
-                    <div className="relative flex w-full max-w-xs flex-col bg-slate-900 p-4 text-white shadow-2xl">
-                        <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-                            <span className="text-md font-bold text-blue-400">
-                                ASDP
-                            </span>
+                    <div className="relative flex w-full max-w-xs flex-col bg-white p-4 text-slate-800 border-r border-slate-100 shadow-xl">
+                        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <div className="flex items-center gap-2 animate-fade-in select-none">
+                                {/* Wadah Ikon: Latar belakang putih dengan border abu-abu yang sangat tipis dan halus */}
+                                <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg flex-shrink-0">
+                                    <svg
+                                        className="w-5 h-5 text-[#459fda]"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        strokeWidth="2.5"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M11 3.06a8.003 8.003 0 0 0-7.94 7.94H11V3.06Z"
+                                        />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M13 3.06A8.003 8.003 0 0 1 20.94 11H13V3.06Z"
+                                        />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            d="M20.475 13A8.001 8.001 0 0 1 3.525 13H20.475Z"
+                                        />
+                                    </svg>
+                                </div>
+
+                                {/* Ukuran Teks: Menggunakan text-slate-800 yang kontras dan bersih di atas background putih */}
+                                <div className="flex flex-col text-left font-sans">
+                                    <span className="text-xs font-bold leading-tight tracking-tight text-slate-800">
+                                        Merchant
+                                    </span>
+                                    <span className="text-xs font-bold leading-tight tracking-tight text-slate-800">
+                                        Management
+                                    </span>
+                                </div>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setIsMobileMenuOpen(false)}

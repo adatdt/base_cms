@@ -50,8 +50,8 @@ export default function MenuPage() {
                     `Gagal mengambil data (HTTP ${response.status})`,
                 );
             }
-
             const result = await response.json();
+            console.log(result.data);
             setData(convertToTreeGridData(result.data));
         } catch (error) {
             const errorMessage =
@@ -276,7 +276,7 @@ export default function MenuPage() {
 
                 <Btn
                     type="button"
-                    variant="primary"
+                    variant="success-blue"
                     size="sm"
                     title="Tambah"
                     onClick={() => loadAdd()}

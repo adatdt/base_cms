@@ -7,7 +7,9 @@ type ButtonVariant =
     | "info"
     | "dark"
     | "default"
-    | "primary";
+    | "success-blue"
+    | "primary"
+    | "ghost";
 type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,11 +26,16 @@ const variantStyles: Record<ButtonVariant, string> = {
     success:
         "bg-emerald-600 hover:bg-emerald-700 text-slate-100 focus:ring-emerald-500",
     delete: "bg-red-600 hover:bg-red-700 text-slate-100 focus:ring-red-500",
-    info: "bg-amber-600 hover:bg-amber-700 text-slate-100 focus:ring-amber-500", // Menggunakan bg-amber-600 agar teks putih lembut tetap terbaca jelas
+    info: "bg-amber-600 hover:bg-amber-700 text-slate-100 focus:ring-amber-500",
     dark: "bg-slate-200 hover:bg-slate-300 text-slate-900 focus:ring-slate-400 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100",
     default:
         "bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 shadow-xs focus:ring-slate-300",
+    "success-blue":
+        "bg-[#459fda] text-white hover:bg-[#378ec7] focus:ring-blue-400/20 active:bg-[#2b7bb0]",
     primary: "bg-blue-600 hover:bg-blue-700 text-slate-100 focus:ring-blue-500",
+
+    // Varian Baru: Sama dengan 'default' tapi TANPA border dan shadow (Sangat cocok untuk ikon titik tiga)
+    ghost: "bg-white hover:bg-slate-50 text-slate-800 focus:ring-slate-300",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

@@ -16,6 +16,14 @@ const input: InputSchema[] = [
         required: true, // Menandai field ini sebagai wajib diisi
     },
     {
+        name: "group",
+        label: "GROUP",
+        variant: "select",
+        required: true,
+        placeholder: "Pilih group...",
+        selectBy: "label", // Menentukan seleksi berdasarkan id (mengikuti setup dinamis kita sebelumnya)
+    },
+    {
         name: "nama_depan",
         label: "NAMA DEPAN",
         variant: "text",
@@ -28,14 +36,6 @@ const input: InputSchema[] = [
         variant: "text",
         placeholder: "Masukkan no. telepon",
         required: true,
-    },
-    {
-        name: "group",
-        label: "GROUP",
-        variant: "select",
-        required: true,
-        placeholder: "Pilih group...",
-        selectBy: "label", // Menentukan seleksi berdasarkan id (mengikuti setup dinamis kita sebelumnya)
     },
 ];
 

@@ -5,6 +5,8 @@ interface SelectOption {
     label: string;
 }
 
+export type SelectSize = "sm" | "md" | "lg";
+
 export interface SelectProps extends Omit<
     React.SelectHTMLAttributes<HTMLSelectElement>,
     "onChange" | "value"
@@ -14,7 +16,20 @@ export interface SelectProps extends Omit<
     value?: string | number;
     onChange?: (value: string | number) => void;
     placeholder?: string;
+    selectSize?: SelectSize;
 }
+
+const buttonSizeClasses: Record<SelectSize, string> = {
+    sm: "p-2 text-xs rounded-md",
+    md: "p-2.5 text-sm rounded-lg",
+    lg: "p-3.5 text-base rounded-xl",
+};
+
+const optionSizeClasses: Record<SelectSize, string> = {
+    sm: "px-2 py-1.5 text-xs rounded-md",
+    md: "px-2.5 py-2 text-sm rounded-md",
+    lg: "px-3.5 py-2.5 text-base rounded-lg",
+};
 
 export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
     (
@@ -25,6 +40,7 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
             value,
             onChange,
             placeholder = "Pilih salah satu...",
+            selectSize = "md",
             defaultValue,
             ...props
         },
@@ -35,14 +51,34 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
         const [selectedValue, setSelectedValue] = useState<string | number>(
             value || "",
         );
+        // State baru untuk menentukan apakah dropdown harus membuka ke atas
+        const [openUpward, setOpenUpward] = useState(false);
+
         const containerRef = useRef<HTMLDivElement>(null);
 
-        // Sinkronisasi jika nilai value berubah dari luar (Parent Component)
+        // Sinkronisasi nilai value dari luar
         useEffect(() => {
             if (value !== undefined) setSelectedValue(value);
         }, [value]);
 
-        // Tutup dropdown otomatis jika pengguna mengklik di luar area komponen
+        // Efek untuk mendeteksi sisa ruang di bawah layar setiap kali dropdown dibuka
+        useEffect(() => {
+            if (isOpen && containerRef.current) {
+                const rect = containerRef.current.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+
+                // Tinggi maksimum panel dropdown adalah 240px (max-h-60) ditambah sedikit margin (16px)
+                const dropdownHeight = 256;
+
+                if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+                    setOpenUpward(true);
+                } else {
+                    setOpenUpward(false);
+                }
+            }
+        }, [isOpen]);
+
+        // Tutup dropdown otomatis jika klik di luar komponen
         useEffect(() => {
             const handleClickOutside = (event: MouseEvent) => {
                 if (
@@ -57,14 +93,12 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
                 document.removeEventListener("mousedown", handleClickOutside);
         }, []);
 
-        // Filter opsi data berdasarkan apa yang diketik pengguna di kolom pencarian
         const filteredOptions = useMemo(() => {
             return options.filter((opt) =>
                 opt.label.toLowerCase().includes(searchTerm.toLowerCase()),
             );
         }, [options, searchTerm]);
 
-        // Mencari label dari nilai yang sedang aktif untuk ditampilkan di tombol utama
         const selectedLabel = useMemo(() => {
             const found = options.find((opt) => opt.value === selectedValue);
             return found ? found.label : placeholder;
@@ -73,13 +107,13 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
         const handleSelect = (val: string | number) => {
             setSelectedValue(val);
             setIsOpen(false);
-            setSearchTerm(""); // Reset kata kunci pencarian setelah memilih
+            setSearchTerm("");
             if (onChange) onChange(val);
         };
 
         return (
             <div ref={containerRef} className="relative w-full text-left">
-                {/* 1. Element Hidden Native Select (Agar tetap kompatibel dengan HTML Form Submit biasa) */}
+                {/* 1. Element Hidden Native Select */}
                 <select
                     ref={ref}
                     value={selectedValue}
@@ -99,7 +133,9 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`w-full flex items-center justify-between bg-slate-50/50 border rounded-lg p-2.5 text-sm text-slate-800 outline-none transition-all hover:bg-slate-100/50 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10 ${
+                    className={`w-full flex items-center justify-between bg-slate-50/50 border text-slate-800 outline-none transition-all hover:bg-slate-100/50 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10 ${
+                        buttonSizeClasses[selectSize]
+                    } ${
                         hasError
                             ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
                             : "border-slate-200"
@@ -114,7 +150,6 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
                     >
                         {selectedLabel}
                     </span>
-                    {/* Icon Panah Kecil Dropdown */}
                     <svg
                         className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                         fill="none"
@@ -132,8 +167,14 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
 
                 {/* 3. Panel Menu Dropdown & Kolom Pencarian */}
                 {isOpen && (
-                    <div className="absolute z-50 w-full mt-1.5 bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-1 duration-100">
-                        {/* Kolom Pencarian (Search Input) */}
+                    <div
+                        className={`absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-hidden flex flex-col animate-in fade-in duration-100 ${
+                            openUpward
+                                ? "bottom-full mb-1.5 slide-in-from-bottom-1"
+                                : "top-full mt-1.5 slide-in-from-top-1"
+                        }`}
+                    >
+                        {/* Kolom Pencarian */}
                         <div className="relative mb-2 flex items-center">
                             <svg
                                 className="absolute left-2.5 w-4 h-4 text-slate-400"
@@ -165,7 +206,9 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
                                         key={opt.value}
                                         type="button"
                                         onClick={() => handleSelect(opt.value)}
-                                        className={`w-full text-left px-2.5 py-2 text-sm rounded-md transition-colors ${
+                                        className={`w-full text-left transition-colors ${
+                                            optionSizeClasses[selectSize]
+                                        } ${
                                             selectedValue === opt.value
                                                 ? "bg-slate-100 text-slate-900 font-medium"
                                                 : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -186,3 +229,5 @@ export const SelectData = React.forwardRef<HTMLSelectElement, SelectProps>(
         );
     },
 );
+
+SelectData.displayName = "SelectData";

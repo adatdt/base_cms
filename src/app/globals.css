@@ -2,108 +2,136 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
-/* 🌟 SEMUA KONFIGURASI DISATUKAN DI SINI DAN DISETUJUI OLEH SONARQUBE */
+/* ==========================================================================
+   DAFTAR FONT THUNDER: TEGAK (MENGUNCI VARIAN LOW CONTRAST / KIRI)
+   ========================================================================== */
+@font-face {
+    font-family: "Thunder";
+    src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Thunder";
+    src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
+@font-face {
+    font-family: "Thunder";
+    src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
+    font-weight: 600; /* Menghasilkan kelas font-semibold */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
+@font-face {
+    font-family: "Thunder";
+    src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
+    font-weight: 700; /* Menghasilkan kelas font-bold */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
+@font-face {
+    font-family: "Thunder";
+    src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
+    font-weight: 800 900; /* Menghasilkan kelas font-extrabold / font-black */
+    font-style: normal;
+    font-display: swap;
+}
+
+/* ==========================================================================
+   KONFIGURASI TEMA TAILWIND V4
+   ========================================================================== */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
 
-  /* Daftar Nama Kelas Animasi */
-  --animate-shake: shake 0.3s ease-in-out;
-  /* 🌟 TAMBAHKAN DUA BARIS ANIMASI INI */
-  --animate-toast-in: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  --animate-toast-out: slideOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    /* 🛠️ DIUBAH: Menjadikan Thunder sebagai font default sistem utama */
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 
-  @keyframes shake {
-    0%,
-    100% {
-      transform: translateX(0);
-    }
-    15%,
-    45%,
-    75% {
-      transform: translateX(-4px);
-    }
-    30%,
-    60%,
-    90% {
-      transform: translateX(4px);
-    }
-  }
+    /* 🛠️ FIX 1: Ditambahkan double-dash '--' agar format variabel CSS valid */
+    --font-thunder: "Thunder", sans-serif;
+    --text-title-xl: clamp(32px, 4vw + 1rem, 48px);
 
-  /* 🌟 KEYFRAMES BARU UNTUK ANIMASI KELUAR */
-  @keyframes slideIn {
-    0% {
-      opacity: 0;
-      transform: translateX(40px) scale(0.95);
-    }
-    100% {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-    }
-  }
+    /* Menyelaraskan line-height agar dinamis mengikuti ukuran font-nya */
+    --leading-title-xl: 1.1;
 
-  @keyframes slideOut {
-    0% {
-      opacity: 1;
-      transform: translateX(0) scale(1);
-      max-height: 100px;
-      margin-bottom: 12px;
-    }
-    100% {
-      opacity: 0;
-      transform: translateX(40px) scale(0.95);
-      max-height: 0;
-      margin-bottom: 0;
-      padding-top: 0;
-      padding-bottom: 0;
-    }
-  }
+    /* Daftar Nama Kelas Animasi */
+    --animate-shake: shake 0.3s ease-in-out;
+    --animate-toast-in: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    --animate-toast-out: slideOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-  /* Pergerakan Keyframes */
-  @keyframes shake {
-    0%,
-    100% {
-      transform: translateX(0);
+    /* 🛠️ FIX 2: Keyframes dibersihkan dari salinan ganda (ditulis tepat 1 kali saja) */
+    @keyframes shake {
+        0%,
+        100% {
+            transform: translateX(0);
+        }
+        15%,
+        45%,
+        75% {
+            transform: translateX(-4px);
+        }
+        30%,
+        60%,
+        90% {
+            transform: translateX(4px);
+        }
     }
-    15%,
-    45%,
-    75% {
-      transform: translateX(-4px);
-    }
-    30%,
-    60%,
-    90% {
-      transform: translateX(4px);
-    }
-  }
 
-  @keyframes slideIn {
-    0% {
-      opacity: 0;
-      transform: translateX(40px) scale(0.95);
+    @keyframes slideIn {
+        0% {
+            opacity: 0;
+            transform: translateX(40px) scale(0.95);
+        }
+        100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
     }
-    100% {
-      opacity: 1;
-      transform: translateX(0) scale(1);
+
+    @keyframes slideOut {
+        0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+            max-height: 100px;
+            margin-bottom: 12px;
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(40px) scale(0.95);
+            max-height: 0;
+            margin-bottom: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+        }
     }
-  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    /* 🛠️ DIUBAH: Memanggil var(--font-sans) yang menyimpan font Thunder Anda */
+    font-family: var(--font-sans);
 }

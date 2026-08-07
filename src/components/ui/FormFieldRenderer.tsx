@@ -1,10 +1,10 @@
 // src/components/FormFieldRenderer.tsx
-import React from 'react';
-import { InputSchema, SelectOption } from '@/types/form.type';
-import { SelectData } from './SelectData'; 
-import { SelectHierarchyData } from './SelectHierarchyData';
-import { SelectDataMultiple } from './SelectDataMultiple';
-import { InputText } from './InputText';
+import React from "react";
+import { InputSchema, SelectOption } from "@/types/form.type";
+import { SelectData } from "./SelectData";
+import { SelectHierarchyData } from "./SelectHierarchyData";
+import { SelectDataMultiple } from "./SelectDataMultiple";
+import { InputText } from "./InputText";
 
 interface FormFieldRendererProps {
     item: InputSchema;
@@ -12,10 +12,12 @@ interface FormFieldRendererProps {
     masterOptions: Record<string, SelectOption[]>;
     errors: Record<string, string>;
     formData: Record<string, any>;
-    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    handleFieldChange: ( 
+    handleChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    ) => void;
+    handleFieldChange: (
         name: string,
-        config?: { selectBy: "id" | "label"; options: any[] }
+        config?: { selectBy: "id" | "label"; options: any[] },
     ) => (eOrValue: any) => void;
 }
 
@@ -31,18 +33,21 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
     // Skeletal Loading dipindahkan ke area render field saja agar label tetap terlihat stabil
     const renderField = () => {
         if (isMasterLoading) {
-            return <div className="w-full h-10 bg-slate-100 animate-pulse rounded-lg" />;
+            return (
+                <div className="w-full h-10 bg-slate-100 animate-pulse rounded-lg" />
+            );
         }
 
         const dynamicOptions = masterOptions[item.name] || item.options || [];
         const selectConfig = {
             selectBy: item.selectBy || "id",
-            options: dynamicOptions
+            options: dynamicOptions,
         };
 
         if (item.variant === "select") {
             return (
                 <SelectData
+                    selectSize={"sm"}
                     name={item.name}
                     hasError={!!errors[item.name]}
                     defaultValue=""
@@ -99,6 +104,7 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         return (
             <InputText
                 type={item.variant}
+                inputSize={"sm"}
                 value={formData[item.name] || ""}
                 onChange={handleChange}
                 hasError={!!errors[item.name]}
@@ -117,7 +123,9 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
                 className="text-xs font-semibold text-gray-700 flex items-center gap-0.5"
             >
                 {item.label}
-                {item.required && <span className="text-red-500 font-bold ml-0.5">*</span>}
+                {item.required && (
+                    <span className="text-red-500 font-bold ml-0.5">*</span>
+                )}
             </label>
 
             {/* Render Field Input */}

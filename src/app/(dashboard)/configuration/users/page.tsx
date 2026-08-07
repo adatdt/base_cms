@@ -12,6 +12,7 @@ import { useTableStore } from "@/store/useTableStore";
 import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
+import { DropdownBtn } from "@/components/ui/DropdownBtn";
 
 const moduleName = `Users`;
 
@@ -167,46 +168,28 @@ export default function PortBranchPage() {
             // Kolom Aksi
             {
                 key: "actions",
-                header: "AKSI",
+                header: "",
                 className:
-                    "text-center whitespace-nowrap text-xs font-semibold",
+                    " text-right whitespace-nowrap text-xs font-semibold",
                 render: (row) => (
                     <div className="flex flex-row items-center gap-1.5">
-                        <Btn
-                            type="button"
-                            variant="info"
-                            size="xs"
-                            title="edit"
-                        >
-                            <CrudIcons name="edit" size={10} />
-                        </Btn>
-
-                        <Btn
-                            type="button"
-                            variant="success"
-                            size="xs"
-                            title="Aktif"
-                        >
-                            <CrudIcons name="active" size={10} />
-                        </Btn>
-
-                        <Btn
-                            type="button"
-                            variant="delete"
-                            size="xs"
-                            title="Non Aktif"
-                        >
-                            <CrudIcons name="inactive" size={10} />
-                        </Btn>
-
-                        <Btn
-                            type="button"
-                            variant="delete"
-                            size="xs"
-                            title="Delete"
-                        >
-                            <CrudIcons name="delete" size={10} />
-                        </Btn>
+                        <DropdownBtn
+                            trigger={
+                                <div className="p-1.5 hover:bg-slate-100 rounded-md cursor-pointer text-slate-600 transition-colors">
+                                    <CrudIcons name="more-vertical" size={10} />
+                                </div>
+                            }
+                            items={[
+                                {
+                                    label: "Edit Profil",
+                                    fontWeight: "medium",
+                                    //  BENAR: Menambahkan tanda kurung () untuk memicu fungsi
+                                    onClick: () => loadEdit(),
+                                },
+                            ]}
+                            widthClass="w-48"
+                            alignClass="right-0"
+                        />
                     </div>
                 ),
             },
@@ -265,6 +248,15 @@ export default function PortBranchPage() {
                 <Add formId="Form Add" />
             </Modal>
 
+            <Modal
+                id="Form Edit"
+                title="Tambah Data Pengguna"
+                size="3xl"
+                isBackdropLoading={isFetchLoading}
+            >
+                <Add formId="Form Add" />
+            </Modal>
+
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
                 <div>
@@ -278,16 +270,90 @@ export default function PortBranchPage() {
                 </div>
                 {/* Bagian Kanan: Tombol Aksi */}
 
-                <Btn
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    title="Tambah"
-                    onClick={() => loadAdd()}
-                >
-                    <CrudIcons name="add" size={15} />
-                    Tambah
-                </Btn>
+                <div className="flex items-center gap-2 flex-nowrap">
+                    <DropdownBtn
+                        trigger={
+                            <Btn
+                                type="button"
+                                variant="default"
+                                size="md"
+                                title="Filter Data"
+                                className="shrink-0"
+                            >
+                                Filter
+                                <CrudIcons name="filter" size={15} />
+                            </Btn>
+                        }
+                        items={[
+                            // 1. Menu Teks Biasa
+                            {
+                                label: "Edit Profil",
+                                fontWeight: "medium",
+                                onClick: () => console.log("Edit diklik"),
+                            },
+                            // 2. Baris Berisi Komponen Input Teks (Form)
+                            {
+                                closeOnItemClick: false, // WAJIB: Agar saat kolom input diklik, dropdown tidak menutup
+                                className: "hover:bg-transparent", // Matikan hover abu-abu untuk form
+                                label: (
+                                    <div className="flex flex-col gap-1">
+                                        <label
+                                            htmlFor="quick_search"
+                                            className="text-xs font-semibold text-slate-500"
+                                        >
+                                            Cari Cepat
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="quick_search"
+                                            placeholder="Ketik nama kelompok..."
+                                            className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-blue-500"
+                                            onChange={(e) =>
+                                                console.log(e.target.value)
+                                            }
+                                        />
+                                    </div>
+                                ),
+                            },
+                            // 3. Baris Berisi Checkbox / Pilihan Status
+                            {
+                                closeOnItemClick: false,
+                                label: (
+                                    <label className="flex items-center gap-2 cursor-pointer py-1">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-slate-300"
+                                        />
+                                        <span className="text-sm text-slate-600">
+                                            Sembunyikan dari Publik
+                                        </span>
+                                    </label>
+                                ),
+                            },
+                            // 4. Menu Tombol Aksi Hapus
+                            {
+                                label: "Hapus Kelompok",
+                                fontWeight: "bold",
+                                className: "text-red-600 hover:bg-red-50 mt-1",
+                                onClick: () => confirm("Hapus data ini?"),
+                            },
+                        ]}
+                        widthClass="w-56"
+                        alignClass="right-0"
+                    />
+
+                    <Btn
+                        type="button"
+                        variant="success-blue"
+                        size="md"
+                        title="Tambah Data"
+                        onClick={() => loadAdd()}
+                        className="shrink-0"
+                    >
+                        <CrudIcons name="add" size={15} />
+                        Tambah
+                    </Btn>
+                </div>
             </div>
 
             {/* CONTROL BAR */}
