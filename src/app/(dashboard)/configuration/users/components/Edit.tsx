@@ -1,170 +1,95 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
+import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
+import { userEditFormSchema } from "../schema/users.schema";
+import { useNotificationStore } from "@/store/useNotificationStore";
+import { useFormStore } from "@/store/useFormStore";
+import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
 
-// Definisikan tipe data objek pengguna yang akan diedit
-export interface UserEditData {
-  id?: string | number; // ID unik data dari database
-  username: string;
-  namaDepan: string;
-  noTelepon: string;
-  group: string;
-  status: string; // "1" untuk Aktif, "2" untuk Non Aktif
-}
+const input: InputSchema[] = [
+    {
+        name: "username",
+        label: "USERNAME",
+        variant: "text",
+        placeholder: "Masukkan username",
+        required: true, // Menandai field ini sebagai wajib diisi
+    },
+    {
+        name: "group",
+        label: "GROUP",
+        variant: "select",
+        required: true,
+        placeholder: "Pilih group...",
+        selectBy: "label", // Menentukan seleksi berdasarkan id (mengikuti setup dinamis kita sebelumnya)
+    },
+    {
+        name: "nama_depan",
+        label: "NAMA DEPAN",
+        variant: "text",
+        placeholder: "Masukkan nama ",
+        required: true,
+    },
+    {
+        name: "no_telepon",
+        label: "NO. TELEPON",
+        variant: "text",
+        placeholder: "Masukkan no. telepon",
+        required: true,
+    },
+];
 
-interface UserFormEditFieldsProps {
-  formId: string; // Harus sama dengan ID Modal agar tombol footer tersambung
-  initialData: UserEditData | null; // Data lama yang dikirim untuk diedit
-  onSubmit: (data: UserEditData) => void;
-}
-
-export default function Edit({
-  formId,
-  initialData,
-  onSubmit,
-}: Readonly<UserFormEditFieldsProps>) {
-  // State lokal formulir
-  const [formData, setFormData] = useState<UserEditData>({
-    username: "",
-    namaDepan: "",
-    noTelepon: "",
-    group: "",
-    status: "1",
-  });
-
-  // Sinkronisasikan isi form setiap kali data lama (initialData) berubah/masuk
-  useEffect(() => {
-    if (initialData) {
-      setFormData(initialData);
-    }
-  }, [initialData]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitInside = (
-    e: React.BaseSyntheticEvent<Event, EventTarget, HTMLFormElement>,
-  ) => {
-    e.preventDefault(); // Cegah halaman reload browser
-    onSubmit(formData); // Kirim data yang sudah diubah ke level Page
-  };
-
-  // Tampilkan loading teks/kosong jika data lama belum selesai dimuat oleh parent
-  if (!initialData) {
-    return (
-      <div className="text-center py-4 text-gray-500">
-        Memuat data pengguna...
-      </div>
+export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
+    const triggerNotification = useNotificationStore(
+        (state) => state.triggerNotification,
     );
-  }
 
-  return (
-    <form
-      id={formId}
-      onSubmit={handleSubmitInside}
-      className="space-y-4 text-left"
-    >
-      {/* Field Username */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="usernameInput"
-          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
-        >
-          Username
-        </label>
-        <input
-          type="text"
-          id="usernameInput"
-          name="username"
-          value={formData.username}
-          onChange={handleChange}
-          placeholder="Masukkan username"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          required
-        />
-      </div>
+    const formData = useFormStore((state) => state.formData);
+    const errors = useFormStore((state) => state.errors);
+    const handleChange = useFormStore((state) => state.handleChange);
+    const handleFieldChange = useFormStore((state) => state.handleFieldChange);
 
-      {/* Field Nama Depan */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="namaDepanInput"
-          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
-        >
-          Nama Depan
-        </label>
-        <input
-          type="text"
-          id="namaDepanInput"
-          name="namaDepan"
-          value={formData.namaDepan}
-          onChange={handleChange}
-          placeholder="Masukkan nama depan"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-          required
-        />
-      </div>
+    const executeSubmit = useFormStore((state) => state.executeSubmit);
+    const { masterOptions, isMasterLoading } = useFormStore();
 
-      {/* Field No. Telepon */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="noTeleponInput"
-          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
-        >
-          No. Telepon
-        </label>
-        <input
-          type="tel"
-          id="noTeleponInput"
-          name="noTelepon"
-          value={formData.noTelepon}
-          onChange={handleChange}
-          placeholder="Contoh: 08123456789"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        />
-      </div>
+    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
+        executeSubmit(e, {
+            formKey: "menuForm",
+            schema: userEditFormSchema,
+            endpoint: "/configuration/menu/api/crud",
+            method: "POST",
+            triggerNotification: triggerNotification,
+            onSuccess: (response) => {
+                console.log("Data berhasil dikirim!", response);
+            },
+            onError: () => {
+                // Remove the unused parameter placeholder entirely
+                console.log("API error handled cleanly in UI.");
+            },
+        }).catch(() => {
+            // Safe parameterless empty catcher
+            console.log("Safely caught unhandled form execution rejection.");
+        });
+    };
 
-      {/* Field Group */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="groupInput"
-          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
+    return (
+        <form
+            id={formId}
+            onSubmit={sendForm}
+            className="grid grid-cols-1 gap-y-4 text-left w-full"
         >
-          Group
-        </label>
-        <input
-          type="text"
-          id="groupInput"
-          name="group"
-          value={formData.group}
-          onChange={handleChange}
-          placeholder="Masukkan nama group"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-        />
-      </div>
-
-      {/* Field Status */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="statusInput"
-          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
-        >
-          Status
-        </label>
-        <select
-          name="status"
-          id="statusInput"
-          value={formData.status}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-pointer"
-        >
-          <option value="1">Aktif</option>
-          <option value="2">Non Aktif</option>
-        </select>
-      </div>
-    </form>
-  );
+            {input.map((item) => (
+                <FormFieldRenderer
+                    key={item.name}
+                    item={item}
+                    isMasterLoading={isMasterLoading}
+                    masterOptions={masterOptions}
+                    errors={errors}
+                    formData={formData}
+                    handleChange={handleChange}
+                    handleFieldChange={handleFieldChange}
+                />
+            ))}
+        </form>
+    );
 }

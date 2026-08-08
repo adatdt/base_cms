@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { inisialisasiZodBahasaIndonesia } from "@/utils/zod-indonesia";
 import "./globals.css";
 
 inisialisasiZodBahasaIndonesia();
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
+// 🚀 LANGKAH 2: Konfigurasi Plus Jakarta Sans Secara Lokal
+const plusJakartaSans = Plus_Jakarta_Sans({
+    variable: "--font-plus-jakarta-sans", // 🌟 Nama variabel disesuaikan dengan isi globals.css Anda
     subsets: ["latin"],
+    weight: ["300", "400", "500", "600", "700", "800"], // Memuat ketebalan font lengkap
+    display: "swap",
 });
 
 const geistMono = Geist_Mono({
@@ -28,7 +31,7 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+            className={`${plusJakartaSans.variable} ${geistMono.variable} h-full antialiased`}
         >
             <body className="min-h-full flex flex-col">{children}</body>
         </html>

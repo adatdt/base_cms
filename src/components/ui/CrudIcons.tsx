@@ -8,7 +8,9 @@ export type CrudIconType =
     | "active"
     | "inactive"
     | "more-vertical"
-    | "filter";
+    | "bell"
+    | "filter"
+    | "user";
 
 interface CrudIconsProps extends React.SVGProps<SVGSVGElement> {
     name: CrudIconType;
@@ -84,6 +86,34 @@ export default function CrudIcons({
                 {/* Titik Bawah */}
                 <circle cx="12" cy="19" r="2" />
             </svg>
+        ),
+        bell: (
+            <>
+                {/* Bagian Kubah Lonceng Utama */}
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 2.25c-3.176 0-5.75 2.574-5.75 5.75 0 3.323-1.026 5.225-1.92 6.453A.75.75 0 0 0 4.937 15.75h14.126a.75.75 0 0 0 .607-1.297c-.894-1.228-1.92-3.13-1.92-6.453 0-3.176-2.574-5.75-5.75-5.75Z"
+                />
+                {/* Bagian Pemukul Lonceng Bawah */}
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M10 18h4"
+                />
+            </>
+        ),
+        user: (
+            <>
+                {/* 👑 Bagian Lingkaran Kepala (Sama persis di tengah atas) */}
+                <circle cx="12" cy="10" r="4" />
+                {/* 👑 Bagian Badan (Lekukan membusur lebar, beririsan dempet di bagian bawah kepala pada koordinat Y 14) */}
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.5 19.5c0-2.5 3.5-5.5 7.5-5.5s7.5 3 7.5 5.5"
+                />
+            </>
         ),
     };
 

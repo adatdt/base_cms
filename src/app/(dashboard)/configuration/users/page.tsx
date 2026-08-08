@@ -5,7 +5,7 @@ import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
 import type { TableUsers } from "./interfaces/users.interfaces";
 import CrudIcons from "@/components/ui/CrudIcons";
-import Modal from "@/components/ui/Modal";
+import SidePanel from "@/components/ui/SidePanel";
 import { useModalStore } from "@/store/useModalStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useTableStore } from "@/store/useTableStore";
@@ -13,8 +13,17 @@ import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
 import { DropdownBtn } from "@/components/ui/DropdownBtn";
+import Edit from "./components/Edit";
+import { fetchClient, FetchError } from "@/services/fetch-client";
+import { useStoreTitle } from "@/store/useStoreTitle";
 
 const moduleName = `Users`;
+interface ApiFetchResponse<T> {
+    success: boolean;
+    message: string;
+    data: T[];
+    total_data?: number;
+}
 
 export default function PortBranchPage() {
     const [tableData, setTableData] = useState<TableUsers[]>([]);
@@ -24,11 +33,19 @@ export default function PortBranchPage() {
         (state) => state.triggerNotification,
     );
 
+    const { setActiveModule } = useStoreTitle(
+        useShallow((state) => ({
+            setActiveModule: state.setActiveModule,
+        })),
+    );
+    setActiveModule(moduleName);
+
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
-    const { isFetchLoading } = useFormStore(
+    const { isFetchLoading, formData } = useFormStore(
         useShallow((state) => ({
             isFetchLoading: state.isFetchLoading,
+            formData: state.formData, // 🌟 Tambahkan baris ini untuk mengambil formData
         })),
     );
 
@@ -56,11 +73,11 @@ export default function PortBranchPage() {
      */
 
     const rawColumnsConfig = [
-        ["no", "NO", "w-12 text-center text-slate-500"],
+        ["no", "NO", "font-semibold text-slate-800"],
         ["username", "Username", "font-semibold text-slate-800"],
-        ["first_name", "Nama Depan", "text-slate-700"],
-        ["phone", "No. Telepon", "text-slate-600 font-medium"],
-        ["group_name", "Group", "w-28 font-mono text-slate-500 font-medium"],
+        ["first_name", "Nama Depan", "font-semibold text-slate-800"],
+        ["phone", "No. Telepon", "font-semibold text-slate-800"],
+        ["group_name", "Group", "font-semibold text-slate-800"],
     ] as const;
 
     /**
@@ -87,25 +104,13 @@ export default function PortBranchPage() {
                     limit: targetLimit,
                     search: searchQuery.trim(),
                 };
-
-                const response = await fetch(
+                const result = await fetchClient.request<ApiFetchResponse<any>>(
                     "/configuration/users/api/get_data",
                     {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify(requestBody),
+                        data: requestBody,
                     },
                 );
-
-                if (!response.ok) {
-                    throw new Error(
-                        `Gagal mengambil data (HTTP ${response.status})`,
-                    );
-                }
-
-                const result = await response.json();
 
                 if (result.success) {
                     // Kalkulasi penomoran baris dinamis (NO) berdasarkan indeks halaman server
@@ -120,14 +125,27 @@ export default function PortBranchPage() {
                     setTableData(dataTerkonversi);
                     setTotalRecords(result.total_data || 0);
                 } else {
-                    triggerNotification(result.message, `warning`);
+                    triggerNotification(
+                        result.message || "Gagal memuat data.",
+                        "warning",
+                    );
                 }
-            } catch (error) {
-                const errorMessage =
-                    error instanceof Error
-                        ? error.message
-                        : "Terjadi kesalahan jaringan atau sistem.";
-                triggerNotification(errorMessage, `error`);
+            } catch (error: any) {
+                // 🚀 3. Penanganan error yang pintar menggunakan struktur FetchError bawaan library Anda
+                let errorMessage = "Terjadi kesalahan jaringan atau sistem.";
+
+                if (error && typeof error === "object" && "status" in error) {
+                    // Ini adalah error yang dilempar oleh fetchClient (tipe FetchError)
+                    const fetchError = error as FetchError;
+                    errorMessage =
+                        fetchError.data?.message ||
+                        `Gagal mengambil data (HTTP ${fetchError.status})`;
+                } else if (error instanceof Error) {
+                    // Ini adalah error JavaScript biasa atau kesalahan runtime lainnya
+                    errorMessage = error.message;
+                }
+
+                triggerNotification(errorMessage, "error");
             } finally {
                 setLoadData(false);
             }
@@ -142,9 +160,7 @@ export default function PortBranchPage() {
 
     const columns: ColumnProps<TableUsers>[] = useMemo(
         () => [
-            ...baseColumns, // 🌟 Masukkan baseColumns agar kolom Username, Nama Depan, dll. ikut muncul
-
-            // Kolom Status
+            ...baseColumns,
             {
                 key: "status",
                 header: "STATUS",
@@ -172,25 +188,27 @@ export default function PortBranchPage() {
                 className:
                     " text-right whitespace-nowrap text-xs font-semibold",
                 render: (row) => (
-                    <div className="flex flex-row items-center gap-1.5">
-                        <DropdownBtn
-                            trigger={
-                                <div className="p-1.5 hover:bg-slate-100 rounded-md cursor-pointer text-slate-600 transition-colors">
-                                    <CrudIcons name="more-vertical" size={10} />
-                                </div>
-                            }
-                            items={[
-                                {
-                                    label: "Edit Profil",
-                                    fontWeight: "medium",
-                                    //  BENAR: Menambahkan tanda kurung () untuk memicu fungsi
-                                    onClick: () => loadEdit(),
-                                },
-                            ]}
-                            widthClass="w-48"
-                            alignClass="right-0"
-                        />
-                    </div>
+                    <DropdownBtn
+                        className="text-slate-400 hover:text-slate-600 active:text-slate-700"
+                        variant="ghost"
+                        trigger={<CrudIcons name="more-vertical" size={10} />}
+                        items={[
+                            {
+                                label: "Edit Profil",
+                                fontWeight: "normal",
+                                fontSize: "xs",
+                                onClick: () => loadEdit(),
+                            },
+                            {
+                                label: "NON AKTIF",
+                                fontWeight: "normal",
+                                fontSize: "xs",
+                                onClick: () => loadEdit(),
+                            },
+                        ]}
+                        widthClass="w-48"
+                        alignClass="right-0"
+                    />
                 ),
             },
         ],
@@ -236,26 +254,35 @@ export default function PortBranchPage() {
         );
     };
 
+    const modalConfigurations = [
+        {
+            id: "Form Add",
+            title: "Tambah Data Pengguna",
+            renderContent: (formId: string) => <Add formId={formId} />,
+        },
+        {
+            id: "Form Edit",
+            title: "Ubah Data Pengguna",
+            renderContent: (formId: string) => (
+                <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
+            ),
+        },
+    ];
+
     return (
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             {/* HEADER */}
-            <Modal
-                id="Form Add"
-                title="Tambah Data Pengguna"
-                size="3xl"
-                isBackdropLoading={isFetchLoading}
-            >
-                <Add formId="Form Add" />
-            </Modal>
-
-            <Modal
-                id="Form Edit"
-                title="Tambah Data Pengguna"
-                size="3xl"
-                isBackdropLoading={isFetchLoading}
-            >
-                <Add formId="Form Add" />
-            </Modal>
+            {modalConfigurations.map((modal) => (
+                <SidePanel
+                    key={modal.id} // 🌟 Key unik wajib untuk kestabilan Virtual DOM React
+                    id={modal.id}
+                    title={modal.title}
+                    size="3xl"
+                    isBackdropLoading={isFetchLoading}
+                >
+                    {modal.renderContent(modal.id)}
+                </SidePanel>
+            ))}
 
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
@@ -272,17 +299,14 @@ export default function PortBranchPage() {
 
                 <div className="flex items-center gap-2 flex-nowrap">
                     <DropdownBtn
+                        size="md"
+                        variant="default"
+                        className="text-slate-400 hover:text-slate-600"
                         trigger={
-                            <Btn
-                                type="button"
-                                variant="default"
-                                size="md"
-                                title="Filter Data"
-                                className="shrink-0"
-                            >
+                            <>
                                 Filter
                                 <CrudIcons name="filter" size={15} />
-                            </Btn>
+                            </>
                         }
                         items={[
                             // 1. Menu Teks Biasa

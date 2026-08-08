@@ -32,7 +32,6 @@
     font-display: swap;
 }
 
-/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
 @font-face {
     font-family: "Thunder";
     src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
@@ -41,7 +40,6 @@
     font-display: swap;
 }
 
-/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
 @font-face {
     font-family: "Thunder";
     src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
@@ -50,7 +48,6 @@
     font-display: swap;
 }
 
-/* 🛠️ PERUBAHAN UTAMA: Diubah dari HC menjadi LC agar memanggil yang kiri */
 @font-face {
     font-family: "Thunder";
     src: url("/fonts/thunder-font-2/Thunder-LC.ttf") format("truetype");
@@ -66,11 +63,11 @@
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 
-    /* 🛠️ DIUBAH: Menjadikan Thunder sebagai font default sistem utama */
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
+    /* 👑 PERBAIKAN UTAMA: Hubungkan ke variabel lokal dari layout.tsx */
+    --font-sans: var(--font-plus-jakarta-sans), sans-serif;
+    --font-mono: var(--font-geist-mono), monospace;
 
-    /* 🛠️ FIX 1: Ditambahkan double-dash '--' agar format variabel CSS valid */
+    /* Menjaga Font Thunder tetap aktif sebagai utility tambahan jika dipanggil lewat class 'font-thunder' */
     --font-thunder: "Thunder", sans-serif;
     --text-title-xl: clamp(32px, 4vw + 1rem, 48px);
 
@@ -82,7 +79,6 @@
     --animate-toast-in: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     --animate-toast-out: slideOut 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-    /* 🛠️ FIX 2: Keyframes dibersihkan dari salinan ganda (ditulis tepat 1 kali saja) */
     @keyframes shake {
         0%,
         100% {
@@ -132,6 +128,6 @@
 body {
     background: var(--background);
     color: var(--foreground);
-    /* 🛠️ DIUBAH: Memanggil var(--font-sans) yang menyimpan font Thunder Anda */
+    /* 👑 Memanggil var(--font-sans) yang kini telah memegang kendali Plus Jakarta Sans */
     font-family: var(--font-sans);
 }

@@ -6,6 +6,7 @@ import Header from "@/components/template/Header";
 import Skeleton from "@/components/ui/Skeleton";
 import Notification from "@/components/ui/Notification";
 import { useNotificationStore } from "@/store/useNotificationStore";
+import CrudIcons from "@/components/ui/CrudIcons";
 
 interface MenuItem {
     name: string;
@@ -129,30 +130,12 @@ export default function DashboardLayout({
                     {isSidebarOpen && (
                         <div className="flex items-center gap-2 animate-fade-in select-none">
                             {/* Wadah Ikon: Latar belakang putih dengan border abu-abu yang sangat tipis dan halus */}
-                            <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg flex-shrink-0">
-                                <svg
-                                    className="w-5 h-5 text-[#459fda]"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth="2.5"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M11 3.06a8.003 8.003 0 0 0-7.94 7.94H11V3.06Z"
-                                    />
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M13 3.06A8.003 8.003 0 0 1 20.94 11H13V3.06Z"
-                                    />
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M20.475 13A8.001 8.001 0 0 1 3.525 13H20.475Z"
-                                    />
-                                </svg>
+                            <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg shrink-0">
+                                <CrudIcons
+                                    name="user"
+                                    size={25}
+                                    className="stroke-1"
+                                />
                             </div>
 
                             {/* Ukuran Teks: Menggunakan text-slate-800 yang kontras dan bersih di atas background putih */}
@@ -260,7 +243,7 @@ export default function DashboardLayout({
                         <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                             <div className="flex items-center gap-2 animate-fade-in select-none">
                                 {/* Wadah Ikon: Latar belakang putih dengan border abu-abu yang sangat tipis dan halus */}
-                                <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg flex-shrink-0">
+                                <div className="flex items-center justify-center w-9 h-9 bg-white border border-slate-200 shadow-sm rounded-lg shrink-0">
                                     <svg
                                         className="w-5 h-5 text-[#459fda]"
                                         fill="none"

@@ -6,7 +6,7 @@ import Add from "./components/Add";
 import Btn from "@/components/ui/Btn";
 import CrudIcons from "@/components/ui/CrudIcons";
 import type { TreeGridColumn } from "@/types/treeGrid.type";
-import Modal from "@/components/ui/Modal";
+import SidePanel from "@/components/ui/SidePanel";
 import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -235,7 +235,7 @@ export default function MenuPage() {
         // </div>
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             {/* HEADER */}
-            <Modal
+            <SidePanel
                 id="Form Add"
                 title="Tambah Data Pengguna"
                 size="sm"
@@ -244,9 +244,9 @@ export default function MenuPage() {
             >
                 {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
                 <Add formId="Form Add" />
-            </Modal>
+            </SidePanel>
 
-            <Modal
+            <SidePanel
                 id="Form Edit"
                 title="Edit Data Pengguna"
                 // size="5xl"
@@ -259,7 +259,7 @@ export default function MenuPage() {
                     formId="Form Edit"
                     key={formData.menu || "modal-kosong"}
                 />
-            </Modal>
+            </SidePanel>
 
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}

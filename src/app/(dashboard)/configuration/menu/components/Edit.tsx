@@ -41,7 +41,8 @@ const input: InputSchema[] = [
         label: "URL",
         variant: "text",
         placeholder: "Masukkan url",
-    },{
+    },
+    {
         name: "action",
         label: "Aksi",
         variant: "select-multiple",

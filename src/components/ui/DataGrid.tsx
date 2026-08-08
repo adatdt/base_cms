@@ -192,19 +192,22 @@ export default function DataGrid<T extends { id: string }>({
 
                     {/* Navigasi Tombol Angka */}
                     {totalPages > 1 && (
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-0 select-none">
+                            {" "}
+                            {/* 🌟 gap direnggangkan agar longgar */}
+                            {/* Halaman Pertama */}
                             <button
                                 disabled={currentPage === 1 || isLoading}
                                 onClick={() => onPageChange(1)}
-                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                className="p-2 text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent"
                                 title="Halaman Pertama"
                             >
                                 <svg
-                                    className="w-4 h-5"
+                                    className="w-4 h-4" // 🌟 Menyelaraskan ukuran ikon agar presisi
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
-                                    strokeWidth={2.5}
+                                    strokeWidth={1.5} // 🌟 Ketebalan garis dibuat lebih tipis sesuai gambar
                                 >
                                     <path
                                         strokeLinecap="round"
@@ -213,19 +216,19 @@ export default function DataGrid<T extends { id: string }>({
                                     />
                                 </svg>
                             </button>
-
+                            {/* Sebelumnya */}
                             <button
                                 disabled={currentPage === 1 || isLoading}
                                 onClick={() => onPageChange(currentPage - 1)}
-                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                className="p-2 text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent"
                                 title="Sebelumnya"
                             >
                                 <svg
-                                    className="w-4 h-5"
+                                    className="w-4 h-4"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
-                                    strokeWidth={2.5}
+                                    strokeWidth={1.5}
                                 >
                                     <path
                                         strokeLinecap="round"
@@ -234,36 +237,39 @@ export default function DataGrid<T extends { id: string }>({
                                     />
                                 </svg>
                             </button>
-
-                            {getPaginationNumbers().map((pageNumber) => (
-                                <button
-                                    key={pageNumber}
-                                    disabled={isLoading}
-                                    onClick={() => onPageChange(pageNumber)}
-                                    className={`px-3 py-1 rounded border text-sm font-medium transition-colors ${
-                                        currentPage === pageNumber
-                                            ? "bg-blue-600 border-blue-600 text-white"
-                                            : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
-                                    }`}
-                                >
-                                    {pageNumber}
-                                </button>
-                            ))}
-
+                            {/* Angka Halaman Dinamis */}
+                            {getPaginationNumbers().map((pageNumber) => {
+                                const isActive = currentPage === pageNumber;
+                                return (
+                                    <button
+                                        key={pageNumber}
+                                        disabled={isLoading}
+                                        onClick={() => onPageChange(pageNumber)}
+                                        className={`w-9 h-9 flex items-center justify-center text-sm font-medium transition-all duration-200 border-none cursor-pointer ${
+                                            isActive
+                                                ? "bg-sky-50 text-blue-500 rounded-xl" // 🌟 Gaya tombol aktif: Latar biru muda lembut, sudut membulat lebar
+                                                : "bg-transparent text-slate-700 hover:bg-slate-50 rounded-lg" // 🌟 Gaya tombol tidak aktif
+                                        }`}
+                                    >
+                                        {pageNumber}
+                                    </button>
+                                );
+                            })}
+                            {/* Selanjutnya */}
                             <button
                                 disabled={
                                     currentPage === totalPages || isLoading
                                 }
                                 onClick={() => onPageChange(currentPage + 1)}
-                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                className="p-2 text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent"
                                 title="Selanjutnya"
                             >
                                 <svg
-                                    className="w-4 h-5"
+                                    className="w-4 h-4"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
-                                    strokeWidth={2.5}
+                                    strokeWidth={1.5}
                                 >
                                     <path
                                         strokeLinecap="round"
@@ -272,21 +278,21 @@ export default function DataGrid<T extends { id: string }>({
                                     />
                                 </svg>
                             </button>
-
+                            {/* Halaman Terakhir */}
                             <button
                                 disabled={
                                     currentPage === totalPages || isLoading
                                 }
                                 onClick={() => onPageChange(totalPages)}
-                                className="px-2.5 py-1 rounded border border-slate-200 bg-white disabled:opacity-50 text-slate-700 text-sm font-medium hover:bg-slate-50 transition-colors disabled:hover:bg-white"
+                                className="p-2 text-slate-600 hover:text-slate-900 transition-colors disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer disabled:cursor-not-allowed border-none bg-transparent"
                                 title="Halaman Terakhir"
                             >
                                 <svg
-                                    className="w-4 h-5"
+                                    className="w-4 h-4"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
-                                    strokeWidth={2.5}
+                                    strokeWidth={1.5}
                                 >
                                     <path
                                         strokeLinecap="round"

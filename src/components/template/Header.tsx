@@ -3,6 +3,8 @@
 import React from "react";
 import { usePathname } from "next/navigation";
 import { logoutUser } from "@/features/auth/actions/logoutUser";
+import { DropdownBtn } from "../ui/DropdownBtn";
+import CrudIcons from "../ui/CrudIcons";
 
 interface HeaderProps {
     isMobileMenuOpen: boolean;
@@ -73,26 +75,26 @@ export default function Header({
 
             {/* Sisi Kanan: Profil Operator & Tombol Keluar */}
             <div className="flex items-center gap-4">
-                <div className="text-right hidden sm:block">
-                    <p className="text-xs font-bold text-slate-800">
-                        {operatorName}
-                    </p>
-                    <p className="text-[10px] text-emerald-600 font-semibold tracking-wide flex items-center justify-end gap-1">
-                        <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        {statusText}
-                    </p>
-                </div>
-
                 {/* Tombol Keluar: Dibuat bersih menyatu dengan tema baru */}
-                <button
-                    type="button"
-                    onClick={async () => {
-                        await logoutUser();
-                    }}
-                    className="rounded-lg bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-3 py-2 text-xs font-semibold border border-slate-200/70 transition-all duration-200 focus:outline-none"
-                >
-                    Keluar
-                </button>
+                <DropdownBtn
+                    variant="default"
+                    size="sm"
+                    isCircle={true} // 🌟 Cukup tambahkan ini agar tombolnya otomatis bulat simetris h-[32px] w-[32px]
+                    className="text-slate-400 hover:text-slate-600"
+                    trigger={<CrudIcons name="bell" size={20} />}
+                    items={[
+                        {
+                            label: "Keluar",
+                            fontWeight: "normal",
+                            fontSize: "xs",
+                            onClick: () => async () => {
+                                await logoutUser();
+                            },
+                        },
+                    ]}
+                    widthClass="w-48"
+                    alignClass="right-0"
+                />
             </div>
         </header>
     );
