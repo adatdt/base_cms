@@ -41,12 +41,15 @@ export function buildWhereClause(
   tablePrefix = "u",
   searchField = "username",
 ) {
-  // Gunakan raw sql identifier jika DB driver Anda mendukung, atau hardcode string prefix yang aman
-  let baseWhere = sql`WHERE u.status <> '-5'`;
+  // 1. Gunakan sql("string") atau sql`string` untuk mendefinisikan identifier/keyword mentah yang dinamis
+  // Di Postgres.js, melemparkan fungsi sql() di dalam template literal akan dianggap sebagai nama objek (bukan teks string terikat)
+  let baseWhere = sql`WHERE ${sql(tablePrefix)}.status <> '-5'`;
 
   if (search !== "") {
     const searchPattern = `%${search}%`;
-    baseWhere = sql`${baseWhere} AND u.username ILIKE ${searchPattern}`;
+    
+    // 2. Gabungkan prefix dan field secara dinamis menggunakan sintaks internal postgres.js
+    baseWhere = sql`${baseWhere} AND ${sql(tablePrefix)}.${sql(searchField)} ILIKE ${searchPattern}`;
   }
 
   return baseWhere;

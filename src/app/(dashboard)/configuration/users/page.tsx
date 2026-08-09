@@ -1,31 +1,37 @@
 "use client";
 
+// 1. React Core Hooks
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useShallow } from "zustand/shallow";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
-import type { TableUsers } from "./interfaces/users.interfaces";
 import CrudIcons from "@/components/ui/CrudIcons";
-import SidePanel from "@/components/ui/SidePanel";
+import { DropdownBtn } from "@/components/ui/DropdownBtn";
+import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import { useFormStore } from "@/store/useFormStore";
 import { useModalStore } from "@/store/useModalStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import { useTableStore } from "@/store/useTableStore";
-import Add from "./components/Add";
-import { useFormStore } from "@/store/useFormStore";
-import { useShallow } from "zustand/shallow";
-import { DropdownBtn } from "@/components/ui/DropdownBtn";
-import Edit from "./components/Edit";
-import { fetchClient, FetchError } from "@/services/fetch-client";
 import { useStoreTitle } from "@/store/useStoreTitle";
+import { useTableStore } from "@/store/useTableStore";
+import { fetchClient, FetchError } from "@/services/fetch-client";
+import Add from "./components/Add";
+import Edit from "./components/Edit";
+import type { TableUsers } from "./interfaces/users.interfaces";
+import type {ApiFetchResponse} from "@/types/api.types"
+
 
 const moduleName = `Users`;
-interface ApiFetchResponse<T> {
-    success: boolean;
-    message: string;
-    data: T[];
-    total_data?: number;
-}
+    const rawColumnsConfig = [
+        ["no", "NO", "font-semibold text-slate-800"],
+        ["username", "Username", "font-semibold text-slate-800"],
+        ["first_name", "Nama Depan", "font-semibold text-slate-800"],
+        ["phone", "No. Telepon", "font-semibold text-slate-800"],
+        ["group_name", "Group", "font-semibold text-slate-800"],
+    ] as const;
 
-export default function PortBranchPage() {
+
+
+export default function UsersPage() {
     const [tableData, setTableData] = useState<TableUsers[]>([]);
     const [totalRecords, setTotalRecords] = useState<number>(0);
 
@@ -67,18 +73,6 @@ export default function PortBranchPage() {
         handleKeyDown,
     } = useTableStore((state) => state.users);
 
-    /**
-     * Fungsi Fetch Utama dengan Parameter Terpaginasi Dinamis.
-     * Dibungkus dengan useCallback demi efisiensi dependensi efek dan kelulusan SonarQube.
-     */
-
-    const rawColumnsConfig = [
-        ["no", "NO", "font-semibold text-slate-800"],
-        ["username", "Username", "font-semibold text-slate-800"],
-        ["first_name", "Nama Depan", "font-semibold text-slate-800"],
-        ["phone", "No. Telepon", "font-semibold text-slate-800"],
-        ["group_name", "Group", "font-semibold text-slate-800"],
-    ] as const;
 
     /**
      * 2. Lakukan pemetaan otomatis menggunakan .map()
@@ -187,7 +181,11 @@ export default function PortBranchPage() {
                 header: "",
                 className:
                     " text-right whitespace-nowrap text-xs font-semibold",
-                render: (row) => (
+                render: (row) => {
+                  const statusLabel = String(row.status) === "1"?"Non Aktifkan":"Aktifkan";
+                return (
+                  
+                   
                     <DropdownBtn
                         className="text-slate-400 hover:text-slate-600 active:text-slate-700"
                         variant="ghost"
@@ -200,20 +198,21 @@ export default function PortBranchPage() {
                                 onClick: () => loadEdit(),
                             },
                             {
-                                label: "NON AKTIF",
+                                label: statusLabel,
                                 fontWeight: "normal",
                                 fontSize: "xs",
-                                onClick: () => loadEdit(),
+                                onClick: () => changeStatus(row.id),
                             },
                         ]}
                         widthClass="w-48"
                         alignClass="right-0"
                     />
-                ),
+                )},
             },
         ],
         [],
     );
+
     const loadAdd = async () => {
         openModal("Form Add");
         await fetchBulkMasterOptions(
@@ -254,6 +253,10 @@ export default function PortBranchPage() {
         );
     };
 
+    const changeStatus = async (params:string) => {
+      openModal("Form Aktif");
+    }
+
     const modalConfigurations = [
         {
             id: "Form Add",
@@ -267,22 +270,20 @@ export default function PortBranchPage() {
                 <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
             ),
         },
+        {
+            id: "Form Aktif",
+            title: "",
+            renderContent: (formId: string) => "Apa Yakin ingin hapus data ini",
+        },
     ];
 
     return (
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             {/* HEADER */}
-            {modalConfigurations.map((modal) => (
-                <SidePanel
-                    key={modal.id} // 🌟 Key unik wajib untuk kestabilan Virtual DOM React
-                    id={modal.id}
-                    title={modal.title}
-                    size="3xl"
-                    isBackdropLoading={isFetchLoading}
-                >
-                    {modal.renderContent(modal.id)}
-                </SidePanel>
-            ))}
+           <ModalListRenderer 
+            configs={modalConfigurations} 
+            isLoading={isFetchLoading} 
+          />
 
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
