@@ -87,7 +87,7 @@ export default function Header({
                             label: "Keluar",
                             fontWeight: "normal",
                             fontSize: "xs",
-                            onClick: () => async () => {
+                            onClick: async () => {
                                 await logoutUser();
                             },
                         },

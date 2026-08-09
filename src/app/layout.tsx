@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
-import { inisialisasiZodBahasaIndonesia } from "@/utils/zod-indonesia";
+
 import "./globals.css";
 
-inisialisasiZodBahasaIndonesia();
 
 // 🚀 LANGKAH 2: Konfigurasi Plus Jakarta Sans Secara Lokal
 const plusJakartaSans = Plus_Jakarta_Sans({

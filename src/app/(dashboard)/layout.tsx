@@ -123,7 +123,7 @@ export default function DashboardLayout({
             >
                 {/* Logo / Nama Aplikasi & Tombol Toggle */}
                 <div
-                    className={`flex h-16 items-center border-b border-slate-100 bg-white px-4 ${
+                    className={`flex h-16  min-h-16  items-center border-b border-slate-100 bg-white px-4 ${
                         isSidebarOpen ? "justify-between" : "justify-center"
                     }`}
                 >

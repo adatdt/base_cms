@@ -128,9 +128,9 @@ export default function LoginForm() {
                         onClick={refreshCaptcha}
                         disabled={isPending}
                         className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold transition cursor-pointer disabled:opacity-50 shrink-0 bg-white border border-slate-200 px-3 py-2.5 rounded-xl shadow-sm hover:bg-slate-50"
-                        title="Ganti Soal"
+                        title="Ganti"
                     >
-                        🔄 Ganti Soal
+                        🔄 Ganti
                     </button>
                 </div>
 

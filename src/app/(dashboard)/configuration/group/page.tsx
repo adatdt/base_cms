@@ -9,6 +9,13 @@ import { ApiFetchResponse } from "@/types/api.types";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { DropdownBtn } from "@/components/ui/DropdownBtn";
 import CrudIcons from "@/components/ui/CrudIcons";
+import Btn from "@/components/ui/Btn";
+import { useModalStore } from "@/store/useModalStore";
+import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import Add from "./components/Add";
+import { useFormStore } from "@/store/useFormStore";
+import { useShallow } from "zustand/shallow";
+import Edit from "./components/Edit";
 
 // 1. React Core Hooks
 
@@ -27,6 +34,13 @@ export default function UsersPage() {
         const triggerNotification = useNotificationStore(
                 (state) => state.triggerNotification,
             );
+        const openModal = useModalStore((state) => state.openModal);
+        const { isFetchLoading, formData } = useFormStore(
+                useShallow((state) => ({
+                    isFetchLoading: state.isFetchLoading,
+                    formData: state.formData, // 🌟 Tambahkan baris ini untuk mengambil formData
+                })),
+            );
             const {
                 page,
                 setPage,
@@ -34,10 +48,7 @@ export default function UsersPage() {
                 setLimit,
                 loadData,
                 typedQuery,
-                setTypedQuery,
                 setLoadData,
-                handleRefresh,
-                handleKeyDown,
             } = useTableStore((state) => state.users);
 
             const baseColumns: ColumnProps<Table>[] = rawColumnsConfig.map(
@@ -47,7 +58,7 @@ export default function UsersPage() {
                         className,
                     }),
                 );
-                const fetchData = useCallback(
+            const fetchData = useCallback(
                     async (
                         targetPage: number,
                         targetLimit: number,
@@ -87,17 +98,13 @@ export default function UsersPage() {
                                 );
                             }
                         } catch (error: any) {
-                            // 🚀 3. Penanganan error yang pintar menggunakan struktur FetchError bawaan library Anda
                             let errorMessage = "Terjadi kesalahan jaringan atau sistem.";
-            
                             if (error && typeof error === "object" && "status" in error) {
-                                // Ini adalah error yang dilempar oleh fetchClient (tipe FetchError)
                                 const fetchError = error as FetchError;
                                 errorMessage =
                                     fetchError.data?.message ||
                                     `Gagal mengambil data (HTTP ${fetchError.status})`;
                             } else if (error instanceof Error) {
-                                // Ini adalah error JavaScript biasa atau kesalahan runtime lainnya
                                 errorMessage = error.message;
                             }
             
@@ -154,10 +161,10 @@ export default function UsersPage() {
                                     trigger={<CrudIcons name="more-vertical" size={10} />}
                                     items={[
                                         {
-                                            label: "Edit Profil",
+                                            label: "Edit ",
                                             fontWeight: "normal",
                                             fontSize: "xs",
-                                            // onClick: () => loadEdit(),
+                                            onClick: () => loadEdit(),
                                         },
                                         {
                                             label: statusLabel,
@@ -175,11 +182,35 @@ export default function UsersPage() {
                     [],
                 );
         
+        const loadAdd = async () => {
+        openModal("Form Add");
+    };
+     const loadEdit = async () => {
+        openModal("Form Edit");
+    };
+
+        const modalConfigurations = [
+            {
+                id: "Form Add",
+                title: `Tambah Data ${moduleName}`,
+                renderContent: (formId: string) => <Add formId={formId} />,
+            },
+            {
+                id: "Form Edit",
+                title: `Ubah Data ${moduleName}`,
+                renderContent: (formId: string) => (
+                    <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
+                ),
+            },
+        ];
    
     return (
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             
-
+            <ModalListRenderer 
+                        configs={modalConfigurations} 
+                        isLoading={isFetchLoading} 
+                    />
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
                 <div>
@@ -191,11 +222,87 @@ export default function UsersPage() {
                         dermaga, dan status operasional.
                     </p>
                 </div>
-                {/* Bagian Kanan: Tombol Aksi */}
-
                 <div className="flex items-center gap-2 flex-nowrap">
-                  
-                </div>
+                                    <DropdownBtn
+                                        size="md"
+                                        variant="default"
+                                        className="text-slate-400 hover:text-slate-600"
+                                        trigger={
+                                            <>
+                                                Filter
+                                                <CrudIcons name="filter" size={15} />
+                                            </>
+                                        }
+                                        items={[
+                                            // 1. Menu Teks Biasa
+                                            {
+                                                label: "Edit Profil",
+                                                fontWeight: "medium",
+                                                onClick: () => console.log("Edit diklik"),
+                                            },
+                                            // 2. Baris Berisi Komponen Input Teks (Form)
+                                            {
+                                                closeOnItemClick: false, // WAJIB: Agar saat kolom input diklik, dropdown tidak menutup
+                                                className: "hover:bg-transparent", // Matikan hover abu-abu untuk form
+                                                label: (
+                                                    <div className="flex flex-col gap-1">
+                                                        <label
+                                                            htmlFor="quick_search"
+                                                            className="text-xs font-semibold text-slate-500"
+                                                        >
+                                                            Cari Cepat
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            name="quick_search"
+                                                            placeholder="Ketik nama kelompok..."
+                                                            className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-blue-500"
+                                                            onChange={(e) =>
+                                                                console.log(e.target.value)
+                                                            }
+                                                        />
+                                                    </div>
+                                                ),
+                                            },
+                                            // 3. Baris Berisi Checkbox / Pilihan Status
+                                            {
+                                                closeOnItemClick: false,
+                                                label: (
+                                                    <label className="flex items-center gap-2 cursor-pointer py-1">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="rounded border-slate-300"
+                                                        />
+                                                        <span className="text-sm text-slate-600">
+                                                            Sembunyikan dari Publik
+                                                        </span>
+                                                    </label>
+                                                ),
+                                            },
+                                            // 4. Menu Tombol Aksi Hapus
+                                            {
+                                                label: "Hapus Kelompok",
+                                                fontWeight: "bold",
+                                                className: "text-red-600 hover:bg-red-50 mt-1",
+                                                onClick: () => confirm("Hapus data ini?"),
+                                            },
+                                        ]}
+                                        widthClass="w-56"
+                                        alignClass="right-0"
+                                    />
+                
+                                    <Btn
+                                        type="button"
+                                        variant="success-blue"
+                                        size="md"
+                                        title="Tambah Data"
+                                        onClick={() => loadAdd()}
+                                        className="shrink-0"
+                                    >
+                                        <CrudIcons name="add" size={15} />
+                                        Tambah
+                                    </Btn>
+                                </div>
             </div>
 
 <DataGrid
