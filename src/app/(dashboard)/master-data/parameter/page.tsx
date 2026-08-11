@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Table } from "./interfaces/group.interfaces";
+import { Table } from "./interfaces/parameter.interfaces";
 import DataGrid from "@/components/ui/DataGrid";
 import { useTableStore } from "@/store/useTableStore";
 import { fetchClient, FetchError } from "@/services/fetch-client";
@@ -14,13 +14,13 @@ import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
 import Edit from "./components/Edit";
-import { useGroupColumns } from "./hooks/useGroupColumns";
+import { useGroupColumns } from "./hooks/useParameterColumns";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
 
-const moduleName = `Group`;
+const moduleName = `Seting Parameter`;
 
-export default function UsersPage() {
+export default function Page() {
     const [tableData, setTableData] = useState<Table[]>([]);
     const [totalRecords, setTotalRecords] = useState<number>(0);
     const triggerNotification = useNotificationStore(

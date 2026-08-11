@@ -4,7 +4,7 @@ import React, { useMemo, useCallback, useEffect } from "react";
 import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
 import Add from "./components/Add";
 import Btn from "@/components/ui/Btn";
-import CrudIcons from "@/components/ui/CrudIcons";
+import CrudIcons from "@/components/ui/Icons";
 import type { TreeGridColumn } from "@/types/treeGrid.type";
 import SidePanel from "@/components/ui/SidePanel";
 import { useModalStore } from "@/store/useModalStore";

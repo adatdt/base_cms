@@ -6,7 +6,7 @@ import Header from "@/components/template/Header";
 import Skeleton from "@/components/ui/Skeleton";
 import Notification from "@/components/ui/Notification";
 import { useNotificationStore } from "@/store/useNotificationStore";
-import CrudIcons from "@/components/ui/CrudIcons";
+import CrudIcons from "@/components/ui/Icons";
 
 interface MenuItem {
     name: string;

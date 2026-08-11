@@ -3,7 +3,7 @@ import React from "react";
 import { ColumnProps } from "@/components/ui/DataGrid";
 import type { TableUsers } from "../interfaces/users.interfaces";
 import Btn from "@/components/ui/Btn";
-import CrudIcons from "@/components/ui/CrudIcons";
+import CrudIcons from "@/components/ui/Icons";
 
 /**
  * 1. Definisikan data mentah kolom secara ringkas tanpa menulis ulang nama properti objek.

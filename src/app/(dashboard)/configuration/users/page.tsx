@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useShallow } from "zustand/shallow";
 import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
-import CrudIcons from "@/components/ui/CrudIcons";
+import Icons from "@/components/ui/Icons";
 import { DropdownBtn } from "@/components/ui/DropdownBtn";
 import { ModalListRenderer } from "@/components/ui/ModalRenderer";
 import { useFormStore } from "@/store/useFormStore";
@@ -17,19 +17,16 @@ import { fetchClient, FetchError } from "@/services/fetch-client";
 import Add from "./components/Add";
 import Edit from "./components/Edit";
 import type { TableUsers } from "./interfaces/users.interfaces";
-import type {ApiFetchResponse} from "@/types/api.types"
-
+import type { ApiFetchResponse } from "@/types/api.types";
 
 const moduleName = `Users`;
-    const rawColumnsConfig = [
-        ["no", "NO", "font-semibold text-slate-800"],
-        ["username", "Username", "font-semibold text-slate-800"],
-        ["first_name", "Nama Depan", "font-semibold text-slate-800"],
-        ["phone", "No. Telepon", "font-semibold text-slate-800"],
-        ["group_name", "Group", "font-semibold text-slate-800"],
-    ] as const;
-
-
+const rawColumnsConfig = [
+    ["no", "NO", "font-semibold text-slate-800"],
+    ["username", "Username", "font-semibold text-slate-800"],
+    ["first_name", "Nama Depan", "font-semibold text-slate-800"],
+    ["phone", "No. Telepon", "font-semibold text-slate-800"],
+    ["group_name", "Group", "font-semibold text-slate-800"],
+] as const;
 
 export default function UsersPage() {
     const [tableData, setTableData] = useState<TableUsers[]>([]);
@@ -72,7 +69,6 @@ export default function UsersPage() {
         handleRefresh,
         handleKeyDown,
     } = useTableStore((state) => state.users);
-
 
     /**
      * 2. Lakukan pemetaan otomatis menggunakan .map()
@@ -182,32 +178,34 @@ export default function UsersPage() {
                 className:
                     " text-right whitespace-nowrap text-xs font-semibold",
                 render: (row) => {
-                  const statusLabel = String(row.status) === "1"?"Non Aktifkan":"Aktifkan";
-                return (
-                  
-                   
-                    <DropdownBtn
-                        className="text-slate-400 hover:text-slate-600 active:text-slate-700"
-                        variant="ghost"
-                        trigger={<CrudIcons name="more-vertical" size={10} />}
-                        items={[
-                            {
-                                label: "Edit Profil",
-                                fontWeight: "normal",
-                                fontSize: "xs",
-                                onClick: () => loadEdit(),
-                            },
-                            {
-                                label: statusLabel,
-                                fontWeight: "normal",
-                                fontSize: "xs",
-                                onClick: () => changeStatus(row.id),
-                            },
-                        ]}
-                        widthClass="w-48"
-                        alignClass="right-0"
-                    />
-                )},
+                    const statusLabel =
+                        String(row.status) === "1"
+                            ? "Non Aktifkan"
+                            : "Aktifkan";
+                    return (
+                        <DropdownBtn
+                            className="text-slate-400 hover:text-slate-600 active:text-slate-700"
+                            variant="ghost"
+                            trigger={<Icons name="more-vertical" size={10} />}
+                            items={[
+                                {
+                                    label: "Edit Profil",
+                                    fontWeight: "normal",
+                                    fontSize: "xs",
+                                    onClick: () => loadEdit(),
+                                },
+                                {
+                                    label: statusLabel,
+                                    fontWeight: "normal",
+                                    fontSize: "xs",
+                                    onClick: () => changeStatus(row.id),
+                                },
+                            ]}
+                            widthClass="w-48"
+                            alignClass="right-0"
+                        />
+                    );
+                },
             },
         ],
         [],
@@ -253,9 +251,9 @@ export default function UsersPage() {
         );
     };
 
-    const changeStatus = async (params:string) => {
-      openModal("Form Aktif");
-    }
+    const changeStatus = async (params: string) => {
+        openModal("Form Aktif");
+    };
 
     const modalConfigurations = [
         {
@@ -280,10 +278,10 @@ export default function UsersPage() {
     return (
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             {/* HEADER */}
-           <ModalListRenderer 
-            configs={modalConfigurations} 
-            isLoading={isFetchLoading} 
-          />
+            <ModalListRenderer
+                configs={modalConfigurations}
+                isLoading={isFetchLoading}
+            />
 
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
@@ -306,7 +304,7 @@ export default function UsersPage() {
                         trigger={
                             <>
                                 Filter
-                                <CrudIcons name="filter" size={15} />
+                                <Icons name="filter" size={15} />
                             </>
                         }
                         items={[
@@ -375,7 +373,7 @@ export default function UsersPage() {
                         onClick={() => loadAdd()}
                         className="shrink-0"
                     >
-                        <CrudIcons name="add" size={15} />
+                        <Icons name="add" size={15} />
                         Tambah
                     </Btn>
                 </div>
@@ -405,19 +403,7 @@ export default function UsersPage() {
                         onClick={() => handleRefresh(fetchData)}
                         className="flex! flex-row! items-center justify-center gap-1.5 shadow-sm min-w-17.5"
                     >
-                        <svg
-                            className="h-3.5 w-3.5 shrink-0"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2.5"
-                            stroke="currentColor"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z"
-                            />
-                        </svg>
+                        <Icons name="search" size={15} />
                         <span className="whitespace-nowrap block">Cari</span>
                     </Btn>
                 </div>

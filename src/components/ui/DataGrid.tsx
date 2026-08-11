@@ -101,7 +101,7 @@ export default function DataGrid<T extends { id: string }>({
                         {columns.map((col) => (
                             <td
                                 key={col.header}
-                                className={`p-4 ${col.className || ""}`}
+                                className={`pt-1 pb-1 pl-4 pr-4 ${col.className || ""}`}
                             >
                                 {col.render
                                     ? col.render(row)

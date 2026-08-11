@@ -4,7 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { logoutUser } from "@/features/auth/actions/logoutUser";
 import { DropdownBtn } from "../ui/DropdownBtn";
-import CrudIcons from "../ui/CrudIcons";
+import CrudIcons from "../ui/Icons";
 
 interface HeaderProps {
     isMobileMenuOpen: boolean;

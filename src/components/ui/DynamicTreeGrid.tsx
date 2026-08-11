@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo } from "react";
 import type { TreeGridRow, TreeGridColumn } from "@/types/treeGrid.type";
-import { ChevronTriangleIcon } from "@/components/ui/Icons";
+import Icons from "@/components/ui/Icons";
 
 interface TreeGridProps<T> {
     columns: TreeGridColumn<T>[];
@@ -247,7 +247,8 @@ export default function DynamicTreeGrid<
                                                                                 : "Tutup folder"
                                                                         }
                                                                     >
-                                                                        <ChevronTriangleIcon
+                                                                        <Icons
+                                                                            name="chevron-triangle"
                                                                             className={`w-3.5 h-3.5 transform transition-transform duration-200 ease-in-out
                                         ${isCollapsed ? "-rotate-90 text-slate-400" : "rotate-0 text-slate-600"}`}
                                                                         />

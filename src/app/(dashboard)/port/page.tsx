@@ -6,7 +6,7 @@ import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import StatusBadge from "@/components/ui/StatusBadge";
 import Btn from "@/components/ui/Btn";
 import Modal from "@/components/ui/SidePanel";
-import CrudIcons from "@/components/ui/CrudIcons";
+import CrudIcons from "@/components/ui/Icons";
 
 interface PortRowData {
     id: string;

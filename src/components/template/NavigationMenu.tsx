@@ -1,25 +1,25 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Icons from "../ui/Icons";
 
-// Interface untuk menyamakan tipe data menu dari database Anda
 export interface MenuItem {
     id?: string;
     name: string;
-    href: string; // Menyambung ke properti 'slug' atau 'url' database Anda
+    href: string;
     icon?: string | React.ReactNode;
     children?: MenuItem[];
 }
 
 interface NavigationMenuProps {
     menuItems: MenuItem[];
-    isMobile?: boolean; // Pembeda mode layout
-    isSidebarOpen?: boolean; // Khusus Desktop Sidebar
-    setIsMobileMenuOpen?: (open: boolean) => void; // Khusus Mobile Menu Drawer
-    handleMouseEnter?: () => void; // Khusus Desktop Sidebar
-    handleMouseLeave?: () => void; // Khusus Desktop Sidebar
+    isMobile?: boolean;
+    isSidebarOpen?: boolean;
+    setIsMobileMenuOpen?: (open: boolean) => void;
+    handleMouseEnter?: () => void;
+    handleMouseLeave?: () => void;
 }
 
 export default function NavigationMenu({
@@ -34,41 +34,92 @@ export default function NavigationMenu({
     const [searchQuery, setSearchQuery] = useState("");
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
 
-    // Fungsi toggle buka-tutup dropdown menu anak
+    // 1. FUNGSI PEMBANTU: Cek secara rekursif apakah modul/menu ini sedang diakses
+    const isModuleActive = (item: MenuItem): boolean => {
+        // Cocokkan langsung dengan href menu saat ini
+        if (pathname === `/${item.href}` || pathname === item.href) {
+            return true;
+        }
+        // Jika punya anak/cucu, cek apakah ada salah satu dari mereka yang aktif
+        if (item.children && item.children.length > 0) {
+            return item.children.some((child) => isModuleActive(child));
+        }
+        return false;
+    };
+
+    // 2. OTOMATIS BUKA DROPDOWN: Jika halaman aktif ada di dalam sub-menu modul tersebut
+    useEffect(() => {
+        const initialOpenStates: Record<string, boolean> = {};
+
+        menuItems.forEach((item) => {
+            if (item.children && item.children.length > 0) {
+                // Cek apakah ada sub-menu yang aktif di dalam item ini
+                const hasActiveChild = item.children.some((child) =>
+                    isModuleActive(child),
+                );
+                if (hasActiveChild) {
+                    initialOpenStates[item.href] = true;
+                }
+
+                // Cek juga level cucu (Level 3)
+                item.children.forEach((child) => {
+                    if (child.children && child.children.length > 0) {
+                        const hasActiveGrandchild = child.children.some(
+                            (grand) => isModuleActive(grand),
+                        );
+                        if (hasActiveGrandchild) {
+                            initialOpenStates[child.href] = true;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (Object.keys(initialOpenStates).length > 0) {
+            setOpenMenus((prev) => ({ ...prev, ...initialOpenStates }));
+        }
+    }, [pathname, menuItems]);
+
     const toggleMenu = (href: string) => {
         setOpenMenus((prev) => ({ ...prev, [href]: !prev[href] }));
     };
 
-    // Fungsi pencarian rekursif yang akurat untuk menyaring teks kecocokan menu
     const hasSearchMatch = (item: MenuItem, query: string): boolean => {
         if (!query) return true;
         const lowerQuery = query.toLowerCase();
-
-        // Cek apakah menu saat ini cocok
         const currentMatch = item.name.toLowerCase().includes(lowerQuery);
         if (currentMatch) return true;
 
-        // Cek apakah salah satu menu anak atau cucu ada yang cocok
         if (item.children && item.children.length > 0) {
             return item.children.some((child) => hasSearchMatch(child, query));
         }
-
         return false;
     };
 
-    // Inner function untuk merender baris anak menu (Level 2) dan cucu menu (Level 3)
+    // RENDER ANAK MENU (LEVEL 2) DAN CUCU (LEVEL 3)
+    // RENDER ANAK MENU (LEVEL 2) DAN CUCU (LEVEL 3)
     const renderChildMenuRow = (child: MenuItem) => {
-        const isChildActive = pathname === child.href;
+        const isChildActive =
+            pathname === `/${child.href}` || pathname === child.href;
+        const isChildOrSubActive = isModuleActive(child); // Highlight jika anaknya aktif
         const hasGrandchildren = child.children && child.children.length > 0;
         const isChildOpen = !!openMenus[child.href];
 
-        // Menyaring daftar cucu (Level 3) berdasarkan kata kunci pencarian
         const filteredGrandchildren =
             child.children?.filter((grandchild) =>
                 grandchild.name
                     .toLowerCase()
                     .includes(searchQuery.toLowerCase()),
             ) || [];
+
+        // 1. SOLUSI SONARQUBE: Mengekstrak nested ternary menjadi conditional statement (if-else) yang bersih
+        let childClassNames =
+            "text-slate-500 hover:text-slate-900 hover:bg-slate-50";
+        if (isChildActive) {
+            childClassNames = "text-blue-600 bg-blue-50/50 font-semibold";
+        } else if (isChildOrSubActive) {
+            childClassNames = "text-blue-600 font-medium"; // Teks tetap biru jika cucunya sedang dibuka
+        }
 
         return (
             <div key={child.href} className="space-y-1">
@@ -83,17 +134,10 @@ export default function NavigationMenu({
                             setIsMobileMenuOpen(false);
                         }
                     }}
-                    className={`flex items-center justify-between py-2 px-3 text-xs font-medium rounded-lg transition-all ${
-                        isChildActive
-                            ? /* GANTI DI SINI: Teks anak aktif menggunakan biru cerah, background abu terang tipis */
-                              "text-blue-600 bg-slate-100/80 font-semibold"
-                            : /* GANTI DI SINI: Hover disesuaikan agar teks menggelap dan background abu tipis */
-                              "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                    }`}
+                    className={`flex items-center justify-between py-2 px-3 text-xs font-medium rounded-lg transition-all ${childClassNames}`}
                 >
                     <span className="whitespace-nowrap">{child.name}</span>
 
-                    {/* Indikator Panah Level 2 CSS Murni */}
                     {hasGrandchildren && (
                         <span
                             className={`inline-block w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-t-[3.5px] border-t-slate-400 transition-transform duration-200 ${
@@ -106,10 +150,10 @@ export default function NavigationMenu({
                 {/* RENDER GRANDCHILDREN (LEVEL 3) */}
                 {(isChildOpen || searchQuery) &&
                     filteredGrandchildren.length > 0 && (
-                        /* GANTI DI SINI: Garis penghubung vertikal diubah dari border-slate-800 ke border-slate-200 */
-                        <div className="pl-4 space-y-1 border-l border-slate-200 ml-3 transition-all duration-200">
+                        <div className="pl-4 space-y-1  border-slate-200 ml-3 transition-all duration-200">
                             {filteredGrandchildren.map((grandchild) => {
                                 const isGrandchildActive =
+                                    pathname === `/${grandchild.href}` ||
                                     pathname === grandchild.href;
 
                                 return (
@@ -126,10 +170,8 @@ export default function NavigationMenu({
                                         }}
                                         className={`block py-1.5 px-3 text-[11px] font-medium rounded-md transition-all ${
                                             isGrandchildActive
-                                                ? /* GANTI DI SINI: Cucu menu aktif menggunakan teks biru dan latar lembut */
-                                                  "text-blue-600 bg-slate-100 font-semibold"
-                                                : /* GANTI DI SINI: Hover teks cucu menu saat tidak aktif */
-                                                  "text-slate-500 hover:text-slate-900 hover:bg-slate-50/50"
+                                                ? "text-blue-600 bg-blue-50/40 font-semibold"
+                                                : "text-slate-500 hover:text-slate-900 hover:bg-slate-50/50"
                                         }`}
                                     >
                                         {grandchild.name}
@@ -142,7 +184,6 @@ export default function NavigationMenu({
         );
     };
 
-    // Kondisi penentu ukuran layout sidebar desktop vs mobile penuh
     const showSidebarFeatures = isMobile || isSidebarOpen;
 
     return (
@@ -153,116 +194,90 @@ export default function NavigationMenu({
                 showSidebarFeatures ? "px-4" : "px-2"
             } scrollbar-thin [scrollbar-color:rgba(203,213,225,0.4)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300/40 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-300/70`}
         >
-            {/* 1. INPUT PENCARIAN (Hanya sembunyi jika di desktop dan sidebar sedang mengecil) */}
+            {/* INPUT PENCARIAN */}
             {showSidebarFeatures && (
                 <div className="px-1 mb-2 animate-fade-in">
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400 text-xs">
-                            🔍
+                            <Icons name="search" size={15} />
                         </span>
                         <input
                             type="text"
                             placeholder="Cari menu..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500/30 focus:border-blue-500/50 transition-all"
+                            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:border-blue-500 focus:bg-white transition-all text-slate-700"
                         />
-                        {searchQuery && (
-                            <button
-                                type="button"
-                                onClick={() => setSearchQuery("")}
-                                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 text-[10px]"
-                            >
-                                ✕
-                            </button>
-                        )}
                     </div>
                 </div>
             )}
 
-            {/* 2. DAFTAR RENDERING MENU BERDASARKAN HASIL FILTER */}
+            {/* DAFTAR MENU UTAMA */}
             <div className="space-y-1">
                 {menuItems
                     .filter((item) => hasSearchMatch(item, searchQuery))
                     .map((item) => {
-                        const isActive = pathname === item.href;
+                        // 3. SEKARANG MENGGUNAKAN INDIKATOR REKURSIF
+                        const isParentActive = isModuleActive(item);
                         const hasChildren =
                             item.children && item.children.length > 0;
-                        const isMenuOpen = !!openMenus[item.href];
+                        const isParentOpen = !!openMenus[item.href];
 
-                        // Filter Level 2 (Children)
                         const filteredChildren =
                             item.children?.filter((child) =>
                                 hasSearchMatch(child, searchQuery),
                             ) || [];
-
                         return (
                             <div key={item.href} className="space-y-1">
-                                {/* LEVEL 1: Menu Utama */}
-                                <div className="relative flex items-center justify-between group">
-                                    <Link
-                                        href={
-                                            hasChildren ? "#" : `/${item.href}`
+                                {/* ITEM LINK PARENT (LEVEL 1 / MODULE UTAMA) */}
+                                <Link
+                                    href={hasChildren ? "#" : `/${item.href}`}
+                                    onClick={(e) => {
+                                        if (hasChildren) {
+                                            e.preventDefault();
+                                            toggleMenu(item.href);
+                                        } else if (
+                                            isMobile &&
+                                            setIsMobileMenuOpen
+                                        ) {
+                                            setIsMobileMenuOpen(false);
                                         }
-                                        onClick={(e) => {
-                                            if (hasChildren) {
-                                                e.preventDefault();
-                                                toggleMenu(item.href);
-                                            } else if (
-                                                isMobile &&
-                                                setIsMobileMenuOpen
-                                            ) {
-                                                setIsMobileMenuOpen(false); // Tutup drawer jika di mobile
-                                            }
-                                        }}
-                                        title={
-                                            showSidebarFeatures
-                                                ? undefined
-                                                : item.name
-                                        }
-                                        className={`flex items-center justify-between w-full gap-3 py-3 text-sm font-medium rounded-xl transition-all ${
-                                            showSidebarFeatures
-                                                ? "px-4"
-                                                : "px-0 justify-center"
-                                        } ${
-                                            isActive
-                                                ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                                                : /* GANTI DI SINI: Menyesuaikan warna teks tidak aktif & hover ke tema putih terang */
-                                                  "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            {/* Warna ikon otomatis menjadi slate-500 jika tidak aktif, dan putih jika aktif */}
+                                    }}
+                                    className={`flex items-center justify-between py-2.5 px-3 text-xs font-medium rounded-xl transition-all ${
+                                        isParentActive
+                                            ? "text-blue-600 bg-blue-50/80 font-semibold shadow-sm border border-blue-100/50"
+                                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        {item.icon && (
                                             <span
-                                                className={`text-base shrink-0 ${isActive ? "text-white" : "text-slate-500"}`}
+                                                className={`shrink-0 transition-colors ${isParentActive ? "text-blue-600" : "text-slate-400"}`}
                                             >
                                                 {item.icon}
                                             </span>
-                                            {showSidebarFeatures && (
-                                                <span className="whitespace-nowrap transition-opacity duration-200">
-                                                    {item.name}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Indikator Panah Level 1 */}
-                                        {showSidebarFeatures && hasChildren && (
-                                            <span
-                                                className={`inline-block w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-slate-400 mr-2 transition-transform duration-200 ${
-                                                    isMenuOpen
-                                                        ? "rotate-180"
-                                                        : ""
-                                                }`}
-                                            />
                                         )}
-                                    </Link>
-                                </div>
+                                        {showSidebarFeatures && (
+                                            <span className="truncate">
+                                                {item.name}
+                                            </span>
+                                        )}
+                                    </div>
 
-                                {/* LEVEL 2 & 3: Render Sub-Menu Anak dan Cucu */}
+                                    {hasChildren && showSidebarFeatures && (
+                                        <span
+                                            className={`inline-block w-0 h-0 border-l-4 border-l-transparent border-r-4 border-r-transparent border-t-4 border-t-slate-400 transition-transform duration-200 ${
+                                                isParentOpen ? "rotate-180" : ""
+                                            }`}
+                                        />
+                                    )}
+                                </Link>
+
+                                {/* RENDER CHILDREN DROP-DOWN (LEVEL 2) */}
                                 {showSidebarFeatures &&
-                                    (isMenuOpen || searchQuery) &&
+                                    (isParentOpen || searchQuery) &&
                                     filteredChildren.length > 0 && (
-                                        <div className="pl-9 space-y-1 transition-all duration-200">
+                                        <div className="pl-3 space-y-1 mt-0.5 transition-all duration-200">
                                             {filteredChildren.map((child) =>
                                                 renderChildMenuRow(child),
                                             )}
@@ -272,6 +287,14 @@ export default function NavigationMenu({
                         );
                     })}
             </div>
+            <Link
+                href="/master-data/parameter"
+                className="flex items-center justify-between py-2.5 px-3 text-xs font-medium rounded-xl transition-all text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="truncate">Parameter</span>
+                </div>
+            </Link>
         </nav>
     );
 }
