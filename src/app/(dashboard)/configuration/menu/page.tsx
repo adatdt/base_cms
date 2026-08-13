@@ -1,12 +1,10 @@
 "use client";
 
-import React, { useMemo, useCallback, useEffect } from "react";
+import React, { useMemo, useCallback, useEffect, useState } from "react";
 import DynamicTreeGrid from "@/components/ui/DynamicTreeGrid";
 import Add from "./components/Add";
 import Btn from "@/components/ui/Btn";
-import CrudIcons from "@/components/ui/Icons";
 import type { TreeGridColumn } from "@/types/treeGrid.type";
-import SidePanel from "@/components/ui/SidePanel";
 import { useModalStore } from "@/store/useModalStore";
 import Edit from "./components/Edit";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -17,11 +15,17 @@ import {
     MyComponentFields,
     RawDatabaseMenu,
 } from "./interfaces/menu.interfaces";
+import { DropdownBtn } from "@/components/ui/DropdownBtn";
+import Icons from "@/components/ui/Icons";
+import Filter from "./components/Filter";
+import { useTableStore } from "@/store/useTableStore";
+import { ModalListRenderer } from "@/components/ui/ModalRenderer";
 
 const moduleName = `Menu`;
 
 export default function MenuPage() {
-    const [data, setData] = React.useState<DocumentData[]>([]);
+    const [data, setData] = useState<DocumentData[]>([]);
+    const [localSearch, setLocalSearch] = useState("");
     // Ambil seluruh state pengendali modal dari Zustand
     const openModal = useModalStore((state) => state.openModal);
     const fetchFormDetails = useFormStore((state) => state.fetchFormDetails);
@@ -35,8 +39,17 @@ export default function MenuPage() {
     );
     const isFetchLoading = useFormStore((state) => state.isFetchLoading);
 
+    const { loadData, setLoadData, typedQuery, setTypedQuery } = useTableStore(
+        (state) => state.getTableState("menu"),
+    );
+
+    const handleSearchSubmit = (value: string) => {
+        setTypedQuery(value); // Sinkronisasi nilai final ke Zustand
+    };
+
     const fetchData = useCallback(async () => {
         try {
+            setLoadData(true);
             // 2. Menggunakan metode GET dengan menyisipkan query string di ujung URL
             const response = await fetch(`/configuration/menu/api/get_data?`, {
                 method: "GET",
@@ -51,13 +64,14 @@ export default function MenuPage() {
                 );
             }
             const result = await response.json();
-            console.log(result.data);
             setData(convertToTreeGridData(result.data));
         } catch (error) {
             const errorMessage =
                 error instanceof Error
                     ? error.message
                     : "Terjadi kesalahan jaringan atau sistem.";
+        } finally {
+            setLoadData(false);
         }
     }, []);
 
@@ -171,30 +185,30 @@ export default function MenuPage() {
             },
             {
                 key: "actions",
-                header: "AKSI",
+                header: " ",
                 className: "text-center whitespace-nowrap w-[1%] px-2",
                 // MENARUH KONTEN TOMBOL AKSI LANGSUNG DI FILE PAGE:
                 render: (row) => (
-                    <div className="flex justify-center gap-1.5">
-                        <Btn
-                            type="button"
-                            variant="info"
-                            size="xs"
-                            title="Edit"
-                            onClick={() => loadEdit(row.id)}
-                        >
-                            <CrudIcons name="edit" size={10} />
-                        </Btn>
-                        <Btn
-                            type="button"
-                            variant="delete"
-                            size="xs"
-                            title="Hapus"
-                            onClick={() => handleDelete(row)}
-                        >
-                            <CrudIcons name="delete" size={10} />
-                        </Btn>
-                    </div>
+                    <DropdownBtn
+                        variant="ghost"
+                        trigger={<Icons name="more-vertical" size={15} />}
+                        items={[
+                            {
+                                label: "Edit ",
+                                fontWeight: "normal",
+                                fontSize: "xs",
+                                onClick: () => loadEdit(row.id), // Passing row data jika dibutuhkan
+                            },
+                            {
+                                label: "Hapus",
+                                fontWeight: "normal",
+                                fontSize: "xs",
+                                onClick: () => handleDelete(row),
+                            },
+                        ]}
+                        widthClass="w-48"
+                        alignClass="right-0"
+                    />
                 ),
             },
         ],
@@ -229,37 +243,32 @@ export default function MenuPage() {
         });
     };
 
+    const modalConfigurations = [
+        {
+            id: "Form Add",
+            title: `Tambah Data ${moduleName}`,
+            renderContent: (formId: string) => <Add formId={formId} />,
+        },
+        {
+            id: "Form Edit",
+            title: `Ubah Data ${moduleName}`,
+            renderContent: (formId: string) => (
+                <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
+            ),
+        },
+    ];
+
     return (
         // <div className="p-8">
         //   <DynamicTreeGrid columns={columns} data={data} />
         // </div>
         <div className="p-6 w-full space-y-6 text-slate-800 min-h-screen bg-slate-50/50">
             {/* HEADER */}
-            <SidePanel
-                id="Form Add"
-                title="Tambah Data Pengguna"
-                size="sm"
-                isBackdropLoading={isFetchLoading}
-                // confirmLoading={loading}
-            >
-                {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Add" */}
-                <Add formId="Form Add" />
-            </SidePanel>
 
-            <SidePanel
-                id="Form Edit"
-                title="Edit Data Pengguna"
-                // size="5xl"
-                isBackdropLoading={isFetchLoading}
-
-                // confirmLoading={loading}
-            >
-                {/* 3. Masukkan Form Fields yang otomatis menyasar formId "Form Edit" */}
-                <Edit
-                    formId="Form Edit"
-                    key={formData.menu || "modal-kosong"}
-                />
-            </SidePanel>
+            <ModalListRenderer
+                configs={modalConfigurations}
+                isLoading={isFetchLoading}
+            />
 
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
@@ -274,19 +283,38 @@ export default function MenuPage() {
                 </div>
                 {/* Bagian Kanan: Tombol Aksi */}
 
-                <Btn
-                    type="button"
-                    variant="success-blue"
-                    size="sm"
-                    title="Tambah"
-                    onClick={() => loadAdd()}
-                >
-                    <CrudIcons name="add" size={15} />
-                    Tambah
-                </Btn>
+                <div className="flex items-center gap-2 flex-nowrap">
+                    <Filter
+                        searchValue={localSearch}
+                        isLoading={loadData}
+                        onReset={() => {
+                            setTypedQuery("");
+                            setLocalSearch("");
+                        }}
+                        onSearchChange={(value) => {
+                            setLocalSearch(value);
+                        }}
+                        onApply={() => handleSearchSubmit(localSearch)}
+                    />
+                    <Btn
+                        type="button"
+                        variant="success-blue"
+                        size="md"
+                        title="Tambah"
+                        onClick={() => loadAdd()}
+                    >
+                        <Icons name="add" size={15} />
+                        Tambah
+                    </Btn>
+                </div>
             </div>
 
-            <DynamicTreeGrid columns={columns} data={data} />
+            <DynamicTreeGrid
+                columns={columns}
+                data={data}
+                searchValue={typedQuery}
+                isLoading={loadData}
+            />
         </div>
     );
 }

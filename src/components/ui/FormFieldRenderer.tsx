@@ -60,6 +60,7 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
         if (item.variant === "select-hierarchy") {
             return (
                 <SelectHierarchyData
+                    inputSize={"sm"}
                     name={item.name}
                     options={dynamicOptions}
                     value={formData[item.name]}

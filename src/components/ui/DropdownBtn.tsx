@@ -34,6 +34,7 @@ interface DropdownBtnProps {
     header?: React.ReactNode;
     // 🌟 PROP BARU OPSIONAL: Konten JSX Custom untuk Bagian Bawah Menu (Footer)
     footer?: React.ReactNode;
+    zIndexClass?: string;
 }
 
 const weightClasses = {
@@ -70,6 +71,7 @@ export const DropdownBtn: React.FC<DropdownBtnProps> = ({
     isCircle = false,
     header,
     footer,
+    zIndexClass = "z-50",
 }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -129,7 +131,7 @@ export const DropdownBtn: React.FC<DropdownBtnProps> = ({
             {isOpen && (
                 <div
                     // 👑 PERBAIKAN: Menghapus max-w-xs agar w-56, w-64, atau w-72 bisa melebar penuh tanpa mentok batas maksimal
-                    className={`absolute ${alignClass} z-50 mt-1 ${widthClass} max-w-sm sm:max-w-md md:max-w-lg bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden origin-top-right flex flex-col`}
+                    className={`absolute ${alignClass} ${zIndexClass} mt-1 ${widthClass} max-w-sm sm:max-w-md md:max-w-lg bg-white border border-slate-100 shadow-xl rounded-xl overflow-hidden origin-top-right flex flex-col`}
                 >
                     {/* RENDER HEADER OPSIONAL */}
                     {header && (

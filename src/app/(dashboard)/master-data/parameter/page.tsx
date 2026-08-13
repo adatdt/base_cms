@@ -44,7 +44,7 @@ export default function Page() {
         typedQuery,
         setTypedQuery,
         setLoadData,
-    } = useTableStore((state) => state.users);
+    } = useTableStore((state) => state.getTableState("parameter"));
 
     const loadAdd = async () => openModal("Form Add");
     const loadEdit = async () => openModal("Form Edit");

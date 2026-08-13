@@ -5,7 +5,7 @@ import { Table } from "./interfaces/group.interfaces";
 import DataGrid from "@/components/ui/DataGrid";
 import { useTableStore } from "@/store/useTableStore";
 import { fetchClient, FetchError } from "@/services/fetch-client";
-import { ApiFetchResponse } from "@/types/api.types";
+import { ApiTableResponse } from "@/types/api.types";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import Btn from "@/components/ui/Btn";
 import { useModalStore } from "@/store/useModalStore";
@@ -20,7 +20,7 @@ import Filter from "./components/Filter";
 
 const moduleName = `Group`;
 
-export default function UsersPage() {
+export default function GroupPage() {
     const [tableData, setTableData] = useState<Table[]>([]);
     const [totalRecords, setTotalRecords] = useState<number>(0);
     const triggerNotification = useNotificationStore(
@@ -44,7 +44,7 @@ export default function UsersPage() {
         typedQuery,
         setTypedQuery,
         setLoadData,
-    } = useTableStore((state) => state.users);
+    } = useTableStore((state) => state.getTableState("group"));
 
     const loadAdd = async () => openModal("Form Add");
     const loadEdit = async () => openModal("Form Edit");
@@ -58,35 +58,37 @@ export default function UsersPage() {
 
     const fetchData = useCallback(
         async (
-            targetPage: number,
-            targetLimit: number,
+            targetPage: number, // start page
+            targetLimit: number, // limit page
             searchQuery: string,
         ) => {
             try {
                 setLoadData(true);
                 const requestBody = {
-                    page: targetPage,
-                    limit: targetLimit,
+                    start: targetPage,
+                    length: targetLimit,
                     search: searchQuery.trim(),
+                    order: "desc",
+                    column: "id",
                 };
-                const result = await fetchClient.request<ApiFetchResponse<any>>(
+                const result = await fetchClient.request<ApiTableResponse<any>>(
                     "/api/group/get_data",
                     {
                         method: "POST",
                         data: requestBody,
                     },
                 );
-
-                if (result.success) {
-                    const dataTerkonversi: Table[] = (result.data || []).map(
-                        (item: any, index: number) => ({
-                            ...item,
-                            id: item.id,
-                            no: (targetPage - 1) * targetLimit + index + 1,
-                        }),
-                    );
+                if (result.status && result.code >= 200 && result.code < 300) {
+                    const dataTerkonversi: Table[] = (
+                        result.data.records || []
+                    ).map((item: any, index: number) => ({
+                        ...item,
+                        id: item.id,
+                        no: (targetPage - 1) * targetLimit + index + 1,
+                    }));
+                    const recordsTotal = result.data.recordsTotal;
                     setTableData(dataTerkonversi);
-                    setTotalRecords(result.total_data || 0);
+                    setTotalRecords(Number(recordsTotal) || 0);
                 } else {
                     triggerNotification(
                         result.message || "Gagal memuat data.",

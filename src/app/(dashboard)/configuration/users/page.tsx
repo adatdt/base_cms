@@ -17,7 +17,7 @@ import { fetchClient, FetchError } from "@/services/fetch-client";
 import Add from "./components/Add";
 import Edit from "./components/Edit";
 import type { TableUsers } from "./interfaces/users.interfaces";
-import type { ApiFetchResponse } from "@/types/api.types";
+import type { ApiTableResponse } from "@/types/api.types";
 
 const moduleName = `Users`;
 const rawColumnsConfig = [
@@ -68,7 +68,7 @@ export default function UsersPage() {
         setLoadData,
         handleRefresh,
         handleKeyDown,
-    } = useTableStore((state) => state.users);
+    } = useTableStore((state) => state.getTableState("user"));
 
     /**
      * 2. Lakukan pemetaan otomatis menggunakan .map()
@@ -83,18 +83,20 @@ export default function UsersPage() {
     );
     const fetchData = useCallback(
         async (
-            targetPage: number,
-            targetLimit: number,
+            targetPage: number, // start page
+            targetLimit: number, // limit page
             searchQuery: string,
         ) => {
             try {
                 setLoadData(true);
                 const requestBody = {
-                    page: targetPage,
-                    limit: targetLimit,
+                    start: targetPage,
+                    length: targetLimit,
                     search: searchQuery.trim(),
+                    order: "desc",
+                    column: "id",
                 };
-                const result = await fetchClient.request<ApiFetchResponse<any>>(
+                const result = await fetchClient.request<ApiTableResponse<any>>(
                     "/configuration/users/api/get_data",
                     {
                         method: "POST",
@@ -102,18 +104,17 @@ export default function UsersPage() {
                     },
                 );
 
-                if (result.success) {
-                    // Kalkulasi penomoran baris dinamis (NO) berdasarkan indeks halaman server
+                if (result.status && result.code >= 200 && result.code < 300) {
                     const dataTerkonversi: TableUsers[] = (
-                        result.data || []
+                        result.data.records || []
                     ).map((item: any, index: number) => ({
                         ...item,
                         id: item.id,
                         no: (targetPage - 1) * targetLimit + index + 1,
                     }));
-
+                    const recordsTotal = result.data.recordsTotal;
                     setTableData(dataTerkonversi);
-                    setTotalRecords(result.total_data || 0);
+                    setTotalRecords(Number(recordsTotal) || 0);
                 } else {
                     triggerNotification(
                         result.message || "Gagal memuat data.",

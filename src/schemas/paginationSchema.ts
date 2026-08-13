@@ -5,18 +5,18 @@ import { z } from "zod";
  * Menggunakan z.coerce untuk otomatis mengubah string URL menjadi tipe number.
  */
 export const paginationQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(10),
-  search: z
-    .string()
-    .trim()
-    .max(100, "Kata kunci pencarian maksimal 100 karakter")
-    .regex(
-      /^[a-zA-Z0-9\s\-_]*$/,
-      "Pencarian tidak boleh mengandung karakter khusus atau simbol",
-    )
-    .optional()
-    .default(""),
+    start: z.coerce.number().int().min(1).default(1),
+    length: z.coerce.number().int().min(1).max(100).default(10),
+    search: z
+        .string()
+        .trim()
+        .max(100, "Kata kunci pencarian maksimal 100 karakter")
+        .regex(
+            /^[a-zA-Z0-9\s\-_]*$/,
+            "Pencarian tidak boleh mengandung karakter khusus atau simbol",
+        )
+        .optional()
+        .default(""),
 });
 
 // Inferensi tipe data TypeScript otomatis dari skema Zod global

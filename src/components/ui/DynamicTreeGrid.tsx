@@ -1,57 +1,75 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import type { TreeGridRow, TreeGridColumn } from "@/types/treeGrid.type";
 import Icons from "@/components/ui/Icons";
-
+import Skeleton from "./Skeleton";
 interface TreeGridProps<T> {
     columns: TreeGridColumn<T>[];
     data: T[];
+    isLoading?: boolean;
+    searchValue?: string;
 }
 
 const getRowIcon = (isLeaf: boolean, isCollapsed: boolean): string => {
     if (isLeaf) return "📄";
-    if (isCollapsed) return "📁";
-    return "📂";
+    return isCollapsed ? "📁" : "📂";
 };
 
 export default function DynamicTreeGrid<
     T extends TreeGridRow & { order?: number; name?: string },
->({ columns, data }: Readonly<TreeGridProps<T>>) {
-    // State untuk melacak teks pencarian langsung di dalam komponen
+>({
+    columns,
+    data,
+    isLoading = false,
+    searchValue = "", // Berikan default value string kosong agar aman dari undefined
+}: Readonly<TreeGridProps<T>>) {
+    // 1. SINKRONISASI STATE: Gunakan useEffect yang sah untuk memindahkan prop luar ke dalam state lokal
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [collapsedIds, setCollapsedIds] = useState<Set<string | number>>(
         new Set(),
     );
 
-    // 1. FILTER DATA BERDASARKAN PENCARIAN (MENJAGA HIERARKI INDUK)
+    useEffect(() => {
+        setSearchQuery(searchValue.trim().toLowerCase());
+    }, [searchValue]);
+
+    // 2. OPTIMASI LOOKUP MAP: Mengonversi array ke Map agar pencarian ID induk berjalan instan (O(1))
+    const dataMap = useMemo(() => {
+        return new Map<string | number, T>(data.map((item) => [item.id, item]));
+    }, [data]);
+
+    // 3. PENAPISAN REKURSIF AMAN (MENJAGA HIERARKI INDUK)
     const filteredData = useMemo(() => {
-        const search = searchQuery.trim().toLowerCase();
-        if (!search) return data;
+        // Gunakan nilai searchQuery dari state yang sudah bersih dari spasi dan huruf kapital
+        if (!searchQuery) return data;
 
         const keepIds = new Set<string | number>();
 
         data.forEach((item) => {
             const matchText = item.name || String(item.id);
-            if (matchText.toLowerCase().includes(search)) {
+
+            // Jika baris saat ini cocok dengan kata kunci pencarian
+            if (matchText.toLowerCase().includes(searchQuery)) {
                 keepIds.add(item.id);
 
+                // Tarik seluruh silsilah induk ke atas menggunakan Map secara instan
                 let currentParentId = item.parentId;
                 while (
                     currentParentId !== null &&
                     currentParentId !== undefined
                 ) {
                     keepIds.add(currentParentId);
-                    const parentRow = data.find(
-                        (p) => p.id === currentParentId,
-                    );
+
+                    // Kecepatan O(1) - jauh lebih cepat dibanding data.find() bawaan Anda sebelumnya
+                    const parentRow = dataMap.get(currentParentId);
                     currentParentId = parentRow ? parentRow.parentId : null;
                 }
             }
         });
 
         return data.filter((item) => keepIds.has(item.id));
-    }, [data, searchQuery]);
+    }, [data, searchQuery, dataMap]);
 
     // 2. ALGORITMA URUTAN HIERARKI (DFS BERDASARKAN ORDER)
     const orderedData = useMemo(() => {
@@ -108,7 +126,7 @@ export default function DynamicTreeGrid<
     }, []);
 
     const checkIfRowHidden = (row: T): boolean => {
-        if (searchQuery.trim() !== "") return false;
+        if (searchQuery?.trim() !== "") return false;
 
         let currentParentId = row.parentId;
         while (currentParentId !== null && currentParentId !== undefined) {
@@ -132,10 +150,150 @@ export default function DynamicTreeGrid<
         return calculatedLevel;
     };
 
+    const renderTableCell = (
+        col: any,
+        row: any,
+        idx: number,
+        columnsLength: number,
+        isCollapsed: boolean,
+        dynamicLevel: number,
+        onToggle: (id: string) => void,
+    ) => {
+        const bodyBorderClasses = `border-b border-slate-100 ${
+            idx < columnsLength - 1 ? "border-r border-slate-100" : ""
+        }`;
+        const baseClassName = `px-6 py-3.5 ${bodyBorderClasses} ${col.className ?? ""}`;
+
+        // Kasus 1: Render Kustom via Properti .render
+        if (col.render) {
+            return (
+                <td key={String(col.key)} className={baseClassName}>
+                    {col.render(row)}
+                </td>
+            );
+        }
+
+        // Kasus 2: Render Struktur Pohon (Tree Field)
+        if (col.isTreeField) {
+            return (
+                <td
+                    key={String(col.key)}
+                    className={`${baseClassName} font-medium text-slate-800`}
+                >
+                    <div
+                        className="flex items-center gap-1"
+                        style={{ paddingLeft: `${dynamicLevel * 1.5}rem` }}
+                    >
+                        {!row.isLeaf ? (
+                            <button
+                                type="button"
+                                onClick={() => onToggle(row.id)}
+                                className="p-1 rounded hover:bg-slate-200/60 text-slate-500 transition-colors duration-150 flex items-center justify-center"
+                                aria-label={
+                                    isCollapsed ? "Buka folder" : "Tutup folder"
+                                }
+                            >
+                                <Icons
+                                    name="chevron-triangle"
+                                    className={`w-3.5 h-3.5 transform transition-transform duration-200 ease-in-out ${
+                                        isCollapsed
+                                            ? "-rotate-90 text-slate-400"
+                                            : "rotate-0 text-slate-600"
+                                    }`}
+                                />
+                            </button>
+                        ) : (
+                            <span
+                                className="w-5.5 h-5.5 block"
+                                aria-hidden="true"
+                            />
+                        )}
+                        <span
+                            className="text-slate-400 mr-1"
+                            aria-hidden="true"
+                        >
+                            {getRowIcon(row.isLeaf, isCollapsed)}
+                        </span>
+                        <span>{row[col.key as string]}</span>
+                    </div>
+                </td>
+            );
+        }
+
+        // Kasus 3: Render Teks Standar Biasa
+        return (
+            <td key={String(col.key)} className={baseClassName}>
+                {row[col.key as string]}
+            </td>
+        );
+    };
+
+    // ==========================================
+    // 2. FUNGSI UTAMA YANG AKAN DI-RENDER DI DALAM TBODY
+    // ==========================================
+    const renderTableContent = () => {
+        // Penanganan Kondisi 1: Loading State
+        if (isLoading) {
+            return (
+                <tr className="hover:bg-slate-50/80 transition-colors group">
+                    <td colSpan={columns.length} className="p-0">
+                        <Skeleton
+                            totalCount={3}
+                            align="left"
+                            rows={3}
+                            variant="text-only"
+                        />
+                    </td>
+                </tr>
+            );
+        }
+
+        // Penanganan Kondisi 2: Empty State (Data Kosong)
+        if (orderedData.length === 0) {
+            return (
+                <tr>
+                    <td
+                        colSpan={columns.length}
+                        className="px-6 py-12 text-center text-slate-400 bg-slate-50/50 border-b border-slate-100"
+                    >
+                        Tidak ada data yang tersedia
+                    </td>
+                </tr>
+            );
+        }
+
+        // Penanganan Kondisi 3: Render Baris Berisi Data
+        return orderedData.map((row) => {
+            if (checkIfRowHidden(row)) return null;
+
+            const isCollapsed = collapsedIds.has(row.id);
+            const dynamicLevel = calculateRowLevel(row);
+
+            return (
+                <tr
+                    key={row.id}
+                    className="hover:bg-slate-50/40 transition-colors"
+                >
+                    {columns.map((col, idx) =>
+                        renderTableCell(
+                            col,
+                            row,
+                            idx,
+                            columns.length,
+                            isCollapsed,
+                            dynamicLevel,
+                            handleToggle,
+                        ),
+                    )}
+                </tr>
+            );
+        });
+    };
+
     return (
         <div className="w-full flex flex-col gap-4">
             {/* ================= BAR INPUT PENCARIAN NAMA BERKAS ================= */}
-            <div className="relative w-full max-w-md">
+            {/* <div className="relative w-full max-w-md">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400 text-base">
                     🔍
                 </span>
@@ -156,7 +314,7 @@ export default function DynamicTreeGrid<
                         ❌
                     </button>
                 )}
-            </div>
+            </div> */}
 
             {/* ================= TABEL TREE GRID ================= */}
             <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full">
@@ -176,125 +334,7 @@ export default function DynamicTreeGrid<
                         </thead>
 
                         <tbody className="bg-white">
-                            {orderedData.length === 0 ? (
-                                <tr>
-                                    <td
-                                        colSpan={columns.length}
-                                        className="px-6 py-12 text-center text-slate-400 bg-slate-50/50 border-b border-slate-100"
-                                    >
-                                        Tdak ada data yang tersedia
-                                    </td>
-                                </tr>
-                            ) : (
-                                orderedData.map((row) => {
-                                    if (checkIfRowHidden(row)) return null;
-                                    const isCollapsed = collapsedIds.has(
-                                        row.id,
-                                    );
-                                    const dynamicLevel = calculateRowLevel(row);
-
-                                    return (
-                                        <tr
-                                            key={row.id}
-                                            className="hover:bg-slate-50/40 transition-colors"
-                                        >
-                                            {columns.map((col, idx) => {
-                                                const bodyBorderClasses = `border-b border-slate-100 ${
-                                                    idx < columns.length - 1
-                                                        ? "border-r border-slate-100"
-                                                        : ""
-                                                }`;
-
-                                                if (col.render) {
-                                                    return (
-                                                        <td
-                                                            key={String(
-                                                                col.key,
-                                                            )}
-                                                            className={`px-6 py-3.5 ${bodyBorderClasses} ${col.className ?? ""}`}
-                                                        >
-                                                            {col.render(row)}
-                                                        </td>
-                                                    );
-                                                }
-
-                                                if (col.isTreeField) {
-                                                    return (
-                                                        <td
-                                                            key={String(
-                                                                col.key,
-                                                            )}
-                                                            className={`px-6 py-3.5 font-medium text-slate-800 ${bodyBorderClasses} ${col.className ?? ""}`}
-                                                        >
-                                                            <div
-                                                                className="flex items-center gap-1"
-                                                                style={{
-                                                                    paddingLeft: `${dynamicLevel * 1.5}rem`,
-                                                                }}
-                                                            >
-                                                                {!row.isLeaf ? (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() =>
-                                                                            handleToggle(
-                                                                                row.id,
-                                                                            )
-                                                                        }
-                                                                        className="p-1 rounded hover:bg-slate-200/60 text-slate-500 transition-colors duration-150 flex items-center justify-center"
-                                                                        aria-label={
-                                                                            isCollapsed
-                                                                                ? "Buka folder"
-                                                                                : "Tutup folder"
-                                                                        }
-                                                                    >
-                                                                        <Icons
-                                                                            name="chevron-triangle"
-                                                                            className={`w-3.5 h-3.5 transform transition-transform duration-200 ease-in-out
-                                        ${isCollapsed ? "-rotate-90 text-slate-400" : "rotate-0 text-slate-600"}`}
-                                                                        />
-                                                                    </button>
-                                                                ) : (
-                                                                    <span
-                                                                        className="w-5.5 h-5.5 block"
-                                                                        aria-hidden="true"
-                                                                    />
-                                                                )}
-                                                                <span
-                                                                    className="text-slate-400 mr-1"
-                                                                    aria-hidden="true"
-                                                                >
-                                                                    {getRowIcon(
-                                                                        row.isLeaf,
-                                                                        isCollapsed,
-                                                                    )}
-                                                                </span>
-                                                                <span>
-                                                                    {
-                                                                        row[
-                                                                            col.key as string
-                                                                        ]
-                                                                    }
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                    );
-                                                }
-
-                                                return (
-                                                    <td
-                                                        key={String(col.key)}
-                                                        className={`px-6 py-3.5 text-slate-600 ${bodyBorderClasses} ${col.className ?? ""}`}
-                                                    >
-                                                        {row[
-                                                            col.key as string
-                                                        ] ?? "-"}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    );
-                                })
-                            )}
+                            {renderTableContent()}
                         </tbody>
                     </table>
                 </div>

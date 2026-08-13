@@ -1,5 +1,6 @@
 import { create } from "zustand";
 
+// 1. DEFINISI TIPE GENERIK UNTUK SATU TABEL
 export interface TableState {
     page: number;
     limit: number;
@@ -8,7 +9,7 @@ export interface TableState {
     setPage: (page: number) => void;
     setLimit: (limit: number) => void;
     setTypedQuery: (query: string) => void;
-    setLoadData: (loading: boolean) => void; // <-- TAMBAHKAN LINE INI
+    setLoadData: (loading: boolean) => void;
     handleRefresh: (
         fetchDataFn: (page: number, limit: number, query: string) => void,
     ) => void;
@@ -18,58 +19,84 @@ export interface TableState {
     ) => void;
 }
 
-interface RootTableStore {
-    users: TableState;
-    products: TableState;
+// 2. ROOT STORE MENGGUNAKAN DYNAMIC KEY RECORD
+// Menggunakan string agar modul apa pun ("users", "products", "orders", dst) bisa masuk otomatis
+interface GenericTableStore {
+    tables: Record<string, TableState | undefined>;
+    getTableState: (tableKey: string) => TableState;
 }
 
-const createTableSlice = (
-    set: any,
-    get: any,
-    sliceKey: keyof RootTableStore,
-) => ({
+// Nilai standar/awal untuk setiap tabel baru
+const initialTableState = {
     page: 1,
     limit: 10,
     typedQuery: "",
     loadData: false,
-    setPage: (page: number) =>
-        set((state: any) => ({ [sliceKey]: { ...state[sliceKey], page } })),
-    setLimit: (limit: number) =>
-        set((state: any) => ({ [sliceKey]: { ...state[sliceKey], limit } })),
-    setTypedQuery: (typedQuery: string) =>
-        set((state: any) => ({
-            [sliceKey]: { ...state[sliceKey], typedQuery },
-        })),
+};
 
-    // TAMBAHKAN IMPLEMENTASI FUNGSI DI SINI
-    setLoadData: (loadData: boolean) =>
-        set((state: any) => ({ [sliceKey]: { ...state[sliceKey], loadData } })),
+// 3. IMPLEMENTASI STORE GENERIK
+export const useTableStore = create<GenericTableStore>((set, get) => ({
+    // Menyimpan semua state tabel berdasarkan nama kuncinya
+    tables: {},
 
-    handleRefresh: (
-        fetchDataFn: (page: number, limit: number, query: string) => void,
-    ) => {
-        const slice = get()[sliceKey];
+    // Fungsi pintar: Ambil state jika sudah ada, atau buat baru secara otomatis jika belum terdaftar
+    getTableState: (tableKey: string): TableState => {
+        const currentTable = get().tables[tableKey];
+        if (currentTable) return currentTable;
 
-        // Cukup panggil fungsi fetch data saja, biarkan fungsi fetch yang mengelola status loading
-        fetchDataFn(slice.page, slice.limit, slice.typedQuery);
+        // Jika kunci tabel belum ada di memori, buat definisinya sekarang secara dinamis
+        const newTableSlice: TableState = {
+            ...initialTableState,
+            setPage: (page) =>
+                set((state) => ({
+                    tables: {
+                        ...state.tables,
+                        [tableKey]: { ...get().getTableState(tableKey), page },
+                    },
+                })),
+            setLimit: (limit) =>
+                set((state) => ({
+                    tables: {
+                        ...state.tables,
+                        [tableKey]: { ...get().getTableState(tableKey), limit },
+                    },
+                })),
+            setTypedQuery: (typedQuery) =>
+                set((state) => ({
+                    tables: {
+                        ...state.tables,
+                        [tableKey]: {
+                            ...get().getTableState(tableKey),
+                            typedQuery,
+                        },
+                    },
+                })),
+            setLoadData: (loadData) =>
+                set((state) => ({
+                    tables: {
+                        ...state.tables,
+                        [tableKey]: {
+                            ...get().getTableState(tableKey),
+                            loadData,
+                        },
+                    },
+                })),
+            handleRefresh: (fetchDataFn) => {
+                const slice = get().getTableState(tableKey);
+                fetchDataFn(slice.page, slice.limit, slice.typedQuery);
+            },
+            handleKeyDown: (e, fetchDataFn) => {
+                if (e.key === "Enter") {
+                    get().getTableState(tableKey).handleRefresh(fetchDataFn);
+                }
+            },
+        };
 
-        // ❌ HAPUS ATAU KOMENTARI LINE DI BAWAH INI:
-        // set((state: any) => ({
-        //   [sliceKey]: { ...state[sliceKey], loadData: !state[sliceKey].loadData }
-        // }));
+        // Simpan slice baru ke dalam object store utama
+        set((state) => ({
+            tables: { ...state.tables, [tableKey]: newTableSlice },
+        }));
+
+        return newTableSlice;
     },
-
-    handleKeyDown: (
-        e: React.KeyboardEvent<HTMLInputElement>,
-        fetchDataFn: (page: number, limit: number, query: string) => void,
-    ) => {
-        if (e.key === "Enter") {
-            get()[sliceKey].handleRefresh(fetchDataFn);
-        }
-    },
-});
-
-export const useTableStore = create<RootTableStore>((set, get) => ({
-    users: createTableSlice(set, get, "users") as TableState,
-    products: createTableSlice(set, get, "products") as TableState,
 }));

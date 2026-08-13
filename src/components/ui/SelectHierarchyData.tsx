@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 
+export type InputSize = "sm" | "md" | "lg";
+
 // 1. Perluas tipe data opsi agar mendukung relasi hierarki
 export interface HierarchyOption {
     value: string | number;
@@ -16,7 +18,21 @@ export interface SelectHierarchyProps extends Omit<
     value?: string | number;
     onChange?: (value: string | number) => void;
     placeholder?: string;
+    inputSize?: InputSize;
 }
+
+const sizeClasses: Record<InputSize, string> = {
+    sm: "p-2 text-xs rounded-md",
+    md: "p-2.5 text-sm rounded-lg",
+    lg: "p-3.5 text-base rounded-xl",
+};
+
+// 👑 DINAMIS: Ukuran ikon disesuaikan secara proporsional
+const iconSizeClasses: Record<InputSize, string> = {
+    sm: "w-3.5 h-3.5",
+    md: "w-4 h-4",
+    lg: "w-5 h-5",
+};
 
 export const SelectHierarchyData = React.forwardRef<
     HTMLSelectElement,
@@ -30,10 +46,14 @@ export const SelectHierarchyData = React.forwardRef<
             value,
             onChange,
             placeholder = "Pilih salah satu...",
+            inputSize = "md",
             ...props
         },
         ref,
     ) => {
+        const currentSizeClass = sizeClasses[inputSize];
+        const currentIconSizeClass = iconSizeClasses[inputSize];
+
         const [isOpen, setIsOpen] = useState(false);
         const [searchTerm, setSearchTerm] = useState("");
         const [selectedValue, setSelectedValue] = useState<string | number>(
@@ -162,7 +182,7 @@ export const SelectHierarchyData = React.forwardRef<
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className={`w-full flex items-center justify-between bg-slate-50/50 border rounded-lg p-2.5 text-sm text-slate-800 outline-none transition-all hover:bg-slate-100/50 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10 ${
+                    className={` ${currentSizeClass} w-full flex items-center justify-between bg-slate-50/50 border rounded-lg p-2.5 text-sm text-slate-800 outline-none transition-all hover:bg-slate-100/50 focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10  ${sizeClasses[inputSize]} ${
                         hasError
                             ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
                             : "border-slate-200"
@@ -179,7 +199,7 @@ export const SelectHierarchyData = React.forwardRef<
                     </span>
                     {/* Icon Panah Kecil Dropdown */}
                     <svg
-                        className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        className={`${currentIconSizeClass} text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -220,7 +240,7 @@ export const SelectHierarchyData = React.forwardRef<
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Cari data menu..."
-                                className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-700 outline-none transition-all focus:bg-white focus:border-slate-300"
+                                className="w-full bg-slate-50 border border-slate-200 rounded-md pl-8 pr-3 py-1.5 text-xs text-slate-700 outline-none transition-all focus:bg-white focus:border-slate-300 "
                             />
                         </div>
 
