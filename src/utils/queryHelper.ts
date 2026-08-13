@@ -39,7 +39,7 @@ export function parsePagination(
 export function buildWhereClause(
     search: string,
     tablePrefix = "u",
-    searchField = "username",
+    searchField = "",
 ) {
     // 1. Gunakan sql("string") atau sql`string` untuk mendefinisikan identifier/keyword mentah yang dinamis
     // Di Postgres.js, melemparkan fungsi sql() di dalam template literal akan dianggap sebagai nama objek (bukan teks string terikat)

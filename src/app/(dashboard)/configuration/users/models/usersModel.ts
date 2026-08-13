@@ -27,14 +27,14 @@ export class UsersModel {
             const qryCount = this.qryCount();
 
             // 3. Eksekusi Query Data Utama dengan aman
-            const data = await sql<UserQueryResult[]>`
-        ${qry}
-        ${baseWhere}
-        ORDER BY u.id DESC
-        LIMIT ${start}
-        OFFSET ${offset}
-      `;
-
+            const queryResult = await sql<UserQueryResult[]>`
+                ${qry}
+                ${baseWhere}
+                ORDER BY u.id DESC
+                LIMIT ${length}
+                OFFSET ${offset}
+            `;
+            const data = [...queryResult];
             // 4. Eksekusi Query Count dengan filter yang sama persis
             const countResult = await sql<{ total: string | number }[]>`
         ${qryCount}
@@ -44,7 +44,8 @@ export class UsersModel {
             const total = Number(countResult[0]?.total || 0);
 
             // 5. SOLUSI SONARQUBE: Return response terformat via global helper
-            return formatPaginatedResponse(data, total, start, length);
+            const result = formatPaginatedResponse(data, total, start, length);
+            return result;
         } catch (error) {
             console.error("Error pada UserModel.getAllList:", error);
             throw new Error("Gagal mengambil daftar pengguna dari sistem.");

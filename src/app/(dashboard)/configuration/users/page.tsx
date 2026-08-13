@@ -18,6 +18,7 @@ import Add from "./components/Add";
 import Edit from "./components/Edit";
 import type { TableUsers } from "./interfaces/users.interfaces";
 import type { ApiTableResponse } from "@/types/api.types";
+import Filter from "./components/Filter";
 
 const moduleName = `Users`;
 const rawColumnsConfig = [
@@ -298,72 +299,23 @@ export default function UsersPage() {
                 {/* Bagian Kanan: Tombol Aksi */}
 
                 <div className="flex items-center gap-2 flex-nowrap">
-                    <DropdownBtn
-                        size="md"
-                        variant="default"
-                        className="text-slate-400 hover:text-slate-600"
-                        trigger={
-                            <>
-                                Filter
-                                <Icons name="filter" size={15} />
-                            </>
-                        }
-                        items={[
-                            // 1. Menu Teks Biasa
-                            {
-                                label: "Edit Profil",
-                                fontWeight: "medium",
-                                onClick: () => console.log("Edit diklik"),
-                            },
-                            // 2. Baris Berisi Komponen Input Teks (Form)
-                            {
-                                closeOnItemClick: false, // WAJIB: Agar saat kolom input diklik, dropdown tidak menutup
-                                className: "hover:bg-transparent", // Matikan hover abu-abu untuk form
-                                label: (
-                                    <div className="flex flex-col gap-1">
-                                        <label
-                                            htmlFor="quick_search"
-                                            className="text-xs font-semibold text-slate-500"
-                                        >
-                                            Cari Cepat
-                                        </label>
-                                        <input
-                                            type="text"
-                                            name="quick_search"
-                                            placeholder="Ketik nama kelompok..."
-                                            className="w-full px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:border-blue-500"
-                                            onChange={(e) =>
-                                                console.log(e.target.value)
-                                            }
-                                        />
-                                    </div>
-                                ),
-                            },
-                            // 3. Baris Berisi Checkbox / Pilihan Status
-                            {
-                                closeOnItemClick: false,
-                                label: (
-                                    <label className="flex items-center gap-2 cursor-pointer py-1">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded border-slate-300"
-                                        />
-                                        <span className="text-sm text-slate-600">
-                                            Sembunyikan dari Publik
-                                        </span>
-                                    </label>
-                                ),
-                            },
-                            // 4. Menu Tombol Aksi Hapus
-                            {
-                                label: "Hapus Kelompok",
-                                fontWeight: "bold",
-                                className: "text-red-600 hover:bg-red-50 mt-1",
-                                onClick: () => confirm("Hapus data ini?"),
-                            },
-                        ]}
-                        widthClass="w-56"
-                        alignClass="right-0"
+                    <Filter
+                        // Mengambil nilai string pencarian dinamis dari store Zustand Anda
+                        searchValue={typedQuery}
+                        // Mengubah nilai di store saat pengguna mengetik huruf demi huruf
+                        onSearchChange={(value) => {
+                            // Contoh: panggil fungsi store Anda di sini
+                            setTypedQuery(value);
+                        }}
+                        // Eksekusi trigger pemicu prapemrosesan data ke server API
+                        onApply={() => {
+                            fetchData(1, limit, typedQuery);
+                        }}
+                        isLoading={loadData}
+                        // Mengosongkan kembali kolom input ketika tombol Kembali diklik
+                        onReset={() => {
+                            setTypedQuery(""); // Mengosongkan text input dari depan secara otomatis
+                        }}
                     />
 
                     <Btn
@@ -382,7 +334,7 @@ export default function UsersPage() {
 
             {/* CONTROL BAR */}
             <div className="flex flex-col md:flex-row gap-3 justify-between items-stretch md:items-center w-full">
-                <div className="flex flex-1 items-center gap-2 max-w-md w-full">
+                {/* <div className="flex flex-1 items-center gap-2 max-w-md w-full">
                     <div className="flex flex-1 items-center w-full space-x-0 isolate">
                         <span className="flex items-center justify-center bg-slate-100 border border-slate-200 rounded-l-lg rounded-r-none h-8.5 px-3.5 text-xs font-medium text-slate-500 select-none whitespace-nowrap z-10">
                             Cari data
@@ -407,7 +359,7 @@ export default function UsersPage() {
                         <Icons name="search" size={15} />
                         <span className="whitespace-nowrap block">Cari</span>
                     </Btn>
-                </div>
+                </div> */}
             </div>
 
             {/* COMPONENT DATA GRID BERBASIS SERVER-SIDE */}
