@@ -18,7 +18,10 @@ export type IconType =
     | "chevron-triangle"
     | "close"
     | "luv"
-    | "search";
+    | "image"
+    | "search"
+    | "trash"
+    | "pencil";
 
 export interface IconsProps extends Omit<
     React.SVGProps<SVGSVGElement>,
@@ -34,6 +37,49 @@ export interface IconsProps extends Omit<
  * 2. STATIC DATA (Diletakkan di luar komponen agar tidak di-render ulang setiap state berubah)
  */
 const ICON_PATHS: Record<IconType, React.ReactNode> = {
+    trash: (
+        <>
+            {/* 1. Garis kapsul pegangan tutup paling atas */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5" // Ketebalan garis tebal kokoh sesuai gambar
+                d="M9 5h6"
+            />
+            {/* 2. Bibir penutup tong sampah bagian tengah */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M4 8h16"
+            />
+            {/* 3. Badan wadah utama tong sampah dengan sudut bawah melengkung halus */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M6 8v9a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"
+            />
+        </>
+    ),
+    pencil: (
+        <>
+            {/* Batang utama pensil lengkap dengan ujung lancip segitiga di bawah */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5" // Ketebalan garis padat sesuai gambar
+                d="M10.5 20.5H6.5v-4l10-10 4 4-10 10Z"
+            />
+            {/* Garis horizontal internal pembatas karet penghapus di bagian atas */}
+            <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="m13.5 9.5 4 4"
+            />
+        </>
+    ),
     search: (
         <path
             strokeLinecap="round"
@@ -127,6 +173,14 @@ const ICON_PATHS: Record<IconType, React.ReactNode> = {
                 d="M4.5 19.5c0-2.5 3.5-5.5 7.5-5.5s7.5 3 7.5 5.5"
             />
         </>
+    ),
+    image: (
+        <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="1.5"
+            d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z"
+        />
     ),
     "chevron-down": (
         <path

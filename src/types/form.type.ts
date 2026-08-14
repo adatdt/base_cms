@@ -14,7 +14,8 @@ export interface InputSchema {
     placeholder: string;
     options?: SelectOption[];
     selectBy?: "id" | "label";
-    required?: boolean; 
+    required?: boolean;
+    description?: string;
 }
 
 export interface UserFormFieldsProps {
