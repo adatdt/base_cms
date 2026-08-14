@@ -302,12 +302,31 @@ export default function NavigationMenu({
             <div className="space-y-1">
                 {renderMenuItems(filteredMenuItems, 1)}
             </div>
+
             <a
                 className="flex items-center justify-between py-2 px-3 text-xs font-medium rounded-lg transition-all text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                 href="/master-data/parameter"
             >
                 <div className="flex items-center gap-2.5 min-w-0">
                     <span className="whitespace-nowrap">Parameter</span>
+                </div>
+            </a>
+
+            <a
+                className="flex items-center justify-between py-2 px-3 text-xs font-medium rounded-lg transition-all text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                href="/master-data/payment-schema"
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="whitespace-nowrap">Paymet Schema</span>
+                </div>
+            </a>
+
+            <a
+                className="flex items-center justify-between py-2 px-3 text-xs font-medium rounded-lg transition-all text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                href="/master-data/bussines-category"
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="whitespace-nowrap">Bisnis Kategori</span>
                 </div>
             </a>
         </nav>

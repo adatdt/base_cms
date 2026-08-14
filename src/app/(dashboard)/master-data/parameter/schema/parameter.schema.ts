@@ -2,8 +2,39 @@ import { inisialisasiZodBahasaIndonesia } from "@/utils/zod-indonesia";
 inisialisasiZodBahasaIndonesia();
 import { z } from "zod";
 
+const antiXssRegex = /^[^<>'";()[\]\\/]*$/;
+const xssErrorMessage =
+    "Input mengandung karakter khusus yang dilarang untuk alasan keamanan";
+
 export const parameterAddFormSchema = z.object({
-    name: z.string().min(1),
+    param_name: z
+        .string()
+        .min(1)
+        .regex(antiXssRegex, { message: xssErrorMessage }),
+
+    param_type: z
+        .string()
+        .min(1)
+        .regex(antiXssRegex, { message: xssErrorMessage }),
+
+    param_value: z
+        .string()
+        .min(1)
+        .regex(antiXssRegex, { message: xssErrorMessage }),
+
+    value_type: z
+        .string()
+        .min(1)
+        .regex(antiXssRegex, { message: xssErrorMessage }),
+
+    // Khusus deskripsi, biasanya membutuhkan tanda petik atau kurung biasa,
+    // jadi kita hanya memblokir tag HTML saja (< dan >) agar pengisian teks deskripsi tetap fleksibel
+    description: z
+        .string()
+        .min(1)
+        .regex(/^[^<>]*$/, {
+            message: "Deskripsi tidak boleh mengandung karakter < atau >",
+        }),
 });
 
 // Schema untuk mode EDIT (Mewarisi semua field ADD + Menimpa properti ID dengan benar)

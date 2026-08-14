@@ -4,9 +4,9 @@ import React, { useEffect, useState } from "react";
 import NavigationMenu from "@/components/template/NavigationMenu";
 import Header from "@/components/template/Header";
 import Skeleton from "@/components/ui/Skeleton";
-import Notification from "@/components/ui/Notification";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import CrudIcons from "@/components/ui/Icons";
+import ToastContainer from "@/components/ui/ToastContainer";
 
 interface MenuItem {
     name: string;
@@ -33,9 +33,6 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }>) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-    const toastList = useNotificationStore((state) => state.toastList);
-    const handleClose = useNotificationStore((state) => state.handleClose);
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
     );
@@ -102,18 +99,7 @@ export default function DashboardLayout({
     return (
         <div className="flex min-h-screen bg-slate-50 text-slate-950">
             {/* CONTAINER UTAMA: Mengunci posisi di pojok kanan atas dan menyusun baris ke bawah */}
-            <div className="fixed top-4 right-4 z-9999 flex flex-col gap-3 w-full max-w-sm pointer-events-none ">
-                {toastList.map((toast) => (
-                    <div key={toast.id} className="pointer-events-auto w-full">
-                        <Notification
-                            message={toast.message}
-                            type={toast.type}
-                            duration={toast.duration}
-                            onClose={() => handleClose(toast.id)}
-                        />
-                    </div>
-                ))}
-            </div>
+            <ToastContainer />
             {/* ================= SIDEBAR (DESKTOP) ================= */}
             {/* Sensor hover dipasang menggunakan onMouseEnter dan onMouseLeave */}
             <aside

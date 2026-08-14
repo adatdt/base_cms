@@ -6,7 +6,7 @@ import { useFormStore } from "@/store/useFormStore";
 import Btn from "./Btn";
 import Skeleton from "@/components/ui/Skeleton";
 
-type PanelSize =
+export type PanelSize =
     | "sm"
     | "md"
     | "lg"

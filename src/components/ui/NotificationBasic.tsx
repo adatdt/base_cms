@@ -3,55 +3,42 @@
 import React, { useCallback, useEffect, useState } from "react";
 
 export type NotificationType =
-    | "success-emerald"
     | "error"
     | "warning"
     | "success"
     | "info"
     | "default";
 
-export type NotificationPosition =
-    | "top-center"
-    | "top-right"
-    | "top-left"
-    | "bottom-center"
-    | "bottom-right"
-    | "bottom-left";
-
-export type NotificationWidth = "sm" | "md" | "lg" | "xl" | "full";
-
 interface NotificationProps {
     message: string | null;
     type?: NotificationType;
-    position?: NotificationPosition;
-    width?: NotificationWidth;
-    hasLeftBorder?: boolean;
     duration?: number;
     onClose: () => void;
 }
 
-export default function Notification({
+export default function NotificationBasic({
     message,
     type = "default",
-    hasLeftBorder = false,
     duration = 3000,
     onClose,
 }: Readonly<NotificationProps>) {
     const [isHovered, setIsHovered] = useState(false);
+    // 1. State baru untuk memicu kelas animasi keluar
     const [isDisappearing, setIsDisappearing] = useState(false);
 
+    // 2. Fungsi penutup kustom untuk menjalankan animasi keluar dulu selama 250ms
     const handleStartDismiss = useCallback(() => {
         setIsDisappearing(true);
         setTimeout(() => {
             onClose();
-        }, 250);
+        }, 250); // Waktu jeda harus sama dengan durasi --animate-toast-out (0.25s)
     }, [onClose]);
 
     useEffect(() => {
         if (duration <= 0 || !message || isHovered || isDisappearing) return;
 
         const timer = setTimeout(() => {
-            handleStartDismiss();
+            handleStartDismiss(); // Panggil fungsi animasi keluar saat waktu habis
         }, duration);
 
         return () => clearTimeout(timer);
@@ -59,10 +46,8 @@ export default function Notification({
 
     if (!message) return null;
 
-    // 1. Skema warna hijau solid premium disesuaikan dengan gambar contoh pertama Anda
+    // Warna pastel premium berbasis OKLCH konstan (dikunci agar tidak terpengaruh tema dark mode)
     const typeStyles: Record<NotificationType, string> = {
-        "success-emerald":
-            "bg-emerald-600 text-white shadow-lg border-emerald-800",
         error: "bg-[oklch(96.5%_0.025_24.37)] border-[oklch(62.7%_0.194_24.37)] text-[oklch(35%_0.13_24.37)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
         warning:
             "bg-[oklch(97.3%_0.02_74.34)] border-[oklch(76.2%_0.158_74.34)] text-[oklch(40%_0.11_74.34)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
@@ -73,32 +58,7 @@ export default function Notification({
             "bg-[oklch(96.5%_0.008_255.43)] border-[oklch(61.3%_0.021_255.43)] text-[oklch(35%_0.015_255.43)] shadow-[0_8px_30px_rgb(0_0_0_/_0.03),_0_1px_4px_rgb(0_0_0_/_0.02)]",
     };
 
-    const textColor: Record<NotificationType, string> = {
-        "success-emerald": "text-white",
-        success: "text-[oklch(35%_0.12_162.48)]",
-        error: "text-[oklch(35%_0.13_24.37)]",
-        warning: "text-[oklch(40%_0.11_74.34)]",
-        info: "text-[oklch(35%_0.12_245.92)]",
-        default: "text-[oklch(35%_0.015_255.43)]",
-    };
-
-    // 2. Ikon centang bersih minimalis tanpa lingkaran sesuai gambar referensi awal Anda
     const icons: Record<NotificationType, React.ReactNode> = {
-        "success-emerald": (
-            <svg
-                className="w-5 h-5 shrink-0 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2.5}
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                />
-            </svg>
-        ),
         error: (
             <svg
                 className="w-5 h-5 shrink-0 text-[oklch(62.7%_0.194_24.37)]"
@@ -176,51 +136,25 @@ export default function Notification({
         ),
     };
 
-    // 3. Fungsi memisahkan kata pertama agar kata "Selamat" otomatis menjadi cetak tebal
-    const renderMessage = () => {
-        if (!message) return null;
-        const words = message.split(" ");
-        if (words.length > 1) {
-            const firstWord = words[0];
-            const restOfMessage = words.slice(1).join(" ");
-            return (
-                <>
-                    <span className="font-bold mr-1">{firstWord}</span>
-                    <span className="font-normal opacity-95">
-                        {restOfMessage}
-                    </span>
-                </>
-            );
-        }
-        return <span className="font-normal">{message}</span>;
-    };
-
     return (
         <div
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            // 4. Perubahan Lebar: Menghapus widthStyles dari sini, mengandalkan 'w-full' penuh mengikuti ukuran wrapper kontainer
-            className={`flex items-center w-full p-3 px-5 shadow-xl transition-all duration-300 ease-in-out transform hover:scale-[1.01] ${
+            className={`${
                 isDisappearing ? "animate-toast-out" : "animate-toast-in"
-            } ${typeStyles[type]} ${
-                hasLeftBorder
-                    ? "border-l-4 rounded-r-xl"
-                    : "border-0 rounded-xl"
-            }`}
+            } flex items-center w-full max-w-sm p-4 border-l-4 rounded-r-xl shadow-xl backdrop-blur-md transition-all duration-300 ease-in-out transform hover:scale-[1.02] ${typeStyles[type]}`}
             role="alert"
         >
             <div className="inline-flex items-center justify-center shrink-0">
                 {icons[type]}
             </div>
-            <div
-                className={`ml-3 text-sm tracking-wide break-words flex-1 ${textColor[type]}`}
-            >
-                {renderMessage()}
+            <div className="ml-3 text-sm font-semibold tracking-wide wrap-break-word flex-1">
+                {message}
             </div>
             <button
                 type="button"
-                onClick={handleStartDismiss} // 5. Perbaikan: panggil handleStartDismiss agar efek transisi keluar berjalan saat di-klik silang
-                className={`ml-auto p-1 rounded-lg ${textColor[type]} opacity-70 hover:opacity-100 hover:bg-white/10 inline-flex items-center justify-center transition-all`}
+                onClick={onClose}
+                className="ml-auto -mx-1.5 -my-1.5 p-1.5 rounded-lg text-current opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 inline-flex items-center justify-center h-8 w-8 transition-all"
                 aria-label="Close"
             >
                 <svg
@@ -228,7 +162,7 @@ export default function Notification({
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
-                    strokeWidth={2}
+                    strokeWidth={2.5}
                 >
                     <path
                         strokeLinecap="round"

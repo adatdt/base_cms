@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Table } from "./interfaces/parameter.interfaces";
+import { Table } from "./interfaces/bussinesCategory.interfaces";
 import DataGrid from "@/components/ui/DataGrid";
 import { useTableStore } from "@/store/useTableStore";
 import { fetchClient, FetchError } from "@/services/fetch-client";
@@ -14,11 +14,11 @@ import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
 import Edit from "./components/Edit";
-import { useGroupColumns } from "./hooks/useParameterColumns";
+import { useBussinesCategoryColumns } from "./hooks/useBussinesCategory";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
 
-const moduleName = `Seting Parameter`;
+const moduleName = `Kategori Bisnis`;
 
 export default function Page() {
     const [tableData, setTableData] = useState<Table[]>([]);
@@ -51,7 +51,7 @@ export default function Page() {
     const changeStatus = (id: string | number) =>
         console.log("Ubah status id:", id);
 
-    const columns = useGroupColumns({
+    const columns = useBussinesCategoryColumns({
         onEdit: loadEdit,
         onChangeStatus: changeStatus,
     });

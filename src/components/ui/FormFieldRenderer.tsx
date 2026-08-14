@@ -5,6 +5,7 @@ import { SelectData } from "./SelectData";
 import { SelectHierarchyData } from "./SelectHierarchyData";
 import { SelectDataMultiple } from "./SelectDataMultiple";
 import { InputText } from "./InputText";
+import { InputTextArea } from "./InputTextArea ";
 
 interface FormFieldRendererProps {
     item: InputSchema;
@@ -13,7 +14,9 @@ interface FormFieldRendererProps {
     errors: Record<string, string>;
     formData: Record<string, any>;
     handleChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >,
     ) => void;
     handleFieldChange: (
         name: string,
@@ -102,6 +105,19 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = ({
             );
         }
 
+        if (item.variant === "text-area") {
+            return (
+                <InputTextArea
+                    inputSize={"sm"}
+                    value={formData[item.name] || ""}
+                    onChange={handleChange}
+                    hasError={!!errors[item.name]}
+                    name={item.name}
+                    placeholder={item.placeholder}
+                    // required={item.required} // Menggunakan nilai boolean dinamis dari schema
+                />
+            );
+        }
         return (
             <InputText
                 type={item.variant}

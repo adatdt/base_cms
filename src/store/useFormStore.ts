@@ -39,7 +39,9 @@ interface FormState {
     isMasterLoading: boolean;
 
     handleChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+        e: React.ChangeEvent<
+            HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+        >,
     ) => void;
 
     handleFieldChange: (

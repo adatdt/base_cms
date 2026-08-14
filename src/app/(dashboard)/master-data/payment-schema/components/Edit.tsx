@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
-import { parameterEditFormSchema } from "../schema/parameter.schema";
+import { paymentSchemaEditFormSchema } from "../schema/paymentSchema.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
 import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
@@ -10,38 +10,10 @@ import { useShallow } from "zustand/shallow";
 
 const input: InputSchema[] = [
     {
-        name: "param_name",
-        label: "Nama Parameter",
+        name: "payment_schema_name",
+        label: "Nama Schema Payment",
         variant: "text",
         placeholder: "Masukkan nama parameter",
-        required: true,
-    },
-    {
-        name: "param_type",
-        label: "Tipe Parameter",
-        variant: "text", // Bisa diganti "select" jika berupa pilihan dropdown
-        placeholder: "Masukkan tipe parameter",
-        required: true,
-    },
-    {
-        name: "param_value",
-        label: "Value Parameter",
-        variant: "text",
-        placeholder: "Masukkan nilai parameter",
-        required: true,
-    },
-    {
-        name: "value_type",
-        label: "Value Tipe",
-        variant: "text", // Bisa diganti "select" jika ada pilihan tipe (string/number/boolean)
-        placeholder: "Masukkan tipe nilai",
-        required: true,
-    },
-    {
-        name: "description",
-        label: "Keterangan",
-        variant: "text-area", // Menggunakan textarea karena biasanya deskripsi membutuhkan teks panjang
-        placeholder: "Masukkan deskripsi penjelasan",
         required: true,
     },
 ];
@@ -78,7 +50,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
     const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
         executeSubmit(e, {
             formKey: "menuForm",
-            schema: parameterEditFormSchema,
+            schema: paymentSchemaEditFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
             triggerNotification: triggerNotification,

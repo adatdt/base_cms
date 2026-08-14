@@ -5,17 +5,7 @@ import { useModalStore } from "@/store/useModalStore";
 import { useFormStore } from "@/store/useFormStore";
 import Btn from "./Btn";
 import Skeleton from "@/components/ui/Skeleton";
-
-type ModalSize =
-    | "sm"
-    | "md"
-    | "lg"
-    | "xl"
-    | "2xl"
-    | "3xl"
-    | "4xl"
-    | "5xl"
-    | "full";
+import { type PanelSize as ModalSize } from "@/components/ui/SidePanel";
 
 interface ModalProps {
     id: string;
@@ -39,6 +29,7 @@ const sizeClasses: Record<ModalSize, string> = {
     "4xl": "max-w-4xl",
     "5xl": "max-w-5xl",
     full: "max-w-full m-4",
+    dynamic: "",
 };
 
 export default function Modal({
