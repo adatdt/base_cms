@@ -44,18 +44,18 @@ const weightClasses = {
 };
 
 const sizeClasses = {
-    xs: "text-xs",
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
-    xl: "text-xl",
+    xs: "text-[10px]", // Disamakan dengan text-[10px] pada sizeStyles.xs
+    sm: "text-xs",     // Disamakan dengan text-xs pada sizeStyles.sm
+    md: "text-sm",     // Disamakan dengan text-sm pada sizeStyles.md
+    lg: "text-base",   // Disamakan dengan text-base pada sizeStyles.lg
+    xl: "text-lg",     // Tetap sebagai nilai cadangan jika dibutuhkan ukuran ekstra
 };
 
 const circleSizeClasses: Record<ButtonSize, string> = {
-    xs: "!p-0 w-[26px] h-[26px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center",
-    sm: "!p-0 w-[32px] h-[32px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center",
-    md: "!p-0 w-[38px] h-[38px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center",
-    lg: "!p-0 w-[46px] h-[46px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center",
+    xs: "!p-0 w-[26px] h-[26px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center text-[10px]",
+    sm: "!p-0 w-[32px] h-[32px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center text-xs",
+    md: "!p-0 w-[38px] h-[38px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center text-sm",
+    lg: "!p-0 w-[46px] h-[46px] !rounded-full aspect-square !flex-shrink-0 flex items-center justify-center text-base",
 };
 
 export const DropdownBtn: React.FC<DropdownBtnProps> = ({

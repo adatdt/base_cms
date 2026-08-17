@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
-import { providerCategoryEditFormSchema } from "../schema/provider.schema";
+import { providerEditFormSchema } from "../schema/provider.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
 import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
@@ -10,11 +10,50 @@ import { useShallow } from "zustand/shallow";
 
 const input: InputSchema[] = [
     {
-        name: "payment_schema_name",
-        label: "Nama Schema Payment",
+        name: "bussines_category",
+        label: "Nama Kategori Bisnis",
         variant: "text",
         placeholder: "Masukkan nama parameter",
         required: true,
+    },
+    {
+        name: "file_provider",
+        label: "Gambar Provider",
+        variant: "input-file",
+        placeholder: "Masukkan nama parameter",
+        description:
+            "  Upload gambarProvidet disini dengan maksimal size sebesar 3.88MB (.PNG, .JPG, dan .SVG)",
+        required: true,
+    },
+    {
+        name: "non_snap",
+        label: "Base URL Non-SNAP",
+        variant: "text",
+        placeholder: "Masukkan base URL Non-SNAP provider ",
+        required: true,
+    },
+    {
+        name: "snap",
+        label: "Base URL SNAP",
+        variant: "text",
+        placeholder: "Masukkan base URL SNAP provider ",
+        required: true,
+    },
+    {
+        name: "timeout_read",
+        label: "Config Timeout Read",
+        variant: "text-addon",
+        placeholder: "Masukkan timeout read dalam detik ",
+        required: true,
+        addOnRight:"Detik"
+    },
+    {
+        name: "timeout_white",
+        label: "Config Timeout Write",
+        variant: "text-addon",
+        placeholder: "Masukkan timeout write dalam detik",
+        required: true,
+        addOnRight:"Detik"
     },
 ];
 
@@ -50,7 +89,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
     const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
         executeSubmit(e, {
             formKey: "menuForm",
-            schema: providerCategoryEditFormSchema,
+            schema: providerEditFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
             triggerNotification: triggerNotification,

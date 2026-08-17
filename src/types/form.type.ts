@@ -16,6 +16,8 @@ export interface InputSchema {
     selectBy?: "id" | "label";
     required?: boolean;
     description?: string;
+    addOnRight?:string;
+    addOnLeft?:string;
 }
 
 export interface UserFormFieldsProps {

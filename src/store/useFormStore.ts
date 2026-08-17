@@ -34,16 +34,13 @@ interface FormState {
     formData: Record<string, any>;
     errors: Record<string, string>;
     isFetchLoading: boolean;
-
     masterOptions: Record<string, any[]>;
     isMasterLoading: boolean;
-
     handleChange: (
         e: React.ChangeEvent<
             HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
         >,
     ) => void;
-
     handleFieldChange: (
         name: string,
         config?: {
@@ -56,15 +53,6 @@ interface FormState {
             | string
             | number,
     ) => void;
-    // handleFieldChange: (
-    //     name: string,
-    // ) => (
-    //     eOrValue:
-    //         | React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-    //         | string
-    //         | number,
-    // ) => void;
-
     setErrors: (
         nameOrErrors: string | Record<string, string>,
         errorMessage?: string,
@@ -98,6 +86,9 @@ interface FormState {
         triggerNotification: NotificationTrigger,
     ) => Promise<void>;
 
+     handleFileChange: (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => void;
     fetchBulkMasterOptions: (
         bulkUrl: string,
         configs: Array<{ key: string; transform?: (data: any) => any }>,
@@ -311,8 +302,7 @@ export const useFormStore = create<FormState>((set, get) => ({
             return { errors: nextErrors };
         }),
 
-    // Master Submit Action: Implements Zod Validation and Intercepts Fetch Client Cycles
-    executeSubmit: async (e, config) => {
+        executeSubmit: async (e, config) => {
         e.preventDefault();
         const {
             schema,
@@ -324,8 +314,28 @@ export const useFormStore = create<FormState>((set, get) => ({
         } = config;
 
         const currentFormData = get().formData;
-        const result = schema.safeParse(currentFormData);
 
+        // =========================================================================
+        // 💡 SOLUSI FINAL: Deteksi FileList Berbasis Karakteristik Objek (Duck Typing)
+        // =========================================================================
+        const sanitizedData: Record<string, any> = {};
+        
+        Object.entries(currentFormData).forEach(([key, val]) => {
+            // Mengecek apakah objek memiliki karakteristik FileList bawaan DOM Browser
+            const isFileList = val && typeof val === "object" && "item" in val && "length" in val;
+
+            if (isFileList) {
+                const fileListObj = val as FileList;
+                // Ekstrak file pertama (Index 0) secara paksa agar tipenya murni menjadi File
+                sanitizedData[key] = fileListObj.length > 0 ? fileListObj.item(0) : null;
+            } else {
+                sanitizedData[key] = val;
+            }
+        });
+
+        // Sekarang safeParse dijamin menerima objek File murni, BUKAN FileList lagi!
+        const result = schema.safeParse(sanitizedData);
+        console.log(currentFormData)
         if (!result.success) {
             const formattedErrors: Record<string, string> = {};
             result.error.issues.forEach((err) => {
@@ -343,23 +353,59 @@ export const useFormStore = create<FormState>((set, get) => ({
         try {
             const isDelete = method.toUpperCase() === "DELETE";
             let targetUrl = endpoint;
-            const validData = result.data;
+            const validData = result.data; // Berisi data bersih dari Zod (Objek File murni)
 
             if (isDelete && validData && Object.keys(validData).length > 0) {
-                const queryParams = new URLSearchParams(
-                    validData as any,
-                ).toString();
+                const queryParams = new URLSearchParams(validData as any).toString();
                 targetUrl = `${endpoint}?${queryParams}`;
+            }
+
+            // =========================================================================
+            // 💡 PEMBENTUKAN PAYLOAD MULTIPART / FORMDATA UNTUK FETCHCLIENT
+            // =========================================================================
+            let finalDataPayload: any = validData;
+            
+            // Periksa keberadaan File menggunakan karakteristik properti name & size
+            const hasFile = Object.values(validData || {}).some(
+                (val) => val && typeof val === "object" && "name" in (val as any) && "size" in (val as any)
+            );
+
+            if (hasFile && !isDelete) {
+                const formDataBody = new FormData();
+                
+          Object.entries(validData).forEach(([key, val]) => {
+    if (val !== undefined && val !== null) {
+        const valType = typeof val;
+
+        // 1. Cek apakah ini objek berkas biner tunggal (File murni)
+        const isSingleFile = valType === "object" && "name" in (val as any) && "size" in (val as any);
+        
+        if (isSingleFile) {
+            formDataBody.append(key, val as File, (val as File).name);
+        } 
+        // 2. Cek jika data berupa Array atau Object biasa (Non-File)
+        else if (valType === "object" || Array.isArray(val)) {
+            formDataBody.append(key, JSON.stringify(val));
+        } 
+        // 3. 💡 SOLUSI FINAL: Lakukan casting ke primitive (string/any) agar linter tidak mendeteksi object biasa
+        else {
+            // Memaksa linter menganggap val bukan tipe Object kompleks
+            const primitiveValue = val as string | number | boolean;
+            formDataBody.append(key, String(primitiveValue));
+        }
+    }
+});
+
+                
+                finalDataPayload = formDataBody;
             }
 
             const responseData = await fetchClient.request<any>(targetUrl, {
                 method,
-                data: isDelete ? undefined : validData,
+                data: isDelete ? undefined : finalDataPayload,
             });
 
             triggerNotification("Data berhasil disimpan ke server!", "success");
-
-            // Automatically clean form memory layers when submissions hit a success code
             get().resetForm();
 
             if (onSuccess) {
@@ -368,25 +414,14 @@ export const useFormStore = create<FormState>((set, get) => ({
 
             return responseData;
         } catch (error: any) {
-            console.log(
-                `[Fetch Form Error] Failed to ${method} to ${endpoint}:`,
-                error,
-            );
-
-            const errorMsg =
-                error?.data?.message ||
-                error?.message ||
-                "Terjadi kesalahan sistem!";
+            console.log(`[Fetch Form Error] Failed to ${method} to ${endpoint}:`, error);
+            const errorMsg = error?.data?.message || error?.message || "Terjadi kesalahan sistem!";
             triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
-
-            if (onError) {
-                onError(error);
-            }
-
-            // Return null instead of re-throwing to avoid Next.js unhandled rejection overlays
+            if (onError) onError(error);
             return null;
         }
     },
+
 
     // Form Clean Engine: Wipes global input values and error trails
     resetForm: () => set({ formData: {}, errors: {}, isFetchLoading: false }),
@@ -547,5 +582,29 @@ export const useFormStore = create<FormState>((set, get) => ({
         } finally {
             set({ isFetchLoading: false });
         }
+    },
+    handleFileChange: (e) => {
+        const { name, files } = e.target;
+        
+        // Pastikan elemen input memiliki atribut 'name' dan memiliki file yang dipilih
+        if (!name || !files || files.length === 0) return;
+
+        // Jika input file mendukung multiple, simpan semua file dalam bentuk array. 
+        // Jika tidak, ambil file pertama saja (index 0) sebagai objek File tunggal.
+        const fileValue = e.target.multiple ? Array.from(files) : files[0];
+
+        set((state) => {
+            const nextErrors = { ...state.errors };
+            // Hapus error field ini jika ada setelah user memilih file baru
+            if (nextErrors[name]) delete nextErrors[name]; 
+            
+            return {
+                formData: { 
+                    ...state.formData, 
+                    [name]: fileValue // Menyimpan objek File asli, bukan string "C:\fakepath\..."
+                },
+                errors: nextErrors,
+            };
+        });
     },
 }));

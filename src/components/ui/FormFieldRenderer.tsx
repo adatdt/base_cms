@@ -23,6 +23,11 @@ interface FormFieldRendererProps {
         name: string,
         config?: { selectBy: "id" | "label"; options: any[] },
     ) => (eOrValue: any) => void;
+    addOnLeft?: string;    
+    addOnRight?: string; 
+    handleFileChange?: (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => void;
 }
 
 /**
@@ -58,6 +63,7 @@ const executeFieldRender = (
         formData,
         handleChange,
         handleFieldChange,
+        handleFileChange,
     } = props;
 
     if (isMasterLoading) {
@@ -75,6 +81,34 @@ const executeFieldRender = (
 
     // Dictionary/Strategy Mapping Pattern untuk mengganti if-else bertingkat
     const fieldRenderers: Record<string, () => React.ReactNode> = {
+        "text-addon": () =>
+             (
+            
+            <InputText
+                size="sm"
+                addOnRight={item.addOnRight==""?"":item.addOnRight}
+                addOnLeft={item.addOnLeft==""?"":item.addOnLeft}
+                type="text"
+                name={item.name}
+                hasError={!!errors[item.name]}
+                defaultValue=""
+                onChange={handleChange}
+                placeholder={item.placeholder}
+            />
+        ),
+        "number-addon": () => (
+            <InputText
+                size="sm"
+                addOnRight={item.addOnRight==""?"":item.addOnRight}
+                addOnLeft={item.addOnLeft==""?"":item.addOnLeft}
+                type="text"
+                name={item.name}
+                hasError={!!errors[item.name]}
+                defaultValue=""
+                onChange={handleChange}
+                placeholder={item.placeholder}
+            />
+        ),
         select: () => (
             <SelectData
                 selectSize="sm"
@@ -120,10 +154,10 @@ const executeFieldRender = (
         ),
         "input-file": () => (
             <InputFile
+            name={item.name} 
                 inputSize="sm"
-                value={formData[item.name] || ""}
-                onChange={handleChange}
-                hasError={!!errors.roles}
+                 onChange={handleFileChange}
+                hasError={!!errors[item.name]}
                 description={item.description}
             />
         ),

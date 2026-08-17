@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
-import { providerCategoryAddFormSchema } from "../schema/provider.schema";
+import { providerAddFormSchema } from "../schema/provider.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
 import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
@@ -42,16 +42,18 @@ const input: InputSchema[] = [
     {
         name: "timeout_read",
         label: "Config Timeout Read",
-        variant: "text",
+        variant: "text-addon",
         placeholder: "Masukkan timeout read dalam detik ",
         required: true,
+        addOnRight:"Detik"
     },
     {
         name: "timeout_white",
         label: "Config Timeout Write",
-        variant: "text",
+        variant: "text-addon",
         placeholder: "Masukkan timeout write dalam detik",
         required: true,
+        addOnRight:"Detik"
     },
 ];
 
@@ -68,6 +70,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         handleFieldChange,
         executeSubmit,
         resetForm,
+        handleFileChange
     } = useFormStore(
         useShallow((state) => ({
             formData: state.formData,
@@ -76,6 +79,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
             handleFieldChange: state.handleFieldChange,
             executeSubmit: state.executeSubmit,
             resetForm: (state as any).resetForm, // Deteksi otomatis fungsi reset di store
+            handleFileChange: state.handleFileChange,
         })),
     );
     const { masterOptions, isMasterLoading } = useFormStore();
@@ -87,8 +91,8 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
 
     const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
         executeSubmit(e, {
-            formKey: "menuForm",
-            schema: providerCategoryAddFormSchema,
+            formKey: "formAddProvider",
+            schema: providerAddFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
             triggerNotification: triggerNotification,
@@ -109,6 +113,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         <form
             id={formId}
             onSubmit={sendForm}
+             encType="multipart/form-data" 
             className="grid grid-cols-1 gap-y-4 text-left w-full"
         >
             {input.map((item) => (
@@ -121,6 +126,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
                     formData={formData}
                     handleChange={handleChange}
                     handleFieldChange={handleFieldChange}
+                    handleFileChange={handleFileChange}
                 />
             ))}
         </form>
