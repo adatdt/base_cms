@@ -40,6 +40,25 @@ export const variantStyles: Record<ButtonVariant, string> = {
     ghost: "bg-white hover:bg-slate-50 text-[var(--btn-text,theme(colors.slate.800))] focus:ring-slate-300",
 };
 
+export const colorStyles = {
+    success: {
+        background: "bg-emerald-600",
+        hover: "hover:bg-emerald-700",
+        ring: "focus:ring-emerald-500",
+    },
+
+    "success-blue": {
+        background:
+            "bg-gradient-to-r from-[#2a68d0] to-[#5190f3]",
+        hover:
+            "hover:from-[#2154ab] hover:to-[#3e7fe0]",
+        active:
+            "active:from-[#1b4691] active:to-[#326cc4]",
+        ring:
+            "focus:ring-blue-400/20",
+    },
+};
+
 export const sizeStyles: Record<ButtonSize, string> = {
     xs: "px-2 py-1 text-[10px] rounded-sm gap-1 h-[26px]",
     sm: "px-3 py-1.5 text-xs rounded-md gap-1.5 h-[32px]",

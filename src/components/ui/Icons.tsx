@@ -21,7 +21,16 @@ export type IconType =
     | "image"
     | "search"
     | "trash"
-    | "pencil";
+    | "pencil"
+    | "wallet"
+    | "bar-chart"      
+    | "store"         
+    | "bank"          
+    | "chart-network"
+    | "receipt"  
+    | "refresh"
+    | "calendar";
+
 
 export interface IconsProps extends Omit<
     React.SVGProps<SVGSVGElement>,
@@ -191,6 +200,89 @@ const ICON_PATHS: Record<IconType, React.ReactNode> = {
         />
     ),
     "chevron-triangle": <polygon points="3,7 21,7 12,17" />,
+    calendar: (
+        <>
+            <path d="M8 2v4" />
+            <path d="M16 2v4" />
+
+            <rect
+                x="3"
+                y="4"
+                width="18"
+                height="17"
+                rx="2"
+            />
+
+            <path d="M3 10h18" />
+
+            <path d="M8 14h.01" />
+            <path d="M12 14h.01" />
+            <path d="M16 14h.01" />
+
+            <path d="M8 18h.01" />
+            <path d="M12 18h.01" />
+        </>
+    ),
+    wallet: (
+        <>
+            <path d="M19 7V5a2 2 0 0 0-2-2H5a3 3 0 0 0 0 6h14v8a2 2 0 0 1-2 2H5a3 3 0 0 1-3-3V6" />
+
+            <path d="M16 13h2" />
+        </>
+    ),
+    refresh: (
+        <>
+            <path d="M3 2v6h6" />
+            <path d="M21 22v-6h-6" />
+            <path d="M3.51 15a9 9 0 0 0 14.85 3.36L21 16" />
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L3 8" />
+        </>
+    ),
+    "bar-chart": (
+        <>
+            <line x1="12" x2="12" y1="20" y2="10" />
+            <line x1="18" x2="18" y1="20" y2="4" />
+            <line x1="6" x2="6" y1="20" y2="16" />
+        </>
+    ),
+    store: (
+        <>
+            <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7" />
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+            <path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4" />
+            <path d="M2 7h20v5a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0H2z" />
+        </>
+    ),
+    bank: (
+        <>
+            <line x1="3" x2="21" y1="22" y2="22" />
+            <line x1="6" x2="6" y1="18" y2="11" />
+            <line x1="10" x2="10" y1="18" y2="11" />
+            <line x1="14" x2="14" y1="18" y2="11" />
+            <line x1="18" x2="18" y1="18" y2="11" />
+            <polygon points="12 2 20 7 4 7 12 2" />
+            <line x1="2" x2="22" y1="18" y2="18" />
+        </>
+    ),
+    "chart-network": (
+        <>
+            <circle cx="5" cy="16" r="1.5" />
+            <circle cx="10" cy="11" r="1.5" />
+            <circle cx="15" cy="14" r="1.5" />
+            <circle cx="19" cy="8" r="1.5" />
+            <path d="M6.2 15.1l2.6-2.9" />
+            <path d="M11.4 11.9l2.2 1.4" />
+            <path d="M16.3 12.9l1.4-3.4" />
+        </>
+    ),
+    receipt: (
+        <>
+            <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z" />
+            <path d="M16 8h-8" />
+            <path d="M16 12h-8" />
+            <path d="M16 16h-8" />
+        </>
+    ),
 };
 
 /** List nama ikon yang memiliki tipe grafis solid blok (bukan outline garis) */
