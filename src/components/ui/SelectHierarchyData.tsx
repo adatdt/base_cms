@@ -59,12 +59,65 @@ export const SelectHierarchyData = React.forwardRef<
         const [selectedValue, setSelectedValue] = useState<string | number>(
             value || "",
         );
+        const [openUpward, setOpenUpward] = useState(false);
         const containerRef = useRef<HTMLDivElement>(null);
 
         // Sinkronisasi jika nilai value berubah dari luar (Parent Component)
         useEffect(() => {
             if (value !== undefined) setSelectedValue(value);
         }, [value]);
+
+        useEffect(() => {
+            const handlePositionCheck = () => {
+                if (isOpen && containerRef.current) {
+                    const rect =
+                        containerRef.current.getBoundingClientRect();
+
+                    const dropdownMaxHeight = 240;
+
+                    const spaceBelow =
+                        window.innerHeight - rect.bottom;
+
+                    const spaceAbove = rect.top;
+
+                    if (
+                        spaceBelow < dropdownMaxHeight &&
+                        spaceAbove > dropdownMaxHeight
+                    ) {
+                        setOpenUpward(true);
+                    } else {
+                        setOpenUpward(false);
+                    }
+                }
+            };
+
+            if (isOpen) {
+                handlePositionCheck();
+
+                window.addEventListener(
+                    "scroll",
+                    handlePositionCheck,
+                    { passive: true },
+                );
+
+                window.addEventListener(
+                    "resize",
+                    handlePositionCheck,
+                );
+            }
+
+            return () => {
+                window.removeEventListener(
+                    "scroll",
+                    handlePositionCheck,
+                );
+
+                window.removeEventListener(
+                    "resize",
+                    handlePositionCheck,
+                );
+            };
+        }, [isOpen]);
 
         // Tutup dropdown otomatis jika pengguna mengklik di luar area komponen
         useEffect(() => {
@@ -218,8 +271,12 @@ export const SelectHierarchyData = React.forwardRef<
                     <div
                         /* 💡 PERUBAHAN UTAMA: Mengganti mt-1.5 menjadi kombinasi deteksi atau fallback bottom jika di ujung */
                         /* Jika Anda ingin memaksa selalu ke atas khusus untuk input paling bawah, ganti 'top-full mt-1.5' menjadi 'bottom-full mb-2' */
-                        className="absolute z-50 w-full bottom-full mb-2 bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-1 duration-100"
-                    >
+                        className={`absolute z-50 w-full bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-hidden flex flex-col animate-in fade-in duration-100 ${
+                            openUpward
+                                ? "bottom-full mb-2 slide-in-from-bottom-1"
+                                : "top-full mt-2 slide-in-from-top-1"
+                        }`}
+                        >
                         {/* Kolom Pencarian (Search Input) */}
                         <div className="relative mb-2 flex items-center">
                             <svg
