@@ -5,7 +5,7 @@ import type { InputSchema } from "../interfaces/menu.interfaces";
 import { menuFormSchema } from "../schema/menu.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
+import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
 
 interface UserFormFieldsProps {
     formId: string; // Harus sama dengan ID Modal agar terhubung dengan tombol Simpan

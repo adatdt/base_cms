@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
 import { providerEditFormSchema } from "../schema/provider.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
+import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
 import { useShallow } from "zustand/shallow";
+import { useModalStore } from "@/store/useModalStore";
 
 const input: InputSchema[] = [
     {
@@ -45,7 +46,7 @@ const input: InputSchema[] = [
         variant: "text-addon",
         placeholder: "Masukkan timeout read dalam detik ",
         required: true,
-        addOnRight:"Detik"
+        addOnRight: "Detik",
     },
     {
         name: "timeout_white",
@@ -53,7 +54,7 @@ const input: InputSchema[] = [
         variant: "text-addon",
         placeholder: "Masukkan timeout write dalam detik",
         required: true,
-        addOnRight:"Detik"
+        addOnRight: "Detik",
     },
 ];
 
@@ -69,6 +70,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
         handleFieldChange,
         executeSubmit,
         resetForm,
+        handleFileChange,
     } = useFormStore(
         useShallow((state) => ({
             formData: state.formData,
@@ -76,19 +78,42 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
             handleChange: state.handleChange,
             handleFieldChange: state.handleFieldChange,
             executeSubmit: state.executeSubmit,
+            handleFileChange: state.handleFileChange,
             resetForm: (state as any).resetForm,
         })),
     );
     const { masterOptions, isMasterLoading } = useFormStore();
+
+    const activeModalId = useModalStore((state) => state.activeModalId);
+    const isOpeningWithData = useModalStore((state) => state.isOpeningWithData);
+    const openModalOnly = useModalStore((state) => state.openModalOnly);
+
     useEffect(() => {
-        if (resetForm) {
+        if (activeModalId === formId && isOpeningWithData && resetForm) {
             resetForm();
         }
-    }, [resetForm]);
+    }, [activeModalId, isOpeningWithData, resetForm, formId]);
 
-    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
+    const isConfirmedRef = useRef(false);
+    const sendForm = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!isConfirmedRef.current) {
+            const isValid = (await executeSubmit(e, {
+                schema: providerEditFormSchema,
+                onlyValidate: true,
+                formKey: formId,
+                endpoint: "",
+                triggerNotification: triggerNotification,
+            })) as unknown as boolean;
+
+            if (!isValid) return;
+            console.log(formId);
+            openModalOnly(`${formId}Action`);
+            return;
+        }
+
         executeSubmit(e, {
-            formKey: "menuForm",
+            formKey: formId,
             schema: providerEditFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
@@ -121,6 +146,7 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
                     errors={errors}
                     formData={formData}
                     handleChange={handleChange}
+                    handleFileChange={handleFileChange}
                     handleFieldChange={handleFieldChange}
                 />
             ))}

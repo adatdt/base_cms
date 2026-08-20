@@ -29,6 +29,7 @@ interface SidePanelProps {
     confirmLoading?: boolean;
     isBackdropLoading?: boolean;
     size?: PanelSize;
+    showFooter?: boolean;
 }
 
 // 🛠️ PERUBAHAN UTAMA: Mengubah kelas agar mendukung ukuran dinamis berbasis konten
@@ -56,9 +57,11 @@ export default function SidePanel({
     confirmLoading = false,
     isBackdropLoading = false,
     size = "dynamic", // 🌟 Mengubah default size menjadi 'dynamic'
+    showFooter = true,
 }: Readonly<SidePanelProps>) {
     const activeModalId = useModalStore((state) => state.activeModalId);
     const closeModal = useModalStore((state) => state.closeModal);
+
     const resetForm = useFormStore((state) => state.resetForm);
 
     const isOpen = activeModalId === id;
@@ -67,18 +70,30 @@ export default function SidePanel({
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
 
+    // untk reset data, jika  berdsarkan openModal dan tidak akan ke reset jika openModalOnly
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
             const timer = setTimeout(() => setIsAnimating(true), 10);
             return () => clearTimeout(timer);
         } else {
-            resetForm();
+            const freshIsOpeningWithData =
+                useModalStore.getState().isOpeningWithData;
+
+            if (freshIsOpeningWithData && resetForm) {
+                resetForm();
+                console.log(
+                    "Zustand Form berhasil dibersihkan via penutupan reguler.",
+                );
+            }
+
             setIsAnimating(false);
             const timer = setTimeout(() => setShouldRender(false), 200);
             return () => clearTimeout(timer);
         }
-    }, [isOpen]);
+        // 🌟 Bersihkan dependensi: Hapus isOpeningWithData dari array agar useEffect tidak terpicu ganda
+    }, [isOpen, resetForm]);
+    // Tambahkan isOpeningWithData ke dalam dependency array
 
     if (isOpen && !shouldRender) {
         setShouldRender(true);
@@ -151,46 +166,48 @@ export default function SidePanel({
 
                 {/* Footer Panel */}
                 {/* Footer Panel - Diubah menjadi justify-center agar posisi tombol berada di tengah */}
-                <div className="border-t border-gray-200 p-4 bg-slate-50 flex justify-center gap-2 shrink-0">
-                    <Btn
-                        type="button"
-                        onClick={closeModal}
-                        variant="default"
-                        size="md"
-                        fullWidth={true}
-                        disabled={confirmLoading}
-                    >
-                        {cancelText ?? "Kembali"}
-                    </Btn>
-
-                    {onConfirm ? (
+                {showFooter && (
+                    <div className="border-t border-gray-200 p-4 bg-slate-50 flex justify-center gap-2 shrink-0">
                         <Btn
                             type="button"
-                            onClick={onConfirm}
-                            disabled={confirmLoading}
-                            variant="info"
+                            onClick={closeModal}
+                            variant="default"
                             size="md"
                             fullWidth={true}
-                        >
-                            {confirmLoading
-                                ? "Memproses..."
-                                : (confirmText ?? "Simpan")}
-                        </Btn>
-                    ) : (
-                        <Btn
-                            type="submit"
-                            form={id}
                             disabled={confirmLoading}
-                            variant="info"
-                            size="md"
-                            fullWidth={true}
                         >
-                            {confirmLoading
-                                ? "Memproses..."
-                                : (confirmText ?? "Simpan")}
+                            {cancelText ?? "Kembali"}
                         </Btn>
-                    )}
-                </div>
+
+                        {onConfirm ? (
+                            <Btn
+                                type="button"
+                                onClick={onConfirm}
+                                disabled={confirmLoading}
+                                variant="info"
+                                size="md"
+                                fullWidth={true}
+                            >
+                                {confirmLoading
+                                    ? "Memproses..."
+                                    : (confirmText ?? "Simpan")}
+                            </Btn>
+                        ) : (
+                            <Btn
+                                type="submit"
+                                form={id}
+                                disabled={confirmLoading}
+                                variant="info"
+                                size="md"
+                                fullWidth={true}
+                            >
+                                {confirmLoading
+                                    ? "Memproses..."
+                                    : (confirmText ?? "Simpan")}
+                            </Btn>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

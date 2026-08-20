@@ -20,7 +20,7 @@ const BASE_COLUMNS: ColumnProps<Table>[] = RAW_COLUMNS_CONFIG.map(
 
 interface UseGroupColumnsProps {
     onEdit: (row: Table) => void;
-    onChangeStatus?: (id: string | number) => void;
+    onChangeStatus?: (id: string | number, ststus: string | number) => void;
 }
 
 export function useGroupColumns({
@@ -38,12 +38,14 @@ export function useGroupColumns({
                     const isStatusActive = String(row.status) === "1";
                     return (
                         <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                                 isStatusActive
                                     ? "bg-emerald-50 text-emerald-700"
                                     : "bg-slate-100 text-slate-600"
                             }`}
                         >
+                            {/* Ikon otomatis mengikuti warna teks (text-emerald-700 / text-slate-600) karena menggunakan currentColor */}
+                            <Icons name="circle" size={8} />
                             {isStatusActive ? "Aktif" : "Non Aktif"}
                         </span>
                     );
@@ -56,26 +58,42 @@ export function useGroupColumns({
                 render: (row) => {
                     const statusLabel =
                         String(row.status) === "1"
-                            ? "Non Aktifkan"
+                            ? "Menonaktifkan"
                             : "Aktifkan";
+
                     return (
                         <DropdownBtn
-                            className="text-slate-400 hover:text-slate-600 active:text-slate-700"
                             variant="ghost"
-                            trigger={<Icons name="more-vertical" size={10} />}
+                            trigger={<Icons name="more-vertical" size={14} />}
                             items={[
                                 {
                                     label: "Edit ",
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "md",
                                     onClick: () => onEdit(row), // Passing row data jika dibutuhkan
                                 },
                                 {
                                     label: statusLabel,
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "md",
                                     onClick: () =>
-                                        onChangeStatus?.(row.id ?? ""),
+                                        onChangeStatus?.(
+                                            row.id ?? "",
+                                            row.status == 1
+                                                ? `active`
+                                                : `nonActive`,
+                                        ),
+                                },
+
+                                {
+                                    label: `Hapus Group`,
+                                    fontWeight: "normal",
+                                    fontSize: "md",
+                                    onClick: () =>
+                                        onChangeStatus?.(
+                                            row.id ?? "",
+                                            `delete`,
+                                        ),
                                 },
                             ]}
                             widthClass="w-48"

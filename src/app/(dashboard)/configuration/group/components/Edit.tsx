@@ -1,11 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
 import { groupEditFormSchema } from "../schema/group.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
+import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
+import { useModalStore } from "@/store/useModalStore";
+import { useShallow } from "zustand/shallow";
 
 const input: InputSchema[] = [
     {
@@ -13,8 +15,15 @@ const input: InputSchema[] = [
         label: "Nama",
         variant: "text",
         placeholder: "Masukkan Nama",
-        required: true, // Menandai field ini sebagai wajib diisi
-    }
+        required: true,
+    },
+    {
+        name: "description",
+        label: "Deskripsi Grup",
+        variant: "text-area",
+        placeholder: "Masukkan deskripsi ",
+        required: true,
+    },
 ];
 
 export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
@@ -22,17 +31,54 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
         (state) => state.triggerNotification,
     );
 
-    const formData = useFormStore((state) => state.formData);
-    const errors = useFormStore((state) => state.errors);
-    const handleChange = useFormStore((state) => state.handleChange);
-    const handleFieldChange = useFormStore((state) => state.handleFieldChange);
+    const {
+        formData,
+        errors,
+        handleChange,
+        handleFieldChange,
+        executeSubmit,
+        resetForm,
+    } = useFormStore(
+        useShallow((state) => ({
+            formData: state.formData,
+            errors: state.errors,
+            handleChange: state.handleChange,
+            handleFieldChange: state.handleFieldChange,
+            executeSubmit: state.executeSubmit,
+            resetForm: (state as any).resetForm,
+        })),
+    );
 
-    const executeSubmit = useFormStore((state) => state.executeSubmit);
     const { masterOptions, isMasterLoading } = useFormStore();
+    const activeModalId = useModalStore((state) => state.activeModalId);
+    const isOpeningWithData = useModalStore((state) => state.isOpeningWithData);
+    const openModalOnly = useModalStore((state) => state.openModalOnly);
 
-    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        if (activeModalId === formId && isOpeningWithData && resetForm) {
+            resetForm();
+        }
+    }, [activeModalId, isOpeningWithData, resetForm, formId]);
+
+    const isConfirmedRef = useRef(false);
+    const sendForm = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!isConfirmedRef.current) {
+            const isValid = (await executeSubmit(e, {
+                schema: groupEditFormSchema,
+                onlyValidate: true,
+                formKey: formId,
+                endpoint: "",
+                triggerNotification: triggerNotification,
+            })) as unknown as boolean;
+            console.log(isValid);
+            if (!isValid) return;
+            openModalOnly(`${formId}Action`);
+            return;
+        }
+
         executeSubmit(e, {
-            formKey: "menuForm",
+            formKey: formId,
             schema: groupEditFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",

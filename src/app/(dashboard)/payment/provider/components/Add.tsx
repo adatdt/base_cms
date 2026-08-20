@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
 import { providerAddFormSchema } from "../schema/provider.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
+import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
 import { useShallow } from "zustand/shallow";
+import { useModalStore } from "@/store/useModalStore";
 
 const input: InputSchema[] = [
     {
@@ -45,7 +46,7 @@ const input: InputSchema[] = [
         variant: "text-addon",
         placeholder: "Masukkan timeout read dalam detik ",
         required: true,
-        addOnRight:"Detik"
+        addOnRight: "Detik",
     },
     {
         name: "timeout_white",
@@ -53,7 +54,7 @@ const input: InputSchema[] = [
         variant: "text-addon",
         placeholder: "Masukkan timeout write dalam detik",
         required: true,
-        addOnRight:"Detik"
+        addOnRight: "Detik",
     },
 ];
 
@@ -70,7 +71,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         handleFieldChange,
         executeSubmit,
         resetForm,
-        handleFileChange
+        handleFileChange,
     } = useFormStore(
         useShallow((state) => ({
             formData: state.formData,
@@ -83,15 +84,37 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         })),
     );
     const { masterOptions, isMasterLoading } = useFormStore();
+    const activeModalId = useModalStore((state) => state.activeModalId);
+    const isOpeningWithData = useModalStore((state) => state.isOpeningWithData);
+    const openModalOnly = useModalStore((state) => state.openModalOnly);
+
+    // KUNCI UTAMA: Form hanya di-reset jika ID modal aktif cocok dengan formId ini
+    // DAN modal tersebut dibuka melalui jalur reguler openModal (isOpeningWithData === true)
     useEffect(() => {
-        if (resetForm) {
+        if (activeModalId === formId && isOpeningWithData && resetForm) {
             resetForm();
         }
-    }, [resetForm]);
+    }, [activeModalId, isOpeningWithData, resetForm, formId]);
 
-    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
-        executeSubmit(e, {
-            formKey: "formAddProvider",
+    const isConfirmedRef = useRef(false);
+    const sendForm = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!isConfirmedRef.current) {
+            const isValid = (await executeSubmit(e, {
+                schema: providerAddFormSchema,
+                onlyValidate: true,
+                formKey: formId,
+                endpoint: "",
+                triggerNotification: triggerNotification,
+            })) as unknown as boolean;
+            console.log(isValid);
+            if (!isValid) return;
+            openModalOnly(`${formId}Action`);
+            return;
+        }
+
+        await executeSubmit(e, {
+            formKey: formId,
             schema: providerAddFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
@@ -113,7 +136,7 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         <form
             id={formId}
             onSubmit={sendForm}
-             encType="multipart/form-data" 
+            encType="multipart/form-data"
             className="grid grid-cols-1 gap-y-4 text-left w-full"
         >
             {input.map((item) => (

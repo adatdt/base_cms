@@ -1,12 +1,12 @@
 // src/components/FormFieldRenderer.tsx
 import React from "react";
 import { InputSchema, SelectOption } from "@/types/form.type";
-import { SelectData } from "./SelectData";
-import { SelectHierarchyData } from "./SelectHierarchyData";
-import { SelectDataMultiple } from "./SelectDataMultiple";
-import { InputText } from "./InputText";
-import { InputTextArea } from "./InputTextArea ";
-import { InputFile } from "./InputFile";
+import { SelectData } from "../ui/SelectData";
+import { SelectHierarchyData } from "../ui/SelectHierarchyData";
+import { SelectDataMultiple } from "../ui/SelectDataMultiple";
+import { InputText } from "../ui/InputText";
+import { InputTextArea } from "../ui/InputTextArea ";
+import { InputFile } from "../ui/InputFile";
 
 interface FormFieldRendererProps {
     item: InputSchema;
@@ -23,11 +23,9 @@ interface FormFieldRendererProps {
         name: string,
         config?: { selectBy: "id" | "label"; options: any[] },
     ) => (eOrValue: any) => void;
-    addOnLeft?: string;    
-    addOnRight?: string; 
-    handleFileChange?: (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => void;
+    addOnLeft?: string;
+    addOnRight?: string;
+    handleFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -81,17 +79,15 @@ const executeFieldRender = (
 
     // Dictionary/Strategy Mapping Pattern untuk mengganti if-else bertingkat
     const fieldRenderers: Record<string, () => React.ReactNode> = {
-        "text-addon": () =>
-             (
-            
+        "text-addon": () => (
             <InputText
                 size="sm"
-                addOnRight={item.addOnRight==""?"":item.addOnRight}
-                addOnLeft={item.addOnLeft==""?"":item.addOnLeft}
+                addOnRight={item.addOnRight == "" ? "" : item.addOnRight}
+                addOnLeft={item.addOnLeft == "" ? "" : item.addOnLeft}
                 type="text"
                 name={item.name}
                 hasError={!!errors[item.name]}
-                defaultValue=""
+                value={formData[item.name] || ""}
                 onChange={handleChange}
                 placeholder={item.placeholder}
             />
@@ -99,12 +95,12 @@ const executeFieldRender = (
         "number-addon": () => (
             <InputText
                 size="sm"
-                addOnRight={item.addOnRight==""?"":item.addOnRight}
-                addOnLeft={item.addOnLeft==""?"":item.addOnLeft}
-                type="text"
+                addOnRight={item.addOnRight == "" ? "" : item.addOnRight}
+                addOnLeft={item.addOnLeft == "" ? "" : item.addOnLeft}
+                type="number"
                 name={item.name}
                 hasError={!!errors[item.name]}
-                defaultValue=""
+                value={formData[item.name] || ""}
                 onChange={handleChange}
                 placeholder={item.placeholder}
             />
@@ -114,7 +110,7 @@ const executeFieldRender = (
                 selectSize="sm"
                 name={item.name}
                 hasError={!!errors[item.name]}
-                defaultValue=""
+                value={formData[item.name] || ""}
                 onChange={commonOnChange}
                 options={dynamicOptions}
             />
@@ -154,9 +150,10 @@ const executeFieldRender = (
         ),
         "input-file": () => (
             <InputFile
-            name={item.name} 
+                name={item.name}
+                selectedFile={formData[item.name] || null}
                 inputSize="sm"
-                 onChange={handleFileChange}
+                onChange={handleFileChange}
                 hasError={!!errors[item.name]}
                 description={item.description}
             />
@@ -207,7 +204,7 @@ export const FormFieldRenderer: React.FC<FormFieldRendererProps> = (props) => {
 
             {/* Render Pesan Error */}
             {errors[item.name] && (
-                <p className="mt-1 text-sm text-red-600 font-medium">
+                <p className="mt-0 text-sm text-red-600 font-medium">
                     {errors[item.name]}
                 </p>
             )}

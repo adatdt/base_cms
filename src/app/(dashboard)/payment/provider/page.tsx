@@ -9,7 +9,10 @@ import { ApiTableResponse } from "@/types/api.types";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import Btn from "@/components/ui/Btn";
 import { useModalStore } from "@/store/useModalStore";
-import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import {
+    ModalListRenderer,
+    type ModalConfig,
+} from "@/components/shared/ModalRenderer";
 import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
@@ -17,8 +20,12 @@ import Edit from "./components/Edit";
 import { useBussinesCategoryColumns } from "./hooks/useProvider";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
+import { ConfirmationContent } from "@/components/shared/ConfirmationContent";
 
 const moduleName = `Provider`;
+const formAdd = `formAdd${moduleName}`;
+const formEdit = `formEdit${moduleName}`;
+const formChangeStatus = `changeStatus${moduleName}`;
 
 export default function Page() {
     const [tableData, setTableData] = useState<Table[]>([]);
@@ -27,7 +34,8 @@ export default function Page() {
         (state) => state.triggerNotification,
     );
     const openModal = useModalStore((state) => state.openModal);
-
+    const openModalOnly = useModalStore((state) => state.openModalOnly);
+    const setManualFormData = useFormStore((state) => state.setManualFormData);
     const { isFetchLoading, formData } = useFormStore(
         useShallow((state) => ({
             isFetchLoading: state.isFetchLoading,
@@ -46,11 +54,20 @@ export default function Page() {
         setLoadData,
     } = useTableStore((state) => state.getTableState("parameter"));
 
-    const loadAdd = async () => openModal("Form Add");
-    const loadEdit = async () => openModal("Form Edit");
-    const changeStatus = (id: string | number) =>
-        console.log("Ubah status id:", id);
+    const loadAdd = async () => openModal(formAdd);
+    const loadEdit = async () => {
+        openModal(formEdit);
 
+        // set id manual ini hardcord nanti  bisa di set di function fetchFormDetails
+        setTimeout(() => {
+            setManualFormData({ id: "idnya" });
+        }, 0);
+    };
+
+    const changeStatus = (id: string | number) => {
+        console.log("Ubah status id:", id);
+        openModal(formChangeStatus);
+    };
     const columns = useBussinesCategoryColumns({
         onEdit: loadEdit,
         onChangeStatus: changeStatus,
@@ -117,18 +134,74 @@ export default function Page() {
         fetchData(page, limit, typedQuery);
     }, [page, limit, fetchData]);
 
-    const modalConfigurations = [
+    const modalConfigurations: ModalConfig[] = [
         {
-            id: "Form Add",
+            id: formAdd,
             title: `Tambah Data ${moduleName}`,
             renderContent: (formId: string) => <Add formId={formId} />,
+            variant: `side-slide`,
         },
         {
-            id: "Form Edit",
+            id: formEdit,
             title: `Ubah Data ${moduleName}`,
-            renderContent: (formId: string) => (
-                <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
+            renderContent: (formId: string) => {
+                return (
+                    <Edit
+                        formId={formId}
+                        key={formData?.menu || "modal-kosong"}
+                    />
+                );
+            },
+            variant: `side-slide`,
+        },
+        {
+            id: formChangeStatus,
+            title: `Ubah Data ${moduleName}`,
+            variant: `modal`,
+            showFooter: false,
+            sizePanel: "xl",
+            renderContent: () => (
+                <ConfirmationContent
+                    iconType="warning"
+                    title="Anda yakin untuk menonaktifkan provider Espay?"
+                    description="Cek dua kali sebelum melakukan penonaktifan data, semua data provider yang dinonaktifkan tidak bisa digunakan untuk melakukan transaksi"
+                    confirmText="Ya, nonaktifkan data sekarang"
+                />
             ),
+        },
+        {
+            id: `${formAdd}Action`,
+            title: "Konfirmasi Tambah Data",
+            variant: "modal",
+            showFooter: false,
+            sizePanel: "lg",
+            renderContent: () => {
+                return (
+                    <ConfirmationContent
+                        title="Anda yakin untuk melakukan penambahan data provider ini?"
+                        description="Pastikan semua data yang Anda masukkan sudah sesuai jika belum sesuai Anda bisa melakukan pengecekan kembali"
+                        confirmText="Ya, tambah data sekarang"
+                        onCancel={() => openModalOnly(formAdd)}
+                    />
+                );
+            },
+        },
+        {
+            id: `${formEdit}Action`,
+            title: "Konfirmasi Edit Data",
+            variant: "modal",
+            showFooter: false,
+            sizePanel: "lg",
+            renderContent: () => {
+                return (
+                    <ConfirmationContent
+                        title="Anda yakin untuk melakukan perubahan data provider ini?"
+                        description="Pastikan semua data yang Anda ubah sudah sesuai jika belum sesuai Anda bisa melakukan pengecekan kembali"
+                        confirmText="Ya, ubah data sekarang"
+                        onCancel={() => openModalOnly(formEdit)}
+                    />
+                );
+            },
         },
     ];
 
@@ -137,7 +210,6 @@ export default function Page() {
             <ModalListRenderer
                 configs={modalConfigurations}
                 isLoading={isFetchLoading}
-                sizeSlidePanel="xl"
             />
             <div className="flex flex-row items-center justify-between w-full gap-4">
                 {/* Bagian Kiri: Judul dan Deskripsi Modul */}
@@ -152,21 +224,16 @@ export default function Page() {
                 </div>
                 <div className="flex items-center gap-2 flex-nowrap">
                     <Filter
-                        // Mengambil nilai string pencarian dinamis dari store Zustand Anda
                         searchValue={typedQuery}
-                        // Mengubah nilai di store saat pengguna mengetik huruf demi huruf
                         onSearchChange={(value) => {
-                            // Contoh: panggil fungsi store Anda di sini
                             setTypedQuery(value);
                         }}
-                        // Eksekusi trigger pemicu prapemrosesan data ke server API
                         onApply={() => {
                             fetchData(1, limit, typedQuery);
                         }}
                         isLoading={loadData}
-                        // Mengosongkan kembali kolom input ketika tombol Kembali diklik
                         onReset={() => {
-                            setTypedQuery(""); // Mengosongkan text input dari depan secara otomatis
+                            setTypedQuery("");
                         }}
                     />
                     <Btn

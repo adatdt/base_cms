@@ -5,7 +5,7 @@ import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
 import { paymentSchemaAddFormSchema } from "../schema/paymentSchema.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
-import { FormFieldRenderer } from "@/components/ui/FormFieldRenderer";
+import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
 import { useShallow } from "zustand/shallow";
 
 const input: InputSchema[] = [

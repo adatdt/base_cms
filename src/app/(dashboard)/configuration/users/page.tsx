@@ -7,7 +7,7 @@ import DataGrid, { ColumnProps } from "@/components/ui/DataGrid";
 import Btn from "@/components/ui/Btn";
 import Icons from "@/components/ui/Icons";
 import { DropdownBtn } from "@/components/ui/DropdownBtn";
-import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import { ModalListRenderer } from "@/components/shared/ModalRenderer";
 import { useFormStore } from "@/store/useFormStore";
 import { useModalStore } from "@/store/useModalStore";
 import { useNotificationStore } from "@/store/useNotificationStore";
@@ -67,8 +67,6 @@ export default function UsersPage() {
         typedQuery,
         setTypedQuery,
         setLoadData,
-        handleRefresh,
-        handleKeyDown,
     } = useTableStore((state) => state.getTableState("user"));
 
     /**

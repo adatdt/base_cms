@@ -7,6 +7,7 @@ import Btn from "./Btn";
 import Skeleton from "@/components/ui/Skeleton";
 import { type PanelSize as ModalSize } from "@/components/ui/SidePanel";
 
+type TitlePosition = "left" | "center" | "right";
 interface ModalProps {
     id: string;
     title: string;
@@ -17,6 +18,8 @@ interface ModalProps {
     confirmLoading?: boolean;
     isBackdropLoading?: boolean;
     size?: ModalSize;
+    showFooter?: boolean;
+    titlePosition?: TitlePosition;
 }
 
 const sizeClasses: Record<ModalSize, string> = {
@@ -42,6 +45,8 @@ export default function Modal({
     confirmLoading = false,
     isBackdropLoading = false,
     size = "md",
+    showFooter = true,
+    titlePosition = "center",
 }: Readonly<ModalProps>) {
     const activeModalId = useModalStore((state) => state.activeModalId);
     const closeModal = useModalStore((state) => state.closeModal);
@@ -53,18 +58,29 @@ export default function Modal({
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(isOpen);
 
+    // untk reset data, jika  berdsarkan openModal dan tidak akan ke reset jika openModalOnly
     useEffect(() => {
         if (isOpen) {
             setShouldRender(true);
             const timer = setTimeout(() => setIsAnimating(true), 10);
             return () => clearTimeout(timer);
         } else {
-            resetForm();
+            const freshIsOpeningWithData =
+                useModalStore.getState().isOpeningWithData;
+
+            if (freshIsOpeningWithData && resetForm) {
+                resetForm();
+                console.log(
+                    "Zustand Form berhasil dibersihkan via penutupan reguler.",
+                );
+            }
+
             setIsAnimating(false);
             const timer = setTimeout(() => setShouldRender(false), 200);
             return () => clearTimeout(timer);
         }
-    }, [isOpen]);
+        // 🌟 Bersihkan dependensi: Hapus isOpeningWithData dari array agar useEffect tidak terpicu ganda
+    }, [isOpen, resetForm]);
 
     if (isOpen && !shouldRender) {
         setShouldRender(true);
@@ -78,6 +94,15 @@ export default function Modal({
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 300);
     };
+
+    const headerAlignmentMap: Record<TitlePosition, string> = {
+        center: "justify-center text-center",
+        right: "flex-row-reverse justify-between text-right",
+        left: "justify-between text-left",
+    };
+
+    // 2. Ambil class berdasarkan prop titlePosition (gunakan fallback "left")
+    const headerAlignmentClass = headerAlignmentMap[titlePosition ?? "left"];
 
     return (
         <div className="fixed inset-0 z-50 overflow-hidden flex items-center justify-center">
@@ -121,14 +146,22 @@ export default function Modal({
               ${isShaking ? "animate-shake" : ""}`}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                        <h3 className="text-lg font-semibold text-gray-900 ">
+                    <div
+                        className={`flex items-center border-b border-gray-200 pb-3 relative ${headerAlignmentClass}`}
+                    >
+                        <h3
+                            className={`text-xs font-semibold text-gray-900 w-full ${titlePosition === "center" ? "px-6" : ""}`}
+                        >
                             {title}
                         </h3>
                         <button
                             type="button"
                             onClick={closeModal}
-                            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 "
+                            className={`text-gray-400 hover:bg-gray-100 hover:text-gray-700 rounded-lg p-1 transition-colors ${
+                                titlePosition === "center"
+                                    ? "absolute right-0"
+                                    : "relative"
+                            }`}
                         >
                             ✕
                         </button>
@@ -140,43 +173,45 @@ export default function Modal({
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-3">
-                        <Btn
-                            type="button"
-                            onClick={closeModal}
-                            variant="delete"
-                            size="md"
-                            disabled={confirmLoading}
-                        >
-                            {cancelText ?? "Batal"}
-                        </Btn>
-
-                        {onConfirm ? (
+                    {showFooter && (
+                        <div className="mt-6 flex justify-end gap-2 border-t border-gray-100 pt-3">
                             <Btn
                                 type="button"
-                                onClick={onConfirm}
-                                disabled={confirmLoading}
-                                variant="primary"
+                                onClick={closeModal}
+                                variant="default"
                                 size="md"
-                            >
-                                {confirmLoading
-                                    ? "Memproses..."
-                                    : (confirmText ?? "Simpan")}
-                            </Btn>
-                        ) : (
-                            <Btn
-                                type="submit"
-                                form={id}
                                 disabled={confirmLoading}
-                                variant="primary"
-                                size="md"
                             >
-                                {confirmLoading
-                                    ? "Memproses..."
-                                    : (confirmText ?? "Simpan")}
+                                {cancelText ?? "Batal"}
                             </Btn>
-                        )}
-                    </div>
+
+                            {onConfirm ? (
+                                <Btn
+                                    type="button"
+                                    onClick={onConfirm}
+                                    disabled={confirmLoading}
+                                    variant="info"
+                                    size="md"
+                                >
+                                    {confirmLoading
+                                        ? "Memproses..."
+                                        : (confirmText ?? "Simpan")}
+                                </Btn>
+                            ) : (
+                                <Btn
+                                    type="submit"
+                                    form={id}
+                                    disabled={confirmLoading}
+                                    variant="info"
+                                    size="md"
+                                >
+                                    {confirmLoading
+                                        ? "Memproses..."
+                                        : (confirmText ?? "Simpan")}
+                                </Btn>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

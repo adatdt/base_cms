@@ -22,12 +22,7 @@ interface GlobalSubmitConfig<TResponse> extends FormSubmitOptions<TResponse> {
     endpoint: string;
     method?: HttpMethod;
     triggerNotification: NotificationTrigger;
-}
-
-interface BulkMasterConfig {
-    key: string;
-    // Fungsi opsional untuk mengubah struktur data master dari payload tunggal
-    transform?: (data: any) => any[];
+    onlyValidate?: boolean;
 }
 
 interface FormState {
@@ -36,6 +31,11 @@ interface FormState {
     isFetchLoading: boolean;
     masterOptions: Record<string, any[]>;
     isMasterLoading: boolean;
+    setManualFormData: (
+        data:
+            | Record<string, any>
+            | ((prev: Record<string, any>) => Record<string, any>),
+    ) => void;
     handleChange: (
         e: React.ChangeEvent<
             HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -86,9 +86,7 @@ interface FormState {
         triggerNotification: NotificationTrigger,
     ) => Promise<void>;
 
-     handleFileChange: (
-        e: React.ChangeEvent<HTMLInputElement>
-    ) => void;
+    handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     fetchBulkMasterOptions: (
         bulkUrl: string,
         configs: Array<{ key: string; transform?: (data: any) => any }>,
@@ -108,7 +106,27 @@ export const useFormStore = create<FormState>((set, get) => ({
 
     masterOptions: {},
     isMasterLoading: false,
+    setManualFormData: (data) => {
+        set((state) => {
+            // Cek apakah argumen berupa fungsi callback atau objek langsung
+            const nextFormData =
+                typeof data === "function" ? data(state.formData) : data;
 
+            // Bersihkan error untuk field yang baru dimasukkan secara manual
+            const nextErrors = { ...state.errors };
+            Object.keys(nextFormData).forEach((key) => {
+                if (nextErrors[key]) delete nextErrors[key];
+            });
+
+            return {
+                formData: {
+                    ...state.formData,
+                    ...nextFormData,
+                },
+                errors: nextErrors,
+            };
+        });
+    },
     // Core Handler: Native HTML Form Inputs (Event Driven)
     handleChange: (e) => {
         const { name, value } = e.target;
@@ -122,30 +140,6 @@ export const useFormStore = create<FormState>((set, get) => ({
         });
     },
 
-    // Core Handler: Custom Input Components (Raw Value Payload Driven - SonarQube Clean)
-    /*
-    handleFieldChange: (name: string) => (eOrValue) => {
-        let value: string = "";
-        if (eOrValue && typeof eOrValue === "object" && "target" in eOrValue) {
-            const target = eOrValue.target as
-                | HTMLInputElement
-                | HTMLSelectElement;
-            value = target.value;
-        } else if (typeof eOrValue === "string") {
-            value = eOrValue;
-        } else if (typeof eOrValue === "number") {
-            value = eOrValue.toString();
-        }
-
-        set((state) => {
-            const nextErrors = { ...state.errors };
-            if (nextErrors[name]) delete nextErrors[name];
-            return {
-                formData: { ...state.formData, [name]: value },
-                errors: nextErrors,
-            };
-        });
-    }, */
     handleFieldChange:
         (
             name: string,
@@ -302,7 +296,7 @@ export const useFormStore = create<FormState>((set, get) => ({
             return { errors: nextErrors };
         }),
 
-        executeSubmit: async (e, config) => {
+    executeSubmit: async (e, config) => {
         e.preventDefault();
         const {
             schema,
@@ -311,6 +305,7 @@ export const useFormStore = create<FormState>((set, get) => ({
             onSuccess,
             onError,
             triggerNotification,
+            onlyValidate = false,
         } = config;
 
         const currentFormData = get().formData;
@@ -319,15 +314,20 @@ export const useFormStore = create<FormState>((set, get) => ({
         // 💡 SOLUSI FINAL: Deteksi FileList Berbasis Karakteristik Objek (Duck Typing)
         // =========================================================================
         const sanitizedData: Record<string, any> = {};
-        
+
         Object.entries(currentFormData).forEach(([key, val]) => {
             // Mengecek apakah objek memiliki karakteristik FileList bawaan DOM Browser
-            const isFileList = val && typeof val === "object" && "item" in val && "length" in val;
+            const isFileList =
+                val &&
+                typeof val === "object" &&
+                "item" in val &&
+                "length" in val;
 
             if (isFileList) {
                 const fileListObj = val as FileList;
                 // Ekstrak file pertama (Index 0) secara paksa agar tipenya murni menjadi File
-                sanitizedData[key] = fileListObj.length > 0 ? fileListObj.item(0) : null;
+                sanitizedData[key] =
+                    fileListObj.length > 0 ? fileListObj.item(0) : null;
             } else {
                 sanitizedData[key] = val;
             }
@@ -335,7 +335,7 @@ export const useFormStore = create<FormState>((set, get) => ({
 
         // Sekarang safeParse dijamin menerima objek File murni, BUKAN FileList lagi!
         const result = schema.safeParse(sanitizedData);
-        console.log(currentFormData)
+
         if (!result.success) {
             const formattedErrors: Record<string, string> = {};
             result.error.issues.forEach((err) => {
@@ -350,13 +350,19 @@ export const useFormStore = create<FormState>((set, get) => ({
             return null;
         }
 
+        if (onlyValidate) {
+            return result.data;
+        }
+
         try {
             const isDelete = method.toUpperCase() === "DELETE";
             let targetUrl = endpoint;
             const validData = result.data; // Berisi data bersih dari Zod (Objek File murni)
 
             if (isDelete && validData && Object.keys(validData).length > 0) {
-                const queryParams = new URLSearchParams(validData as any).toString();
+                const queryParams = new URLSearchParams(
+                    validData as any,
+                ).toString();
                 targetUrl = `${endpoint}?${queryParams}`;
             }
 
@@ -364,39 +370,52 @@ export const useFormStore = create<FormState>((set, get) => ({
             // 💡 PEMBENTUKAN PAYLOAD MULTIPART / FORMDATA UNTUK FETCHCLIENT
             // =========================================================================
             let finalDataPayload: any = validData;
-            
+
             // Periksa keberadaan File menggunakan karakteristik properti name & size
             const hasFile = Object.values(validData || {}).some(
-                (val) => val && typeof val === "object" && "name" in (val as any) && "size" in (val as any)
+                (val) =>
+                    val &&
+                    typeof val === "object" &&
+                    "name" in (val as any) &&
+                    "size" in (val as any),
             );
 
             if (hasFile && !isDelete) {
                 const formDataBody = new FormData();
-                
-          Object.entries(validData).forEach(([key, val]) => {
-    if (val !== undefined && val !== null) {
-        const valType = typeof val;
 
-        // 1. Cek apakah ini objek berkas biner tunggal (File murni)
-        const isSingleFile = valType === "object" && "name" in (val as any) && "size" in (val as any);
-        
-        if (isSingleFile) {
-            formDataBody.append(key, val as File, (val as File).name);
-        } 
-        // 2. Cek jika data berupa Array atau Object biasa (Non-File)
-        else if (valType === "object" || Array.isArray(val)) {
-            formDataBody.append(key, JSON.stringify(val));
-        } 
-        // 3. 💡 SOLUSI FINAL: Lakukan casting ke primitive (string/any) agar linter tidak mendeteksi object biasa
-        else {
-            // Memaksa linter menganggap val bukan tipe Object kompleks
-            const primitiveValue = val as string | number | boolean;
-            formDataBody.append(key, String(primitiveValue));
-        }
-    }
-});
+                Object.entries(validData).forEach(([key, val]) => {
+                    if (val !== undefined && val !== null) {
+                        const valType = typeof val;
 
-                
+                        // 1. Cek apakah ini objek berkas biner tunggal (File murni)
+                        const isSingleFile =
+                            valType === "object" &&
+                            "name" in (val as any) &&
+                            "size" in (val as any);
+
+                        if (isSingleFile) {
+                            formDataBody.append(
+                                key,
+                                val as File,
+                                (val as File).name,
+                            );
+                        }
+                        // 2. Cek jika data berupa Array atau Object biasa (Non-File)
+                        else if (valType === "object" || Array.isArray(val)) {
+                            formDataBody.append(key, JSON.stringify(val));
+                        }
+                        // 3. 💡 SOLUSI FINAL: Lakukan casting ke primitive (string/any) agar linter tidak mendeteksi object biasa
+                        else {
+                            // Memaksa linter menganggap val bukan tipe Object kompleks
+                            const primitiveValue = val as
+                                | string
+                                | number
+                                | boolean;
+                            formDataBody.append(key, String(primitiveValue));
+                        }
+                    }
+                });
+
                 finalDataPayload = formDataBody;
             }
 
@@ -414,14 +433,19 @@ export const useFormStore = create<FormState>((set, get) => ({
 
             return responseData;
         } catch (error: any) {
-            console.log(`[Fetch Form Error] Failed to ${method} to ${endpoint}:`, error);
-            const errorMsg = error?.data?.message || error?.message || "Terjadi kesalahan sistem!";
+            console.log(
+                `[Fetch Form Error] Failed to ${method} to ${endpoint}:`,
+                error,
+            );
+            const errorMsg =
+                error?.data?.message ||
+                error?.message ||
+                "Terjadi kesalahan sistem!";
             triggerNotification(`Terjadi kesalahan: ${errorMsg}`, "warning");
             if (onError) onError(error);
             return null;
         }
     },
-
 
     // Form Clean Engine: Wipes global input values and error trails
     resetForm: () => set({ formData: {}, errors: {}, isFetchLoading: false }),
@@ -438,7 +462,7 @@ export const useFormStore = create<FormState>((set, get) => ({
     ) => {
         set({ isFetchLoading: true, errors: {} });
         try {
-            // 👈 2. Gunakan customUrl jika ada, jika tidak ada pakai URL default
+            // 2. Gunakan customUrl jika ada, jika tidak ada pakai URL default
             const targetUrl =
                 customUrl || `/configuration/menu/api/crud?id=${id}`;
 
@@ -585,24 +609,38 @@ export const useFormStore = create<FormState>((set, get) => ({
     },
     handleFileChange: (e) => {
         const { name, files } = e.target;
-        
-        // Pastikan elemen input memiliki atribut 'name' dan memiliki file yang dipilih
-        if (!name || !files || files.length === 0) return;
 
-        // Jika input file mendukung multiple, simpan semua file dalam bentuk array. 
-        // Jika tidak, ambil file pertama saja (index 0) sebagai objek File tunggal.
-        const fileValue = e.target.multiple ? Array.from(files) : files[0];
+        // Pastikan elemen input memiliki atribut 'name'
+        if (!name) return;
 
         set((state) => {
-            const nextErrors = { ...state.errors };
-            // Hapus error field ini jika ada setelah user memilih file baru
-            if (nextErrors[name]) delete nextErrors[name]; 
-            
+            let nextFormData = { ...state.formData };
+            let nextErrors = { ...state.errors };
+
+            // JIKA FILE ADA: Tambahkan atau perbarui file
+            if (files && files.length > 0) {
+                const fileValue = e.target.multiple
+                    ? Array.from(files)
+                    : files[0];
+
+                nextFormData = {
+                    ...nextFormData,
+                    [name]: fileValue,
+                };
+
+                // Menghapus error tanpa menggunakan operator 'delete'
+                const { [name]: _, ...remainingErrors } = nextErrors;
+                nextErrors = remainingErrors;
+            }
+            // JIKA FILE KOSONG (DIHAPUS): Hapus field dari formData
+            else {
+                // Menghapus data file dari object tanpa menggunakan operator 'delete'
+                const { [name]: _, ...remainingFormData } = nextFormData;
+                nextFormData = remainingFormData;
+            }
+
             return {
-                formData: { 
-                    ...state.formData, 
-                    [name]: fileValue // Menyimpan objek File asli, bukan string "C:\fakepath\..."
-                },
+                formData: nextFormData,
                 errors: nextErrors,
             };
         });

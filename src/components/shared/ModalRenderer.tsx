@@ -1,20 +1,24 @@
 import React from "react";
-import Modal from "./Modal"; // Sesuaikan path ke komponen Modal Anda
-import SidePanel, { type PanelSize } from "./SidePanel";
+import Modal from "../ui/Modal"; // Sesuaikan path ke komponen Modal Anda
+import SidePanel, { type PanelSize } from "../ui/SidePanel";
 
 // 1. Definisikan tipe data untuk objek modal tunggal
 export interface ModalConfig {
     id: string;
     title: string;
     renderContent: (id: string) => React.ReactNode;
+    variant?: "sidePanel" | "modal" | (string & {});
+    sizePanel?: PanelSize;
+    modalConfigurations?: true;
+    showFooter?: boolean;
+    onConfirm?: () => void;
+    confirmText?: string;
 }
 
 // 2. Definisikan props: sekarang menerima array 'configs'
 interface ModalListRendererProps {
     configs: ModalConfig[];
     isLoading: boolean;
-    sizeSlidePanel?: PanelSize;
-    sizeModal?: PanelSize;
 }
 
 /**
@@ -24,19 +28,20 @@ interface ModalListRendererProps {
 export const ModalListRenderer: React.FC<ModalListRendererProps> = ({
     configs,
     isLoading,
-    sizeSlidePanel = "3xl",
-    sizeModal = "3xl",
 }) => {
     return (
         <>
             {configs.map((modal) => {
-                // Tentukan wrapper secara dinamis untuk setiap item
+                // 💡 Ambil variant dengan nilai default "sidePanel" jika modal.variant bernilai falsy (undefined/null/"")
+                const activeVariant = modal.variant || "sidePanel";
+
+                // Tentukan wrapper secara dinamis untuk setiap item berdasarkan activeVariant
                 let ComponentWrapper = SidePanel;
-                let size = sizeSlidePanel;
-                if (modal.id === "Form Aktif") {
+                if (activeVariant === "modal") {
                     ComponentWrapper = Modal;
-                    size = sizeModal;
                 }
+
+                let size = modal.sizePanel ?? "2xl";
 
                 return (
                     <ComponentWrapper
@@ -45,6 +50,9 @@ export const ModalListRenderer: React.FC<ModalListRendererProps> = ({
                         title={modal.title}
                         size={size === "dynamic" ? "3xl" : size}
                         isBackdropLoading={isLoading}
+                        showFooter={modal.showFooter}
+                        onConfirm={modal.onConfirm}
+                        confirmText={modal.confirmText || `Simpan`}
                     >
                         {modal.renderContent(modal.id)}
                     </ComponentWrapper>

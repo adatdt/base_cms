@@ -5,6 +5,7 @@ import React, {
     useState,
     useCallback,
     useImperativeHandle,
+    useEffect,
 } from "react";
 import Icons from "./Icons";
 
@@ -15,6 +16,7 @@ interface InputFileProps extends React.InputHTMLAttributes<HTMLInputElement> {
     inputSize?: InputSize;
     label?: string;
     description?: string; // Menambahkan properti label dinamis
+    selectedFile?: File | null;
 }
 
 const sizeClasses: Record<InputSize, string> = {
@@ -68,13 +70,18 @@ export const InputFile = React.forwardRef<HTMLInputElement, InputFileProps>(
             description = "", // Diterima dari depan dengan nilai default
             name, // Diterima dari depan untuk kebutuhan integrasi form
             onChange,
+            selectedFile = null,
             ...props
         },
         ref,
     ) => {
-        const [file, setFile] = useState<File | null>(null);
+        const [file, setFile] = useState<File | null>(selectedFile);
         const [isDragActive, setIsDragActive] = useState(false);
         const fileInputRef = useRef<HTMLInputElement>(null);
+
+        useEffect(() => {
+            setFile(selectedFile);
+        }, [selectedFile]);
 
         // Menyatukan ref eksternal (Hook Form) dengan ref internal komponen untuk input type="file"
         useImperativeHandle(ref, () => fileInputRef.current!, []);
@@ -129,18 +136,44 @@ export const InputFile = React.forwardRef<HTMLInputElement, InputFileProps>(
             fileInputRef.current?.click();
         }, []);
 
-        const handleRemoveFile = useCallback(() => {
-            setFile(null);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = "";
-                // Picu event change kosong agar status validasi form ikut ter-reset
-                const changeEvent = new Event("change", { bubbles: true });
-                fileInputRef.current.dispatchEvent(changeEvent);
-            }
-        }, []);
+        const handleRemoveFile = useCallback(
+            (e: React.MouseEvent<HTMLButtonElement>) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // 1. Reset state lokal komponen
+                setFile(null);
+
+                if (fileInputRef.current) {
+                    // 2. Kosongkan nilai string fisik input file di DOM
+                    fileInputRef.current.value = "";
+
+                    // 3. Panggil onChange (Zustand) dengan mengirimkan mock event array kosong
+                    if (onChange) {
+                        const mockEvent = {
+                            ...new Event("change", { bubbles: true }),
+                            target: {
+                                ...fileInputRef.current,
+                                value: "",
+                                name: fileInputRef.current.name, // Pastikan name terkirim
+                                files: [], // Memicu kondisi else di Zustand untuk menghapus data
+                            },
+                            currentTarget: fileInputRef.current,
+                        } as unknown as React.ChangeEvent<HTMLInputElement>;
+
+                        onChange(mockEvent);
+                    }
+                }
+            },
+            [onChange],
+        );
 
         // Proteksi properti bertabrakan untuk standard SonarQube bersih
-        const { type: _omittedType, ...cleanProps } = props;
+        const {
+            type: _omittedType,
+            value: _omittedValue,
+            ...cleanProps
+        } = props;
 
         return (
             <div className={`w-full max-w-2xl font-sans ${className}`}>

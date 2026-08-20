@@ -9,7 +9,7 @@ import { ApiFetchResponse } from "@/types/api.types";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import Btn from "@/components/ui/Btn";
 import { useModalStore } from "@/store/useModalStore";
-import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import { ModalListRenderer } from "@/components/shared/ModalRenderer";
 import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";

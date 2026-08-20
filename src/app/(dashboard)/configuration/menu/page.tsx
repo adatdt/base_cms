@@ -19,7 +19,7 @@ import { DropdownBtn } from "@/components/ui/DropdownBtn";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
 import { useTableStore } from "@/store/useTableStore";
-import { ModalListRenderer } from "@/components/ui/ModalRenderer";
+import { ModalListRenderer } from "@/components/shared/ModalRenderer";
 
 const moduleName = `Menu`;
 
@@ -247,11 +247,13 @@ export default function MenuPage() {
         {
             id: "Form Add",
             title: `Tambah Data ${moduleName}`,
+            variant: `side-slide`,
             renderContent: (formId: string) => <Add formId={formId} />,
         },
         {
             id: "Form Edit",
             title: `Ubah Data ${moduleName}`,
+            variant: `side-slide`,
             renderContent: (formId: string) => (
                 <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
             ),

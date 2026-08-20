@@ -23,14 +23,14 @@ export type IconType =
     | "trash"
     | "pencil"
     | "wallet"
-    | "bar-chart"      
-    | "store"         
-    | "bank"          
+    | "bar-chart"
+    | "store"
+    | "bank"
     | "chart-network"
-    | "receipt"  
+    | "receipt"
     | "refresh"
+    | "circle"
     | "calendar";
-
 
 export interface IconsProps extends Omit<
     React.SVGProps<SVGSVGElement>,
@@ -46,6 +46,14 @@ export interface IconsProps extends Omit<
  * 2. STATIC DATA (Diletakkan di luar komponen agar tidak di-render ulang setiap state berubah)
  */
 const ICON_PATHS: Record<IconType, React.ReactNode> = {
+    circle: (
+        <circle
+            cx="12"
+            cy="12"
+            r="8" // Menggunakan radius 8 agar proporsional dengan grid viewBox 24x24
+            fill="currentColor" // Warna mengikuti teks induk otomatis (fill, bukan stroke)
+        />
+    ),
     trash: (
         <>
             {/* 1. Garis kapsul pegangan tutup paling atas */}
@@ -205,13 +213,7 @@ const ICON_PATHS: Record<IconType, React.ReactNode> = {
             <path d="M8 2v4" />
             <path d="M16 2v4" />
 
-            <rect
-                x="3"
-                y="4"
-                width="18"
-                height="17"
-                rx="2"
-            />
+            <rect x="3" y="4" width="18" height="17" rx="2" />
 
             <path d="M3 10h18" />
 

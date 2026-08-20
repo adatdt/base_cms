@@ -67,13 +67,13 @@ export function useBussinesCategoryColumns({
                                 {
                                     label: "Edit ",
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "sm",
                                     onClick: () => onEdit(row), // Passing row data jika dibutuhkan
                                 },
                                 {
                                     label: statusLabel,
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "sm",
                                     onClick: () =>
                                         onChangeStatus?.(row.id ?? ""),
                                 },
