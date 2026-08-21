@@ -72,14 +72,18 @@ export const ConfirmationContent: React.FC<ConfirmationContentProps> = ({
                         type="button"
                         onClick={onConfirm}
                         disabled={confirmLoading}
-                        variant="info"
+                        variant="success-blue"
                     >
                         {confirmLoading
                             ? "Memproses..."
                             : (confirmText ?? "Simpan")}
                     </Btn>
                 ) : (
-                    <Btn type="submit" disabled={confirmLoading} variant="info">
+                    <Btn
+                        type="submit"
+                        disabled={confirmLoading}
+                        variant="success-blue"
+                    >
                         {confirmLoading
                             ? "Memproses..."
                             : (confirmText ?? "Simpan")}

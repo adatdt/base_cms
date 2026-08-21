@@ -197,7 +197,7 @@ export default function SidePanel({
                                 type="submit"
                                 form={id}
                                 disabled={confirmLoading}
-                                variant="info"
+                                variant="success-blue"
                                 size="md"
                                 fullWidth={true}
                             >

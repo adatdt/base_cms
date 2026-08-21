@@ -30,7 +30,9 @@ export type IconType =
     | "receipt"
     | "refresh"
     | "circle"
-    | "calendar";
+    | "calendar"
+    | "eyes-off"
+    | "eyes";
 
 export interface IconsProps extends Omit<
     React.SVGProps<SVGSVGElement>,
@@ -46,6 +48,53 @@ export interface IconsProps extends Omit<
  * 2. STATIC DATA (Diletakkan di luar komponen agar tidak di-render ulang setiap state berubah)
  */
 const ICON_PATHS: Record<IconType, React.ReactNode> = {
+    eyes: (
+        <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="inline-block align-middle"
+        >
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+    ),
+    "eyes-off": (
+        <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="inline-block align-middle"
+        >
+            {/* Garis lengkung utama kelopak mata (melengkung ke bawah) */}
+            <path d="M3 8c3 5 15 5 18 0" />
+
+            {/* Bulu mata tengah (tegak lurus ke bawah) */}
+            <line x1="12" y1="11" x2="12" y2="15" />
+
+            {/* Bulu mata kiri dalam */}
+            <line x1="8" y1="10.5" x2="6" y2="14" />
+
+            {/* Bulu mata kiri luar */}
+            <line x1="4.5" y1="9.5" x2="2" y2="12.5" />
+
+            {/* Bulu mata kanan dalam */}
+            <line x1="16" y1="10.5" x2="18" y2="14" />
+
+            {/* Bulu mata kanan luar */}
+            <line x1="19.5" y1="9.5" x2="22" y2="12.5" />
+        </svg>
+    ),
     circle: (
         <circle
             cx="12"

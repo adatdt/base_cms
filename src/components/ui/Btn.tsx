@@ -9,6 +9,7 @@ export type ButtonVariant =
     | "dark"
     | "default"
     | "success-blue"
+    | "success-blue-dark"
     | "primary"
     | "ghost";
 export type ButtonSize = "xs" | "sm" | "md" | "lg";
@@ -34,6 +35,9 @@ export const variantStyles: Record<ButtonVariant, string> = {
     default:
         "bg-white hover:bg-slate-50 text-[var(--btn-text,theme(colors.slate.800))] border border-slate-200 shadow-xs focus:ring-slate-300",
     "success-blue":
+        "bg-gradient-to-r from-[#3e89cd] to-[#60b3e2] text-white hover:from-[#3372ab] hover:to-[#4fa1cc] active:from-[#2a5e8f] active:to-[#418cb3] focus:ring-blue-400/20",
+
+    "success-blue-dark":
         "bg-gradient-to-r from-[#2a68d0] to-[#5190f3] text-[var(--btn-text,theme(colors.white))] hover:from-[#2154ab] hover:to-[#3e7fe0] active:from-[#1b4691] active:to-[#326cc4] focus:ring-blue-400/20",
 
     primary: "bg-blue-600 hover:bg-blue-700 text-slate-100 focus:ring-blue-500",
@@ -46,16 +50,18 @@ export const colorStyles = {
         hover: "hover:bg-emerald-700",
         ring: "focus:ring-emerald-500",
     },
-
     "success-blue": {
-        background:
-            "bg-gradient-to-r from-[#2a68d0] to-[#5190f3]",
-        hover:
-            "hover:from-[#2154ab] hover:to-[#3e7fe0]",
-        active:
-            "active:from-[#1b4691] active:to-[#326cc4]",
-        ring:
-            "focus:ring-blue-400/20",
+        background: "bg-gradient-to-r from-[#3e89cd] to-[#60b3e2]",
+        hover: "hover:from-[#3372ab] hover:to-[#4fa1cc]",
+        active: "active:from-[#2a5e8f] active:to-[#418cb3]",
+        ring: "focus:ring-blue-400/20",
+    },
+
+    "success-blue-dark": {
+        background: "bg-gradient-to-r from-[#2a68d0] to-[#5190f3]",
+        hover: "hover:from-[#2154ab] hover:to-[#3e7fe0]",
+        active: "active:from-[#1b4691] active:to-[#326cc4]",
+        ring: "focus:ring-blue-400/20",
     },
 };
 

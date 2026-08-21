@@ -1,39 +1,46 @@
 import React from "react";
 import Image from "next/image";
+
 export default function AuthLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
     return (
-        // 1. Ubah bg-slate-100 menjadi 'relative overflow-hidden'
-        <main className="relative flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8 overflow-hidden">
-            {/* 2. Sisipkan Komponen Gambar Next.js sebagai Latar Belakang */}
-            <Image
-                src="/images/bg_image.png" // Pastikan file gambar ada di public/images/
-                alt="ASDP Payment Collection Background"
-                fill // Mengisi seluruh area tag <main>
-                priority // Dioptimalkan untuk loading instan (LCP)
-                className="object-cover object-center z-0" // Berada di lapisan paling belakang
-            />
+        // Tag utama pembungkus layar penuh
+        <main className="relative flex min-h-screen w-full overflow-hidden">
+            <div className="relative z-20 flex w-full min-h-screen justify-start">
+                {/* 1. KOTAK PUTIH MENTOK KIRI (Tepat Setengah Layar: 50%) */}
+                <div className="relative w-full lg:w-1/2 min-h-screen bg-white p-8 sm:p-12 md:p-16 flex flex-col justify-center shadow-2xl border-r border-slate-200/80 overflow-y-auto">
+                    {/* SISIPAN GAMBAR IKON / LOGO DI POJOK KIRI ATAS */}
+                    <div className="absolute top-8 left-4 sm:left-6 md:left-8">
+                        <div className="flex items-center gap-2">
+                            <Image
+                                src="/images/logo-asdp.png"
+                                alt="ASDP Logo Icon"
+                                width={80}
+                                height={80}
+                                className="object-contain"
+                            />
+                        </div>
+                    </div>
 
-            {/* 3. Efek Overlay Transparan (Agar gambar tidak terlalu terang dan teks tetap terbaca) */}
-            <div className="absolute inset-0 bg-slate-900/15 backdrop-blur-[1px] z-10"></div>
-
-            {/* 4. Kotak Formulir Utama (Diberi kelas 'relative z-20' agar berada di atas gambar) */}
-            <div className="relative z-20 w-full max-w-md space-y-8 bg-white p-8 rounded-2xl shadow-2xl border border-slate-200/80">
-                {/* Header Bersama untuk Halaman Auth */}
-                <div className="text-center">
-                    <h2 className="text-4xl font-black tracking-tight text-blue-900">
-                        ASDP
-                    </h2>
-                    <p className="mt-2 text-xs font-bold text-amber-500 uppercase tracking-widest">
-                        Hub Pelabuhan & Penyeberangan
-                    </p>
+                    {/* Pembungkus Konten Internal (Form & Header) */}
+                    <div className="w-full max-w-sm sm:max-w-md mx-auto space-y-8 pt-12">
+                        {/* Halaman /login atau /register akan dimuat di sini */}
+                        <div className="relative z-30 w-full">{children}</div>
+                    </div>
                 </div>
 
-                {/* Halaman /login atau /register akan dimuat di sini */}
-                <div className="relative z-30">{children}</div>
+                <div className="hidden lg:flex lg:w-1/2 min-h-screen items-center justify-center p-12 text-white bg-black/10 backdrop-blur-[1px] relative overflow-hidden">
+                    <Image
+                        src="/images/bg_image.png"
+                        alt="ASDP Payment Collection Background"
+                        fill
+                        priority
+                        className="object-cover object-left z-0"
+                    />
+                </div>
             </div>
         </main>
     );

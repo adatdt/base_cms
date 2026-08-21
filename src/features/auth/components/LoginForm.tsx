@@ -3,6 +3,9 @@
 import { useActionState, useEffect, useState, useCallback } from "react";
 import { loginUser, ActionState } from "../actions/loginUser";
 import { getNewCaptcha } from "../actions/getNewCaptcha"; // 🌟 Impor generator action
+import Icons from "@/components/ui/Icons";
+import { InputText } from "@/components/ui/InputText";
+import Btn from "@/components/ui/Btn";
 
 const initialState: ActionState = {
     success: false,
@@ -15,9 +18,12 @@ export default function LoginForm() {
         initialState,
     );
 
+    console.log(state);
+
     // 🌟 State lokal untuk menampung soal teks dan kode enkripsi jawaban captcha
     const [captchaQuestion, setCaptchaQuestion] = useState("");
     const [encryptedAnswer, setEncryptedAnswer] = useState("");
+    const [showPassword, setShowPassword] = useState<boolean>(false);
 
     // 🌟 Fungsi untuk mengambil soal captcha baru dari server secara aman
     const refreshCaptcha = useCallback(async () => {
@@ -39,11 +45,11 @@ export default function LoginForm() {
     }, [state, refreshCaptcha]);
 
     return (
-        <form action={formAction} className="space-y-5">
+        <form action={formAction} className="space-y-4 w-full">
             {/* Alert Error / Sukses Global */}
             {state.message && (
                 <div
-                    className={`p-3 text-sm rounded-lg border ${
+                    className={`p-3 text-sm rounded-xl border ${
                         state.success
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                             : "bg-rose-50 text-rose-700 border-rose-200"
@@ -53,26 +59,24 @@ export default function LoginForm() {
                 </div>
             )}
 
-            {/* Input Email */}
-            <div>
+            {/* Input Email (Label: Email, Warna Teks Label Lembut, Input Lengkung Rapi) */}
+            <div className="space-y-1.5">
                 <label
                     htmlFor="email"
-                    className="block text-sm font-medium text-slate-700 mb-1"
+                    className="block text-sm font-medium text-slate-600"
                 >
-                    Username
+                    Email
                 </label>
-                <input
+                <InputText
                     id="email"
                     name="email"
                     type="text"
                     autoComplete="email"
-                    placeholder="Username"
-                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-slate-600 placeholder-slate-400 ${
-                        state.errors?.email
-                            ? "border-rose-400 focus:ring-rose-500"
-                            : "border-slate-300"
-                    }`}
+                    placeholder="Masukkan email"
+                    inputSize="sm"
+                    hasError={!!state.errors?.email}
                 />
+
                 {state.errors?.email && (
                     <p className="mt-1 text-xs text-rose-600">
                         {state.errors.email[0]}
@@ -80,26 +84,38 @@ export default function LoginForm() {
                 )}
             </div>
 
-            {/* Input Password */}
-            <div>
+            {/* Input Password (Label: Password, Ditambahkan Tombol Ikon Mata Sesuai Gambar) */}
+            <div className="space-y-1.5">
                 <label
                     htmlFor="password"
-                    className="block text-sm font-medium text-slate-700 mb-1"
+                    className="block text-sm font-medium text-slate-600"
                 >
-                    Kata Sandi
+                    Password
                 </label>
-                <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="••••••••"
-                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-slate-600 placeholder-slate-400 ${
-                        state.errors?.password
-                            ? "border-rose-400 focus:ring-rose-500"
-                            : "border-slate-300"
-                    }`}
-                />
+                <div className="relative w-full">
+                    <InputText
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        inputSize="sm"
+                        hasError={!!state.errors?.password}
+                    />
+
+                    {/* Tombol Ikon Mata Sesuai Desain Gambar */}
+                    <button
+                        type="button"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition focus:outline-none"
+                        onClick={() => setShowPassword(!showPassword)}
+                    >
+                        {showPassword ? (
+                            <Icons name="eyes" size={25} />
+                        ) : (
+                            <Icons name="eyes-off" size={25} />
+                        )}
+                    </button>
+                </div>
                 {state.errors?.password && (
                     <p className="mt-1 text-xs text-rose-600">
                         {state.errors.password[0]}
@@ -107,90 +123,98 @@ export default function LoginForm() {
                 )}
             </div>
 
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                {/* Hidden input untuk menyisipkan kunci jawaban terenkripsi AES ke FormData */}
+            {/* Lupa Password Samping Kanan-Kiri Sesuai Gambar */}
+            <div className="flex justify-between items-center text-sm pt-1">
+                <span className="text-slate-600">Lupa password?</span>
+                <a
+                    href="/dahboard"
+                    className="text-blue-900 font-bold underline underline-offset-4 decoration-1"
+                >
+                    Klik Disini
+                </a>
+            </div>
+
+            {/* Blok Konstruksi Captcha (Menghapus container abu-abu bg-slate-50, diubah polos menyamping) */}
+            <div className="space-y-2 pt-2">
+                <label
+                    htmlFor="user_captcha"
+                    className="block text-sm font-medium text-slate-600"
+                >
+                    Captcha
+                </label>
+
                 <input
                     type="hidden"
                     name="encrypted_captcha"
                     value={encryptedAnswer}
                 />
 
-                {/* 🌟 PERBAIKAN DI SINI: flex-row dengan gap-3 untuk menyusun menyamping secara penuh */}
-                <div className="flex items-center justify-between gap-3 w-full">
-                    {/* 🌟 KOTAK TEKS: Ditambahkan 'flex-1' dan 'text-center' agar melebar mengikuti sisa ruang */}
-                    <span className="flex-1 inline-flex items-center justify-center text-center text-xl font-black text-slate-700 bg-white px-4 min-h-11.5 border border-slate-200 rounded-xl select-none tracking-widest italic line-through decoration-slate-400 decoration-2 shadow-sm font-mono">
-                        {captchaQuestion || ""}
-                    </span>
+                {/* Susunan 3 Kolom Menyamping: Input Teks - Box Gambar Soal - Tombol Refresh */}
+                <div className="flex items-center gap-3 w-full">
+                    {/* 1. Kolom Kiri: Kolom Input Jawaban */}
+                    <div className="flex-1">
+                        <InputText
+                            id="user_captcha"
+                            name="user_captcha"
+                            type="text"
+                            autoCapitalize="off"
+                            autoCorrect="off"
+                            spellCheck="false"
+                            placeholder="Masukkan captcha"
+                            inputSize="sm"
+                            hasError={!!state.errors?.captcha}
+                        />
+                    </div>
 
-                    {/* Tombol Refresh Captcha manual tetap berada di sudut kanan */}
-                    <button
+                    {/* 2. Kolom Tengah: Box Teks Soal Gambar Captcha */}
+                    <div className="shrink-0">
+                        <span className="inline-flex items-center justify-center text-center text-sm font-bold text-slate-700 bg-white px-5 py-3 border border-slate-200 rounded-lg select-none tracking-widest italic line-through decoration-slate-400 decoration-1 h-9 min-w-30 font-mono">
+                            {captchaQuestion || "xk8FB"}
+                        </span>
+                    </div>
+
+                    {/* 3. Kolom Kanan: Tombol Segarkan Berwarna Biru dengan Ikon Panah Putar Lingkaran */}
+                    <Btn
                         type="button"
                         onClick={refreshCaptcha}
                         disabled={isPending}
-                        className="flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold transition cursor-pointer disabled:opacity-50 shrink-0 bg-white border border-slate-200 px-3 py-2.5 rounded-xl shadow-sm hover:bg-slate-50"
-                        title="Ganti"
+                        size="sm"
+                        title="Segarkan Captcha"
+                        className="flex items-center justify-center text-blue-600 hover:text-blue-800 transition disabled:opacity-50 shrink-0 \ focus:outline-none"
                     >
-                        🔄 Ganti
-                    </button>
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            stroke="currentColor"
+                            strokeWidth="2.5"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="animate-none active:rotate-180 transition-transform duration-300"
+                        >
+                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                        </svg>
+                    </Btn>
                 </div>
-
-                {/* Input Teks Jawaban Pengguna */}
-                <div>
-                    <input
-                        id="user_captcha"
-                        name="user_captcha"
-                        type="text"
-                        autoCapitalize="off"
-                        autoCorrect="off"
-                        spellCheck="false"
-                        placeholder="Masukkan kode di atas..."
-                        className={`w-full px-3 py-2 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-sm text-slate-600 placeholder-slate-400 bg-white tracking-wider ${
-                            state.errors?.captcha
-                                ? "border-rose-400 focus:ring-rose-500"
-                                : "border-slate-300"
-                        }`}
-                    />
-                    {state.errors?.captcha && (
-                        <p className="mt-1 text-xs text-rose-600">
-                            {state.errors.captcha[0]}
-                        </p>
-                    )}
-                </div>
+                {state.errors?.captcha && (
+                    <p className="mt-1 text-xs text-rose-600">
+                        {state.errors.captcha[0]}
+                    </p>
+                )}
             </div>
 
-            {/* Tombol Submit */}
-            <button
-                type="submit"
-                disabled={isPending}
-                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-                {isPending ? (
-                    <span className="flex items-center gap-2">
-                        <svg
-                            className="animate-spin h-4 w-4 text-white"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                        >
-                            <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                            />
-                            <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            />
-                        </svg>
-                        Memverifikasi...
-                    </span>
-                ) : (
-                    "Masuk"
-                )}
-            </button>
+            {/* Tombol Submit Utama Berwarna Cerah Solid Bergradasi Halus Biru Langit */}
+            <div className="pt-2">
+                <Btn
+                    type="submit"
+                    isLoading={isPending}
+                    variant="success-blue"
+                    fullWidth={true}
+                >
+                    {isPending ? "Memproses..." : "Masuk"}
+                </Btn>
+            </div>
         </form>
     );
 }
