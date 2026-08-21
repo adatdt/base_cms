@@ -20,7 +20,11 @@ const BASE_COLUMNS: ColumnProps<Table>[] = RAW_COLUMNS_CONFIG.map(
 
 interface UseGroupColumnsProps {
     onEdit: (row: Table) => void;
-    onChangeStatus?: (id: string | number, ststus: string | number) => void;
+    onChangeStatus?: (
+        id: string | number,
+        status: string | number,
+        dataName: string,
+    ) => void;
 }
 
 export function useGroupColumns({
@@ -44,7 +48,6 @@ export function useGroupColumns({
                                     : "bg-slate-100 text-slate-600"
                             }`}
                         >
-                            {/* Ikon otomatis mengikuti warna teks (text-emerald-700 / text-slate-600) karena menggunakan currentColor */}
                             <Icons name="circle" size={8} />
                             {isStatusActive ? "Aktif" : "Non Aktif"}
                         </span>
@@ -82,6 +85,7 @@ export function useGroupColumns({
                                             row.status == 1
                                                 ? `active`
                                                 : `nonActive`,
+                                            `admin`,
                                         ),
                                 },
 
@@ -93,6 +97,7 @@ export function useGroupColumns({
                                         onChangeStatus?.(
                                             row.id ?? "",
                                             `delete`,
+                                            `admin`,
                                         ),
                                 },
                             ]}

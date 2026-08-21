@@ -21,6 +21,8 @@ import { useGroupColumns } from "./hooks/useGroupColumns";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
 import { ConfirmationContent } from "@/components/shared/ConfirmationContent";
+import { masterLabels } from "@/constants/labels";
+import { capitalize } from "@/utils/global";
 
 const moduleName = `Group`;
 const formAdd = `formAdd${moduleName}`;
@@ -28,13 +30,14 @@ const formEdit = `formEdit${moduleName}`;
 const formChangeStatus = `changeStatus${moduleName}`;
 
 export default function GroupPage() {
+    const { modalText } = masterLabels;
     const [tableData, setTableData] = useState<Table[]>([]);
     const [totalRecords, setTotalRecords] = useState<number>(0);
     const [dataModalStatus, setDataModalStatus] = useState({
-        title: `Anda yakin untuk melakukan penambahan data ${moduleName} ini?`,
-        description:
-            "Pastikan semua data yang Anda masukkan sudah sesuai jika belum sesuai Anda bisa melakukan pengecekan kembali",
-        confirmText: "Ya, tambah data sekarang",
+        title: modalText.title(`Nonaktifkan Data`),
+        titleNotif: modalText.confirmation(`nonaktifkan ${moduleName} ?`),
+        description: modalText.description,
+        confirmText: modalText.confirmTextBtn(`tambah`),
     });
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
@@ -64,15 +67,18 @@ export default function GroupPage() {
     const loadAdd = async () => openModal(formAdd);
     const loadEdit = async () => {
         openModal(formEdit);
-
         // set id manual ini hardcord nanti  bisa di set di function fetchFormDetails
         setTimeout(() => {
             setManualFormData({ id: "idnya" });
         }, 0);
     };
 
-    const changeStatus = (id: string | number, status: string | number) => {
-        let labelStatus = "Hapus";
+    const changeStatus = (
+        id: string | number,
+        status: string | number,
+        dataName: string,
+    ) => {
+        let labelStatus = "hapus";
         if (status === "active") {
             labelStatus = `nonaktifkan`;
         }
@@ -80,10 +86,14 @@ export default function GroupPage() {
         if (status === "nonActive") {
             labelStatus = `aktifkan`;
         }
+
         setDataModalStatus((prev) => ({
             ...prev, // Pertahankan semua isi deskripsi, tombol, dan ikon yang lama
-            title: `Anda yakin untuk ${labelStatus} menu ${moduleName}?`, // Hanya timpa/ubah bagian judulnya saja
-            confirmText: `Ya, ${labelStatus} data sekarang`,
+            title: modalText.title(`${capitalize(labelStatus)} Data`),
+            titleNotif: modalText.confirmation(
+                ` ${labelStatus}  ${moduleName.toLowerCase()}  ${dataName}?`,
+            ),
+            confirmText: modalText.confirmTextBtn(labelStatus),
         }));
 
         setTimeout(() => {
@@ -166,7 +176,7 @@ export default function GroupPage() {
         },
         {
             id: formEdit,
-            title: `Ubah Data ${moduleName}`,
+            title: `Edit ${moduleName}`,
             confirmText: `Simpan  ${moduleName}`,
             renderContent: (formId: string) => (
                 <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
@@ -181,9 +191,11 @@ export default function GroupPage() {
             renderContent: () => {
                 return (
                     <ConfirmationContent
-                        title={`Anda yakin untuk melakukan penambahan data  ${moduleName}  ini?`}
-                        description="Pastikan semua data yang Anda masukkan sudah sesuai jika belum sesuai Anda bisa melakukan pengecekan kembali"
-                        confirmText="Ya, tambah data sekarang"
+                        title={modalText.titleNotif(
+                            `penambahan data  ${moduleName.toLowerCase()}`,
+                        )}
+                        description={modalText.description}
+                        confirmText={modalText.confirmTextBtn(`tambahkan`)}
                         onCancel={() => openModalOnly(formAdd)}
                     />
                 );
@@ -198,9 +210,11 @@ export default function GroupPage() {
             renderContent: () => {
                 return (
                     <ConfirmationContent
-                        title={`Anda yakin untuk melakukan perubahan data ${moduleName} ini?`}
-                        description="Pastikan semua data yang Anda ubah sudah sesuai jika belum sesuai Anda bisa melakukan pengecekan kembali"
-                        confirmText="Ya, ubah data sekarang"
+                        title={modalText.titleNotif(
+                            `perubahan data  ${moduleName.toLowerCase()}`,
+                        )}
+                        description={modalText.description}
+                        confirmText={modalText.confirmTextBtn(`ubah`)}
                         onCancel={() => openModalOnly(formEdit)}
                     />
                 );
@@ -208,14 +222,14 @@ export default function GroupPage() {
         },
         {
             id: formChangeStatus,
-            title: `Konfirmasi Nonaktifkan Data`,
+            title: dataModalStatus.title,
             variant: `modal`,
             showFooter: false,
-            sizePanel: "xl",
+            sizePanel: "lg",
             renderContent: () => (
                 <ConfirmationContent
                     iconType="warning"
-                    title={dataModalStatus.title}
+                    title={dataModalStatus.titleNotif}
                     description={dataModalStatus.description}
                     confirmText={dataModalStatus.confirmText}
                 />

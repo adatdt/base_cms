@@ -4,6 +4,7 @@ import { z } from "zod";
 
 export const actionAddFormSchema = z.object({
     name: z.string().min(1),
+    description: z.string().min(1).trim(),
 });
 
 // Schema untuk mode EDIT (Mewarisi semua field ADD + Menimpa properti ID dengan benar)

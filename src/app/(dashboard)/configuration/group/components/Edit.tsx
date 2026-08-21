@@ -38,6 +38,8 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
         handleFieldChange,
         executeSubmit,
         resetForm,
+        masterOptions,
+        isMasterLoading,
     } = useFormStore(
         useShallow((state) => ({
             formData: state.formData,
@@ -45,14 +47,20 @@ export default function Edit({ formId }: Readonly<UserFormFieldsProps>) {
             handleChange: state.handleChange,
             handleFieldChange: state.handleFieldChange,
             executeSubmit: state.executeSubmit,
-            resetForm: (state as any).resetForm,
+            resetForm: (state as any).resetForm, // Mempertahankan assertion bawaan Anda
+            masterOptions: state.masterOptions,
+            isMasterLoading: state.isMasterLoading,
         })),
     );
 
-    const { masterOptions, isMasterLoading } = useFormStore();
-    const activeModalId = useModalStore((state) => state.activeModalId);
-    const isOpeningWithData = useModalStore((state) => state.isOpeningWithData);
-    const openModalOnly = useModalStore((state) => state.openModalOnly);
+    // 💡 2. Satukan semua State & Fungsi dari Modal Store
+    const { activeModalId, isOpeningWithData, openModalOnly } = useModalStore(
+        useShallow((state) => ({
+            activeModalId: state.activeModalId,
+            isOpeningWithData: state.isOpeningWithData,
+            openModalOnly: state.openModalOnly,
+        })),
+    );
 
     useEffect(() => {
         if (activeModalId === formId && isOpeningWithData && resetForm) {

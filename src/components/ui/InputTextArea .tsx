@@ -26,7 +26,7 @@ export const InputTextArea = React.forwardRef<
             className = "",
             hasError,
             inputSize = "md",
-            rows = 4,
+            rows = 6,
             width,
             height,
             style,
@@ -48,13 +48,15 @@ export const InputTextArea = React.forwardRef<
                 style={customStyle}
                 // 2. Karena 'type' sudah diekstrak di atas, objek ...props di bawah ini
                 //    tidak akan lagi mengandung atribut 'type' secara tidak sengaja.
-                className={`bg-slate-50/50 border text-slate-800 outline-none transition-all resize-y focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10 ${
-                    width ? "" : "w-full"
-                } ${sizeClasses[inputSize]} ${
-                    hasError
-                        ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
-                        : "border-slate-200"
-                } ${className}`}
+                className={`bg-slate-50/50 border text-slate-800 outline-none transition-all
+                     resize-none
+                      focus:bg-white focus:border-slate-400 focus:ring-4 focus:ring-slate-500/10 ${
+                          width ? "" : "w-full"
+                      } ${sizeClasses[inputSize]} ${
+                          hasError
+                              ? "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                              : "border-slate-200"
+                      } ${className}`}
                 {...props}
             />
         );

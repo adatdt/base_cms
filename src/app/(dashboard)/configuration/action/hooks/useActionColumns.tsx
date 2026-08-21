@@ -3,6 +3,7 @@ import { ColumnProps } from "@/components/ui/DataGrid";
 import { DropdownBtn } from "@/components/ui/DropdownBtn";
 import Icons from "@/components/ui/Icons";
 import { Table } from "../interfaces/action.interfaces";
+import { ColumnProps as LocalColumn } from "@/types/table.types";
 
 // 1. Konfigurasi data statis diletakkan di luar hooks (Efisien Memori)
 const RAW_COLUMNS_CONFIG = [
@@ -18,15 +19,10 @@ const BASE_COLUMNS: ColumnProps<Table>[] = RAW_COLUMNS_CONFIG.map(
     }),
 );
 
-interface UseGroupColumnsProps {
-    onEdit: (row: Table) => void;
-    onChangeStatus?: (id: string | number) => void;
-}
-
 export function useGroupColumns({
     onEdit,
     onChangeStatus,
-}: Readonly<UseGroupColumnsProps>) {
+}: Readonly<LocalColumn>) {
     return useMemo<ColumnProps<Table>[]>(
         () => [
             ...BASE_COLUMNS,
@@ -38,12 +34,13 @@ export function useGroupColumns({
                     const isStatusActive = String(row.status) === "1";
                     return (
                         <span
-                            className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
                                 isStatusActive
                                     ? "bg-emerald-50 text-emerald-700"
                                     : "bg-slate-100 text-slate-600"
                             }`}
                         >
+                            <Icons name="circle" size={8} />
                             {isStatusActive ? "Aktif" : "Non Aktif"}
                         </span>
                     );
@@ -66,15 +63,19 @@ export function useGroupColumns({
                                 {
                                     label: "Edit ",
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "md",
                                     onClick: () => onEdit(row), // Passing row data jika dibutuhkan
                                 },
                                 {
                                     label: statusLabel,
                                     fontWeight: "normal",
-                                    fontSize: "xs",
+                                    fontSize: "md",
                                     onClick: () =>
-                                        onChangeStatus?.(row.id ?? ""),
+                                        onChangeStatus?.(
+                                            row.id ?? "",
+                                            `delete`,
+                                            `admin`,
+                                        ),
                                 },
                             ]}
                             // widthClass="w-48"

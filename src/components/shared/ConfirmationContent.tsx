@@ -55,12 +55,12 @@ export const ConfirmationContent: React.FC<ConfirmationContentProps> = ({
             </div>
 
             {/* Title */}
-            <h2 className="text-lg font-bold text-slate-800 leading-snug tracking-normal mb-3 px-2">
+            <h2 className="text-lg font-bold text-slate-800 leading-snug tracking-normal mb-3 px-1">
                 {title}
             </h2>
 
             {/* Description */}
-            <p className="text-xs text-slate-400 font-normal leading-relaxed  px-4">
+            <p className="text-xs text-slate-400 font-normal leading-relaxed  px-2">
                 {description}
             </p>
 

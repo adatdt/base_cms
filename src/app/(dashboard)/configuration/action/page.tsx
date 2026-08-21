@@ -5,11 +5,14 @@ import { Table } from "./interfaces/action.interfaces";
 import DataGrid from "@/components/ui/DataGrid";
 import { useTableStore } from "@/store/useTableStore";
 import { fetchClient, FetchError } from "@/services/fetch-client";
-import { ApiFetchResponse } from "@/types/api.types";
+import { ApiTableResponse } from "@/types/api.types";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import Btn from "@/components/ui/Btn";
 import { useModalStore } from "@/store/useModalStore";
-import { ModalListRenderer } from "@/components/shared/ModalRenderer";
+import {
+    ModalListRenderer,
+    type ModalConfig,
+} from "@/components/shared/ModalRenderer";
 import Add from "./components/Add";
 import { useFormStore } from "@/store/useFormStore";
 import { useShallow } from "zustand/shallow";
@@ -17,16 +20,26 @@ import Edit from "./components/Edit";
 import { useGroupColumns } from "./hooks/useActionColumns";
 import Icons from "@/components/ui/Icons";
 import Filter from "./components/Filter";
+import { masterLabels } from "@/constants/labels";
+import { capitalize } from "@/utils/global";
+import { ConfirmationContent } from "@/components/shared/ConfirmationContent";
 
-const moduleName = `Master Aksi`;
+const moduleName = `Action`;
+const formAdd = `formAdd${moduleName}`;
+const formEdit = `formEdit${moduleName}`;
+const formChangeStatus = `changeStatus${moduleName}`;
 
 export default function UsersPage() {
+    const { modalText } = masterLabels;
     const [tableData, setTableData] = useState<Table[]>([]);
     const [totalRecords, setTotalRecords] = useState<number>(0);
     const triggerNotification = useNotificationStore(
         (state) => state.triggerNotification,
     );
+
     const openModal = useModalStore((state) => state.openModal);
+    const openModalOnly = useModalStore((state) => state.openModalOnly);
+    const setManualFormData = useFormStore((state) => state.setManualFormData);
 
     const { isFetchLoading, formData } = useFormStore(
         useShallow((state) => ({
@@ -34,6 +47,13 @@ export default function UsersPage() {
             formData: state.formData,
         })),
     );
+
+    const [dataModalStatus, setDataModalStatus] = useState({
+        title: modalText.title(`Nonaktifkan Data`),
+        titleNotif: modalText.confirmation(`nonaktifkan ${moduleName} ?`),
+        description: modalText.description,
+        confirmText: modalText.confirmTextBtn(`tambah`),
+    });
 
     const {
         page,
@@ -46,10 +66,41 @@ export default function UsersPage() {
         setLoadData,
     } = useTableStore((state) => state.getTableState("action"));
 
-    const loadAdd = async () => openModal("Form Add");
-    const loadEdit = async () => openModal("Form Edit");
-    const changeStatus = (id: string | number) =>
-        console.log("Ubah status id:", id);
+    const loadAdd = async () => openModal(formAdd);
+    const loadEdit = async () => {
+        openModal(formEdit);
+        // set id manual ini hardcord nanti  bisa di set di function fetchFormDetails
+        setTimeout(() => {
+            setManualFormData({ id: "idnya" });
+        }, 0);
+    };
+    const changeStatus = (
+        id: string | number,
+        status: string | number,
+        dataName: string,
+    ) => {
+        let labelStatus = "hapus";
+        if (status === "active") {
+            labelStatus = `nonaktifkan`;
+        }
+
+        if (status === "nonActive") {
+            labelStatus = `aktifkan`;
+        }
+
+        setDataModalStatus((prev) => ({
+            ...prev, // Pertahankan semua isi deskripsi, tombol, dan ikon yang lama
+            title: modalText.title(`${capitalize(labelStatus)} Data`),
+            titleNotif: modalText.confirmation(
+                ` ${labelStatus}  ${moduleName.toLowerCase()}  ${dataName}?`,
+            ),
+            confirmText: modalText.confirmTextBtn(labelStatus),
+        }));
+
+        setTimeout(() => {
+            openModal(formChangeStatus);
+        }, 0);
+    };
 
     const columns = useGroupColumns({
         onEdit: loadEdit,
@@ -58,18 +109,20 @@ export default function UsersPage() {
 
     const fetchData = useCallback(
         async (
-            targetPage: number,
-            targetLimit: number,
+            targetPage: number, // start page
+            targetLimit: number, // limit page
             searchQuery: string,
         ) => {
             try {
                 setLoadData(true);
                 const requestBody = {
-                    page: targetPage,
-                    limit: targetLimit,
+                    start: targetPage,
+                    length: targetLimit,
                     search: searchQuery.trim(),
+                    order: "desc",
+                    column: "id",
                 };
-                const result = await fetchClient.request<ApiFetchResponse<any>>(
+                const result = await fetchClient.request<ApiTableResponse<any>>(
                     "/api/action/get_data",
                     {
                         method: "POST",
@@ -77,16 +130,17 @@ export default function UsersPage() {
                     },
                 );
 
-                if (result.success) {
-                    const dataTerkonversi: Table[] = (result.data || []).map(
-                        (item: any, index: number) => ({
-                            ...item,
-                            id: item.id,
-                            no: (targetPage - 1) * targetLimit + index + 1,
-                        }),
-                    );
+                if (result.status && result.code >= 200 && result.code < 300) {
+                    const dataTerkonversi: Table[] = (
+                        result.data.records || []
+                    ).map((item: any, index: number) => ({
+                        ...item,
+                        id: item.id,
+                        no: (targetPage - 1) * targetLimit + index + 1,
+                    }));
+                    const recordsTotal = result.data.recordsTotal;
                     setTableData(dataTerkonversi);
-                    setTotalRecords(result.total_data || 0);
+                    setTotalRecords(Number(recordsTotal) || 0);
                 } else {
                     triggerNotification(
                         result.message || "Gagal memuat data.",
@@ -115,17 +169,72 @@ export default function UsersPage() {
         fetchData(page, limit, typedQuery);
     }, [page, limit, fetchData]);
 
-    const modalConfigurations = [
+    const modalConfigurations: ModalConfig[] = [
         {
-            id: "Form Add",
-            title: `Tambah Data ${moduleName}`,
+            id: formAdd,
+            title: `Tambah  ${moduleName}`,
+            confirmText: `Tambah  ${moduleName}`,
             renderContent: (formId: string) => <Add formId={formId} />,
         },
         {
-            id: "Form Edit",
-            title: `Ubah Data ${moduleName}`,
+            id: formEdit,
+            title: `Edit ${moduleName}`,
+            confirmText: `Simpan  ${moduleName}`,
             renderContent: (formId: string) => (
                 <Edit formId={formId} key={formData?.menu || "modal-kosong"} />
+            ),
+        },
+        {
+            id: `${formAdd}Action`,
+            title: "Konfirmasi Tambah Data",
+            variant: "modal",
+            showFooter: false,
+            sizePanel: "lg",
+            renderContent: () => {
+                return (
+                    <ConfirmationContent
+                        title={modalText.titleNotif(
+                            `penambahan data  ${moduleName.toLowerCase()}`,
+                        )}
+                        description={modalText.description}
+                        confirmText={modalText.confirmTextBtn(`tambahkan`)}
+                        onCancel={() => openModalOnly(formAdd)}
+                    />
+                );
+            },
+        },
+        {
+            id: `${formEdit}Action`,
+            title: "Konfirmasi Edit Data",
+            variant: "modal",
+            showFooter: false,
+            sizePanel: "lg",
+            renderContent: () => {
+                return (
+                    <ConfirmationContent
+                        title={modalText.titleNotif(
+                            `perubahan data  ${moduleName.toLowerCase()}`,
+                        )}
+                        description={modalText.description}
+                        confirmText={modalText.confirmTextBtn(`ubah`)}
+                        onCancel={() => openModalOnly(formEdit)}
+                    />
+                );
+            },
+        },
+        {
+            id: formChangeStatus,
+            title: dataModalStatus.title,
+            variant: `modal`,
+            showFooter: false,
+            sizePanel: "lg",
+            renderContent: () => (
+                <ConfirmationContent
+                    iconType="warning"
+                    title={dataModalStatus.titleNotif}
+                    description={dataModalStatus.description}
+                    confirmText={dataModalStatus.confirmText}
+                />
             ),
         },
     ];

@@ -32,23 +32,35 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         (state) => state.triggerNotification,
     );
 
-    const { formData, errors, handleChange, handleFieldChange, resetForm } =
-        useFormStore(
-            useShallow((state) => ({
-                formData: state.formData,
-                errors: state.errors,
-                handleChange: state.handleChange,
-                handleFieldChange: state.handleFieldChange,
-                resetForm: (state as any).resetForm,
-            })),
-        );
+    const {
+        executeSubmit,
+        masterOptions,
+        isMasterLoading,
+        formData,
+        errors,
+        handleChange,
+        handleFieldChange,
+        resetForm,
+    } = useFormStore(
+        useShallow((state) => ({
+            executeSubmit: state.executeSubmit,
+            masterOptions: state.masterOptions,
+            isMasterLoading: state.isMasterLoading,
+            formData: state.formData,
+            errors: state.errors,
+            handleChange: state.handleChange,
+            handleFieldChange: state.handleFieldChange,
+            resetForm: (state as any).resetForm, // Mempertahankan assertion 'as any' bawaan Anda
+        })),
+    );
 
-    const isOpeningWithData = useModalStore((state) => state.isOpeningWithData);
-    const activeModalId = useModalStore((state) => state.activeModalId);
-    const openModalOnly = useModalStore((state) => state.openModalOnly);
-
-    const executeSubmit = useFormStore((state) => state.executeSubmit);
-    const { masterOptions, isMasterLoading } = useFormStore();
+    const { isOpeningWithData, activeModalId, openModalOnly } = useModalStore(
+        useShallow((state) => ({
+            isOpeningWithData: state.isOpeningWithData,
+            activeModalId: state.activeModalId,
+            openModalOnly: state.openModalOnly,
+        })),
+    );
 
     useEffect(() => {
         if (activeModalId === formId && isOpeningWithData && resetForm) {

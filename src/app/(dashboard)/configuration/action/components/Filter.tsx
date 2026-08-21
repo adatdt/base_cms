@@ -22,7 +22,7 @@ export default function Filter({
 }: Readonly<GroupFilterProps>) {
     return (
         <DropdownBtn
-            size="lg"
+            size="md"
             variant="default"
             header="Filter"
             className="text-slate-400 hover:text-slate-600"

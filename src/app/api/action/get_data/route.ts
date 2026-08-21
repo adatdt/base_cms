@@ -10,8 +10,8 @@ export async function POST(request: Request) {
 
         // Map object mentah dari request body
         const rawQueryParams = {
-            page: rawBody.page,
-            limit: rawBody.limit,
+            start: rawBody.start,
+            length: rawBody.length,
             search: rawBody.search,
         };
 
@@ -22,8 +22,8 @@ export async function POST(request: Request) {
             return handleValidationError(validation.error);
         }
 
-        const { page, limit, search } = validation.data;
-        const offset = (page - 1) * limit;
+        const { start, length, search } = validation.data;
+        const offset = (start - 1) * length;
 
         // 2. SOLUSI SONARQUBE: Pembuatan filter WHERE via global helper
         const baseWhere = buildWhereClause(search, "gr", "action_name");
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         ${qry}
         ${baseWhere}
         ORDER BY gr.id DESC
-        LIMIT ${limit}
+        LIMIT ${length}
         OFFSET ${offset}
       `;
 
@@ -55,12 +55,16 @@ export async function POST(request: Request) {
         const total = Number(countResult[0]?.total || 0);
 
         // 5. SOLUSI SONARQUBE: Return response terformat via global helper
-        const result = formatPaginatedResponse(data, total, page, limit);
+        const result = formatPaginatedResponse(data, total, start, length);
 
         return NextResponse.json({
-            success: 1,
+            status: true,
             message: "success",
-            ...result,
+            code: 200,
+            reqId: "SJCDBSJBD112",
+            error: null,
+            srvId: null,
+            data: result,
         });
     } catch (error) {
         // SOLUSI SONARQUBE: Abstraksi penuh catch-block error 500

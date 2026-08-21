@@ -130,8 +130,8 @@ export default function DataGrid<T extends { id: string }>({
 
     return (
         <div className="space-y-4 w-full">
-            <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm w-full">
-                <div className="overflow-x-auto w-full">
+            <div className="bg-white border border-slate-200 rounded-2xl overflow-visible shadow-sm w-full relative z-4">
+                <div className="overflow-x-auto md:overflow-x-visible w-full ">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
@@ -145,14 +145,14 @@ export default function DataGrid<T extends { id: string }>({
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 text-xs">
+                        <tbody className="divide-y divide-slate-100 text-xs  relative z-5">
                             {renderTableBodyContent()}
                         </tbody>
                     </table>
                 </div>
 
                 {/* GRID FOOTER / PAGINATION CONTROL */}
-                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-600 w-full">
+                <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center text-xs text-slate-600 w-full ">
                     <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto text-center sm:text-left">
                         <div>
                             Menampilkan{" "}

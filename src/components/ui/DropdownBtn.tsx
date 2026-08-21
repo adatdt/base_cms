@@ -45,10 +45,10 @@ const weightClasses = {
 
 const sizeClasses = {
     xs: "text-[10px]", // Disamakan dengan text-[10px] pada sizeStyles.xs
-    sm: "text-xs",     // Disamakan dengan text-xs pada sizeStyles.sm
-    md: "text-sm",     // Disamakan dengan text-sm pada sizeStyles.md
-    lg: "text-base",   // Disamakan dengan text-base pada sizeStyles.lg
-    xl: "text-lg",     // Tetap sebagai nilai cadangan jika dibutuhkan ukuran ekstra
+    sm: "text-xs", // Disamakan dengan text-xs pada sizeStyles.sm
+    md: "text-sm", // Disamakan dengan text-sm pada sizeStyles.md
+    lg: "text-base", // Disamakan dengan text-base pada sizeStyles.lg
+    xl: "text-lg", // Tetap sebagai nilai cadangan jika dibutuhkan ukuran ekstra
 };
 
 const circleSizeClasses: Record<ButtonSize, string> = {

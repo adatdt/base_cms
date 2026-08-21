@@ -1,19 +1,28 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import type { InputSchema, UserFormFieldsProps } from "@/types/form.type";
 import { actionAddFormSchema } from "../schema/action.schema";
 import { useNotificationStore } from "@/store/useNotificationStore";
 import { useFormStore } from "@/store/useFormStore";
 import { FormFieldRenderer } from "@/components/shared/FormFieldRenderer";
+import { useShallow } from "zustand/shallow";
+import { useModalStore } from "@/store/useModalStore";
 
 const input: InputSchema[] = [
     {
         name: "name",
-        label: "Nama",
+        label: "Nama Action",
         variant: "text",
-        placeholder: "Masukkan Nama",
-        required: true, // Menandai field ini sebagai wajib diisi
+        placeholder: "Masukkan nama action",
+        required: true,
+    },
+    {
+        name: "description",
+        label: "Deskripsi Action",
+        variant: "text-area", // Menggunakan komponen InputTextArea tanpa garis 3 resize-none yang kita set tadi
+        placeholder: "Masukkan deskripsi action",
+        required: true,
     },
 ];
 
@@ -23,17 +32,61 @@ export default function Add({ formId }: Readonly<UserFormFieldsProps>) {
         (state) => state.triggerNotification,
     );
 
-    const formData = useFormStore((state) => state.formData);
-    const errors = useFormStore((state) => state.errors);
-    const handleChange = useFormStore((state) => state.handleChange);
-    const handleFieldChange = useFormStore((state) => state.handleFieldChange);
+    const {
+        executeSubmit,
+        masterOptions,
+        isMasterLoading,
+        formData,
+        errors,
+        handleChange,
+        handleFieldChange,
+        resetForm,
+    } = useFormStore(
+        useShallow((state) => ({
+            executeSubmit: state.executeSubmit,
+            masterOptions: state.masterOptions,
+            isMasterLoading: state.isMasterLoading,
+            formData: state.formData,
+            errors: state.errors,
+            handleChange: state.handleChange,
+            handleFieldChange: state.handleFieldChange,
+            resetForm: (state as any).resetForm, // Mempertahankan assertion 'as any' bawaan Anda
+        })),
+    );
 
-    const executeSubmit = useFormStore((state) => state.executeSubmit);
-    const { masterOptions, isMasterLoading } = useFormStore();
+    const { isOpeningWithData, activeModalId, openModalOnly } = useModalStore(
+        useShallow((state) => ({
+            isOpeningWithData: state.isOpeningWithData,
+            activeModalId: state.activeModalId,
+            openModalOnly: state.openModalOnly,
+        })),
+    );
 
-    const sendForm = (e: React.SubmitEvent<HTMLFormElement>) => {
+    useEffect(() => {
+        if (activeModalId === formId && isOpeningWithData && resetForm) {
+            resetForm();
+        }
+    }, [activeModalId, isOpeningWithData, resetForm, formId]);
+
+    const isConfirmedRef = useRef(false);
+    const sendForm = async (e: React.SubmitEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (!isConfirmedRef.current) {
+            const isValid = (await executeSubmit(e, {
+                schema: actionAddFormSchema,
+                onlyValidate: true,
+                formKey: formId,
+                endpoint: "",
+                triggerNotification: triggerNotification,
+            })) as unknown as boolean;
+            console.log(isValid);
+            if (!isValid) return;
+            openModalOnly(`${formId}Action`);
+            return;
+        }
+
         executeSubmit(e, {
-            formKey: "menuForm",
+            formKey: formId,
             schema: actionAddFormSchema,
             endpoint: "/configuration/menu/api/crud",
             method: "POST",
